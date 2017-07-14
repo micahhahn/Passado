@@ -8,4 +8,8 @@
     <PackageReference Include="Microsoft.CodeAnalysis" Version="2.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="tools\" />
+  </ItemGroup>
+
 </Project>
