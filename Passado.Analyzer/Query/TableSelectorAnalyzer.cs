@@ -28,14 +28,25 @@ namespace Passado.Analyzers.Query
             "OuterJoin"
         };
 
+        static bool IsSimpleSelector(SyntaxNodeAnalysisContext context, ExpressionSyntax expression)
+        {
+            var lambdaExpression = expression as SimpleLambdaExpressionSyntax;
+
+            if (lambdaExpression == null)
+                return false;
+
+            var selector = lambdaExpression.Body as MemberAccessExpressionSyntax;
+
+            if (selector == null)
+                return false;
+
+            return context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol;
+        }
+
         public override void AnalyzeQueryMethod(SyntaxNodeAnalysisContext context, string methodName, ArgumentListSyntax arguments)
         {
-            var selector = arguments.Arguments[0].Expression as SimpleLambdaExpressionSyntax;
-            
-            if (selector == null)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Rule, arguments.Arguments[0].GetLocation(), "xxx"));
-            }
+            if (!IsSimpleSelector(context, arguments.Arguments[0].Expression))
+                context.ReportDiagnostic(Diagnostic.Create(Rule, arguments.Arguments[0].GetLocation(), "Must be a simple selector"));
         }
     }
 }

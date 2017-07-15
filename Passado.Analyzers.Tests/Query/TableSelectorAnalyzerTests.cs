@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -16,9 +18,9 @@ namespace Passado.Analyzers.Tests
     {
         static readonly DiagnosticAnalyzer _analyzer = new QueryAnalyzerDispatcher();
 
-        static string GenerateCode(string queryBuilder)
+        async void CompileQuery(string queryBuilder)
         {
-            return @"
+            var source = @"
                 using System.Collections.Generic;
                 using Passado.Core;
 
@@ -46,21 +48,42 @@ namespace Passado.Analyzers.Tests
                         " + queryBuilder + @"
                     }
                 }";
-        }
-
-        [Fact]
-        public async void Error_On_Non_Simple_Lambda_Expression()
-        {
-            var source = GenerateCode(@"
-                var dummyUsers = new List<User>();
-                queryBuilder.Select(q => q.From((Database t) => dummyUsers)
-                                          .Select(t => new { Name = t.T1.FirstName }));");
 
             var queryAnalyzer = new QueryAnalyzerDispatcher();
 
             var diagnostics = await CodeAnalyzerHelper.GetDiagnosticsAsync(queryAnalyzer, source);
-            
-            Assert.Equal(1, diagnostics.Count(d => d.Id == "PassadoTableSelectorAnalyzer"));
+
+            Assert.True(diagnostics.Count() > 0);
+            Assert.True(diagnostics.All(d => d.Id == "PassadoTableSelectorAnalyzer"));
+        }
+
+        [Theory]
+        [InlineData("From",      @"queryBuilder.Select(q => q.From((Database t) => t.Users)
+                                                             .Select(t => new { Name = t.T1.FirstName }));")]
+        [InlineData("Join",      @"queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .Join((Database t) => t.Addresses, t => t.T1.AddressID == t.T2.AddressID)
+                                                             .Select(t => new { Name = t.T1.FirstName }));")]
+        [InlineData("LeftJoin",  @"queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .LeftJoin((Database t) => t.Addresses, t => t.T1.AddressID == t.T2.AddressID)
+                                                             .Select(t => new { Name = t.T1.FirstName }));")]
+        [InlineData("RightJoin", @"queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .RightJoin((Database t) => t.Addresses, t => t.T1.AddressID == t.T2.AddressID)
+                                                             .Select(t => new { Name = t.T1.FirstName }));")]
+        [InlineData("OuterJoin", @"queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .OuterJoin((Database t) => t.Addresses, t => t.T1.AddressID == t.T2.AddressID)
+                                                             .Select(t => new { Name = t.T1.FirstName }));")]
+        public void Error_On_Non_Simple_Lambda_Expression(string name, string queryBuilder)
+        {
+            CompileQuery(queryBuilder);
+        }
+
+        [Theory]
+        [InlineData("From", @"var users = new List<User>();
+                              queryBuilder.Select(q => q.From(t => users)
+                                                        .Select(t => new { Name = t.T1.FirstName }));")]
+        public void Error_On_Non_Parameter_Member(string name, string queryBuilder)
+        {
+            CompileQuery(queryBuilder);
         }
     }
 }
