@@ -35,7 +35,8 @@ namespace Passado.Analyzers
             { "LeftJoin",  "Passado.Core.Query" },
             { "RightJoin", "Passado.Core.Query" },
             { "OuterJoin", "Passado.Core.Query" },
-            { "GroupBy",   "Passado.Core.Query" }
+            { "GroupBy",   "Passado.Core.Query" },
+            { "Set",       "Passado.Core.Query.Update.ISetable" }     
         };
         
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(_rule);

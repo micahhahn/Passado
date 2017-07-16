@@ -100,7 +100,15 @@ namespace Passado.Analyzers.Tests
         [InlineData(@"qb.Delete(t => users);")]
         [InlineData(@"qb.From(t => t.Users)
                         .Join(t => users);")]
+        [InlineData(@"qb.Update(t => t.Users)
+                        .Join(t => users);")]
+        [InlineData(@"qb.Delete(t => t.Users)
+                        .Join(t => users);")]
         [InlineData(@"qb.From(t => t.Users)
+                        .LeftJoin(t => users);")]
+        [InlineData(@"qb.Update(t => t.Users)
+                        .LeftJoin(t => users);")]
+        [InlineData(@"qb.Delete(t => t.Users)
                         .LeftJoin(t => users);")]
         [InlineData(@"qb.From(t => t.Users)
                         .RightJoin(t => users);")]
@@ -112,6 +120,8 @@ namespace Passado.Analyzers.Tests
                         .GroupBy(t => userId);")]
         [InlineData(@"qb.From(t => t.Users)
                         .GroupBy(t => t.T1.UserId, t => userId);")]
+        [InlineData(@"qb.Update(t => t.Users)
+                        .Set(t => userId, 7);")]
         public async void QueryBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);
