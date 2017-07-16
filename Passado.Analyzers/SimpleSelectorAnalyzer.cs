@@ -27,7 +27,10 @@ namespace Passado.Analyzers
         {
             { "Table",     "Passado.Core.Model.Builder.TableModelBuilder" },
             { "Column",    "Passado.Core.Model.Builder.ColumnModelBuilderBase" },
-            { "From",      "Passado.Core.Query" },
+            { "From",      "Passado.Core.IQueryBuilder" },
+            { "Insert",    "Passado.Core.IQueryBuilder" },
+            { "Update",    "Passado.Core.IQueryBuilder" },
+            { "Delete",    "Passado.Core.IQueryBuilder" },
             { "Join",      "Passado.Core.Query" },
             { "LeftJoin",  "Passado.Core.Query" },
             { "RightJoin", "Passado.Core.Query" },

@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 using Passado.Core.Query.Select;
-using Passado.Core.Query.Delete;
 using Passado.Core.Query.Insert;
 using Passado.Core.Query.Update;
+using Passado.Core.Query.Delete;
 
 namespace Passado.Core
 {
@@ -14,12 +16,9 @@ namespace Passado.Core
     /// <typeparam name="TDatabase"></typeparam>
     public interface IQueryBuilder<TDatabase>
     {
-        IQuery<TTable> Select<TTable>(Expression<Func<ISelectQueryBuilder<TDatabase>, ISelectQuery<TTable>>> query);
-
-        IQuery Insert(Expression<Func<IInsertQueryBuilder<TDatabase>, IInsertQuery>> query);
-
-        IQuery Update(Expression<Func<IUpdateQueryBuilder<TDatabase>, IUpdateQuery>> query);
-
-        IQuery Delete(Expression<Func<IDeleteQueryBuilder<TDatabase>, IDeleteQuery>> query);
+        IFromQuery<TDatabase, TTable1> From<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
+        IInsertQuery<TDatabase, TTable1> Insert<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
+        IUpdateQuery<TDatabase, TTable1> Update<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
+        IDeleteQuery<TDatabase, TTable1> Delete<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
     }
 }

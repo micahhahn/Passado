@@ -57,8 +57,10 @@ namespace Passado.Analyzers.Tests
                 {
                     public int UserId { get; set; }
 
-                    public void Query(IQueryBuilder<Database> queryBuilder)
+                    public void Query(IQueryBuilder<Database> qb)
                     {
+                        var users = new List<User>();
+                        var userId = 7;
                         " + queryBuilder + @"
                     }
                 }
@@ -92,34 +94,25 @@ namespace Passado.Analyzers.Tests
         }
 
         [Theory]
-        [InlineData("From",      @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => users)
-                                                             .Select(t => new { A = 1 }));")]
-        [InlineData("Join",      @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => t.Users)
-                                                             .Join(t => users)
-                                                             .Select(t => new { A = 1 }));")]
-        [InlineData("LeftJoin",  @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => t.Users) 
-                                                             .LeftJoin(t => users)
-                                                             .Select(t => new { A = 1 }));")]
-        [InlineData("RightJoin", @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => t.Users)
-                                                             .RightJoin(t => users)
-                                                             .Select(t => new { A = 1 }));")]
-        [InlineData("OuterJoin", @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => t.Users)
-                                                             .OuterJoin(t => users)
-                                                             .Select(t => new { A = 1 }));")]
-        [InlineData("GroupBy1",  @"var userId = 7;
-                                   queryBuilder.Select(q => q.From(t => t.Users)
-                                                             .GroupBy(t => userId)
-                                                             .Select(t => new { A = t.Key1 }));")]
-        [InlineData("GroupBy2",  @"var userId = 7;
-                                   queryBuilder.Select(q => q.From(t => t.Users)
-                                                             .GroupBy(t => t.UserId, t => userId)
-                                                             .Select(t => new { A = t.Key1, B = t.Key2 }));")]
-        public async void QueryBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string methodName, string queryBuilder)
+        [InlineData(@"qb.From(t => users);")]
+        [InlineData(@"qb.Insert(t => users);")]
+        [InlineData(@"qb.Update(t => users);")]
+        [InlineData(@"qb.Delete(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .Join(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .LeftJoin(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .RightJoin(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .OuterJoin(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .OuterJoin(t => users);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .GroupBy(t => userId);")]
+        [InlineData(@"qb.From(t => t.Users)
+                        .GroupBy(t => t.T1.UserId, t => userId);")]
+        public async void QueryBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);
 
