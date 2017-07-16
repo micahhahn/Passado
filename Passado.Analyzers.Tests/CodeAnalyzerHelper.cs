@@ -15,7 +15,6 @@ using Microsoft.CodeAnalysis.Text;
 
 using Passado.Core;
 
-
 namespace Passado.Analyzers.Tests
 {
     class CodeAnalyzerHelper
@@ -49,6 +48,7 @@ namespace Passado.Analyzers.Tests
             project = project.WithCompilationOptions(((CSharpCompilationOptions)project.CompilationOptions).WithOutputKind(OutputKind.DynamicallyLinkedLibrary)
                                                                                                            .WithWarningLevel(0));
             var compilation = await project.GetCompilationAsync();
+            
             var compilationDiagnostics = compilation.GetDiagnostics();
 
             var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create(analyzer));

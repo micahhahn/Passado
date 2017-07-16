@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Core", "Passado.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Core.Tests", "Passado.Core.Tests\Passado.Core.Tests.csproj", "{B6BD1351-87F2-4EAF-8754-44FFBD2998E8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Analyzers", "Passado.Analyzer\Passado.Analyzers.csproj", "{E2A5A9AD-617F-4F9C-8079-C16BE363DFCB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Analyzers", "Passado.Analyzers\Passado.Analyzers.csproj", "{E2A5A9AD-617F-4F9C-8079-C16BE363DFCB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Passado.Analyzers.Tests", "Passado.Analyzers.Tests\Passado.Analyzers.Tests.csproj", "{414A7F9A-DD3A-470B-AE5D-F28E8150A95D}"
 EndProject

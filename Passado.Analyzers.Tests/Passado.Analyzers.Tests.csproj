@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Passado.Analyzer\Passado.Analyzers.csproj" />
+    <ProjectReference Include="..\Passado.Analyzers\Passado.Analyzers.csproj" />
     <ProjectReference Include="..\Passado.Core\Passado.Core.csproj" />
   </ItemGroup>
 
