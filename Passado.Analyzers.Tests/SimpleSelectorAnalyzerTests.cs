@@ -100,7 +100,7 @@ namespace Passado.Analyzers.Tests
                                                              .Join(t => users)
                                                              .Select(t => new { A = 1 }));")]
         [InlineData("LeftJoin",  @"var users = new List<User>();
-                                   queryBuilder.Select(q => q.From(t => t.Users)
+                                   queryBuilder.Select(q => q.From(t => t.Users) 
                                                              .LeftJoin(t => users)
                                                              .Select(t => new { A = 1 }));")]
         [InlineData("RightJoin", @"var users = new List<User>();
@@ -111,6 +111,14 @@ namespace Passado.Analyzers.Tests
                                    queryBuilder.Select(q => q.From(t => t.Users)
                                                              .OuterJoin(t => users)
                                                              .Select(t => new { A = 1 }));")]
+        [InlineData("GroupBy1",  @"var userId = 7;
+                                   queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .GroupBy(t => userId)
+                                                             .Select(t => new { A = t.Key1 }));")]
+        [InlineData("GroupBy2",  @"var userId = 7;
+                                   queryBuilder.Select(q => q.From(t => t.Users)
+                                                             .GroupBy(t => t.UserId, t => userId)
+                                                             .Select(t => new { A = t.Key1, B = t.Key2 }));")]
         public async void QueryBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string methodName, string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);

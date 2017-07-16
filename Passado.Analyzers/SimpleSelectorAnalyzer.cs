@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
@@ -30,10 +31,27 @@ namespace Passado.Analyzers
             { "Join",      "Passado.Core.Query" },
             { "LeftJoin",  "Passado.Core.Query" },
             { "RightJoin", "Passado.Core.Query" },
-            { "OuterJoin", "Passado.Core.Query" }
+            { "OuterJoin", "Passado.Core.Query" },
+            { "GroupBy",   "Passado.Core.Query" }
         };
-
+        
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(_rule);
+
+        public static bool IsInvalidSimpleSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        {
+            var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
+
+            // If it's not a lambda expression, we can't easily do any compile time analysis
+            if (lambdaExpression == null)
+                return false;
+
+            var selector = lambdaExpression.Body as MemberAccessExpressionSyntax;
+
+            if (selector == null)
+                return true;
+
+            return !(context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol);
+        }
 
         public override void Initialize(AnalysisContext context)
         {
@@ -49,15 +67,19 @@ namespace Passado.Analyzers
 
                     if (methodSymbol?.ToString()?.StartsWith(_methodHooks[name]) == true)
                     {
-                        var lambdaExpression = invocationExpression.ArgumentList.Arguments[0].Expression as SimpleLambdaExpressionSyntax;
-
-                        if (lambdaExpression != null)
+                        if (name == "GroupBy")
                         {
-                            var selector = lambdaExpression.Body as MemberAccessExpressionSyntax;
-
-                            if (selector == null || !(syntaxContext.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol))
+                            foreach (var argument in invocationExpression.ArgumentList.Arguments.Where(a => IsInvalidSimpleSelector(syntaxContext, a)))
                             {
-                                syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, syntaxContext.Node.GetLocation(), ""));
+                                syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, argument.GetLocation(), ""));
+                            }
+                        }
+                        else
+                        {
+                            var firstArgument = invocationExpression.ArgumentList.Arguments[0];
+                            if (IsInvalidSimpleSelector(syntaxContext, firstArgument))
+                            {
+                                syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, firstArgument.GetLocation(), ""));
                             }
                         }
                     }
