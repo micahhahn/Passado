@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Passado.Core
 {
@@ -12,6 +13,8 @@ namespace Passado.Core
         /// </summary>
         /// <returns>The number of rows affected.</returns>
         int Execute();
+
+        Task<int> ExecuteAsync();
     }
 
     /// <summary>
@@ -21,5 +24,6 @@ namespace Passado.Core
     public interface IQuery<TTable>
     {
         IEnumerable<TTable> Execute();
+        Task<IEnumerable<TTable>> ExecuteAsync();
     }
 }
