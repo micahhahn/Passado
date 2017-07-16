@@ -32,9 +32,8 @@ namespace Passado.Core.Tests
     {
         public void Query(IQueryBuilder<Database> queryBuilder)
         {
-            queryBuilder.From(t => t.Users)
-                        .Where(t => t.T1.FirstName == "James")
-                        .Select(t => new { t.T1.FirstName });
+            queryBuilder.Delete(t => t.Users)
+                        .Join(t => t.Addresses);
         }
     }
 }
