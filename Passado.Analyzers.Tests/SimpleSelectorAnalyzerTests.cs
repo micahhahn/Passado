@@ -46,7 +46,7 @@ namespace Passado.Analyzers.Tests
             return await CodeAnalyzerHelper.GetDiagnosticsAsync(_analyzer, source);
         }
         
-        async Task<ImmutableArray<Diagnostic>> RunQueryBuilderDiagnostics(string queryBuilder)
+        async Task<IEnumerable<(string, Diagnostic)>> RunQueryBuilderDiagnostics(string queryBuilder)
         {
             var source = @"
                 using System.Collections.Generic;
@@ -71,7 +71,9 @@ namespace Passado.Analyzers.Tests
                 }
                 ";
 
-            return await CodeAnalyzerHelper.GetDiagnosticsAsync(_analyzer, source);
+            var diagnostic = await CodeAnalyzerHelper.GetDiagnosticsAsync(_analyzer, source);
+
+            return diagnostic.Select(d => (source.Substring(d.Location.SourceSpan.Start, d.Location.SourceSpan.Length), d));
         }
 
         [Theory]
@@ -94,40 +96,40 @@ namespace Passado.Analyzers.Tests
         }
 
         [Theory]
-        [InlineData(@"qb.From(t => users);")]
-        [InlineData(@"qb.Insert(t => users, t => t.UserId);")]
-        [InlineData(@"qb.Update(t => users);")]
-        [InlineData(@"qb.Delete(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .Join(t => users);")]
-        [InlineData(@"qb.Update(t => t.Users)
-                        .Join(t => users);")]
-        [InlineData(@"qb.Delete(t => t.Users)
-                        .Join(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .LeftJoin(t => users);")]
-        [InlineData(@"qb.Update(t => t.Users)
-                        .LeftJoin(t => users);")]
-        [InlineData(@"qb.Delete(t => t.Users)
-                        .LeftJoin(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .RightJoin(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .OuterJoin(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .OuterJoin(t => users);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .GroupBy(t => userId);")]
-        [InlineData(@"qb.From(t => t.Users)
-                        .GroupBy(t => t.T1.UserId, t => userId);")]
-        [InlineData(@"qb.Update(t => t.Users)
-                        .Set(t => userId, 7);")]
-        public async void QueryBuilder_Error_Diagnostic_On_Selector_Invalid(string queryBuilder)
+        [InlineData("users",  @"qb.From(t => users);")]
+        [InlineData("users",  @"qb.Insert(t => users, t => t.UserId);")]
+        [InlineData("users",  @"qb.Update(t => users);")]
+        [InlineData("users",  @"qb.Delete(t => users);")]
+        [InlineData("users",  @"qb.From(t => t.Users)
+                                 .Join(t => users);")]
+        [InlineData("users",  @"qb.Update(t => t.Users)
+                                 .Join(t => users);")]
+        [InlineData("users",  @"qb.Delete(t => t.Users)
+                                 .Join(t => users);")]
+        [InlineData("users",  @"qb.From(t => t.Users)
+                                 .LeftJoin(t => users);")]
+        [InlineData("users",  @"qb.Update(t => t.Users)
+                                 .LeftJoin(t => users);")]
+        [InlineData("users",  @"qb.Delete(t => t.Users)
+                                 .LeftJoin(t => users);")]
+        [InlineData("users",  @"qb.From(t => t.Users)
+                                 .RightJoin(t => users);")]
+        [InlineData("users",  @"qb.From(t => t.Users)
+                                 .OuterJoin(t => users);")]
+        [InlineData("users",  @"qb.From(t => t.Users)
+                                 .OuterJoin(t => users);")]
+        [InlineData("userId", @"qb.Update(t => t.Users)
+                                  .Set(t => userId, 7);")]
+        public async void QueryBuilder_Error_Diagnostic_On_Selector_Invalid(string error, string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);
 
-            Assert.DoesNotContain(diagnostics, d => d.Id != SimpleSelectorAnalyzer.Id);
-            Assert.NotEqual(0, diagnostics.Count());
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(error, e);
+            Assert.Equal(SimpleSelectorAnalyzer.Id, d.Id);
         }
     }
 }

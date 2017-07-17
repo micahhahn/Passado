@@ -35,7 +35,6 @@ namespace Passado.Analyzers
             { "LeftJoin",  "Passado.Core.Query" },
             { "RightJoin", "Passado.Core.Query" },
             { "OuterJoin", "Passado.Core.Query" },
-            { "GroupBy",   "Passado.Core.Query" },
             { "Set",       "Passado.Core.Query.Update.ISetable" }     
         };
         
@@ -71,20 +70,10 @@ namespace Passado.Analyzers
 
                     if (methodSymbol?.ToString()?.StartsWith(_methodHooks[name]) == true)
                     {
-                        if (name == "GroupBy")
+                        var firstArgument = invocationExpression.ArgumentList.Arguments[0];
+                        if (IsInvalidSimpleSelector(syntaxContext, firstArgument))
                         {
-                            foreach (var argument in invocationExpression.ArgumentList.Arguments.Where(a => IsInvalidSimpleSelector(syntaxContext, a)))
-                            {
-                                syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, argument.GetLocation(), ""));
-                            }
-                        }
-                        else
-                        {
-                            var firstArgument = invocationExpression.ArgumentList.Arguments[0];
-                            if (IsInvalidSimpleSelector(syntaxContext, firstArgument))
-                            {
-                                syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, firstArgument.GetLocation(), ""));
-                            }
+                            syntaxContext.ReportDiagnostic(Diagnostic.Create(_rule, (firstArgument.Expression as SimpleLambdaExpressionSyntax).Body.GetLocation(), ""));
                         }
                     }
                 }
