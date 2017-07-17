@@ -32,8 +32,7 @@ namespace Passado.Core.Tests
     {
         public void Query(IQueryBuilder<Database> queryBuilder)
         {
-            queryBuilder.Delete(t => t.Users)
-                        .Join(t => t.Addresses);
+            queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
         }
     }
 }

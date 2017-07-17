@@ -17,7 +17,7 @@ namespace Passado.Core
     public interface IQueryBuilder<TDatabase>
     {
         IFromQuery<TDatabase, TTable1> From<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
-        IInsertQuery<TDatabase, TTable1> Insert<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
+        IInsertQuery<TDatabase, TTable1> Insert<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector, Expression<Func<TTable1, object>> columns);
         IUpdateQuery<TDatabase, TTable1> Update<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
         IDeleteQuery<TDatabase, TTable1> Delete<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
     }

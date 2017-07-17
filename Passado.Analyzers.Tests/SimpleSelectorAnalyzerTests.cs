@@ -85,7 +85,7 @@ namespace Passado.Analyzers.Tests
                                                    .Column(t => users, SqlType.Int, identity: true)
                                                    .PrimaryKey(t => t.UserId)
                                                    .Build();")]
-        public async void TableModelBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string methodName, string modelBuilder)
+        public async void TableModelBuilder_Error_Diagnostic_On_Selector_Invalid(string methodName, string modelBuilder)
         {
             var diagnostics = await RunModelBuilderDiagnostics(modelBuilder);
             
@@ -95,7 +95,7 @@ namespace Passado.Analyzers.Tests
 
         [Theory]
         [InlineData(@"qb.From(t => users);")]
-        [InlineData(@"qb.Insert(t => users);")]
+        [InlineData(@"qb.Insert(t => users, t => t.UserId);")]
         [InlineData(@"qb.Update(t => users);")]
         [InlineData(@"qb.Delete(t => users);")]
         [InlineData(@"qb.From(t => t.Users)
@@ -122,7 +122,7 @@ namespace Passado.Analyzers.Tests
                         .GroupBy(t => t.T1.UserId, t => userId);")]
         [InlineData(@"qb.Update(t => t.Users)
                         .Set(t => userId, 7);")]
-        public async void QueryBuilder_Error_Diagnostic_On_Table_Selector_Invalid(string queryBuilder)
+        public async void QueryBuilder_Error_Diagnostic_On_Selector_Invalid(string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);
 
