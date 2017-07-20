@@ -96,7 +96,7 @@ namespace Passado.Analyzers
         {
             if (argument == null)
             {
-                return new Optional<string>();
+                return new Optional<string>(null);
             }
             else
             {
@@ -137,14 +137,17 @@ namespace Passado.Analyzers
             {
                 fuzzyTableModel.Name = ParseStringArgument(context, nameArgument);
             }
+            
+            fuzzyTableModel.Schema = ParseStringArgument(context, schemaArgument);
 
-            if (fuzzyTableModel.Name.HasValue)
+            if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
-                if (partialDatabase.Tables.Any(t => t.Name.HasValue && t.Name.Value == fuzzyTableModel.Name.Value))
+                if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
+                                                    t.Schema.HasValue &&
+                                                    t.Name.Value == fuzzyTableModel.Name.Value &&
+                                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
                     context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArgument == null ? firstArgument.GetLocation() : nameArgument.GetLocation()));
             }
-
-            fuzzyTableModel.Schema = ParseStringArgument(context, schemaArgument);
 
             return fuzzyTableModel;
         }

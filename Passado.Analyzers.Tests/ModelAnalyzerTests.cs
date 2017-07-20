@@ -148,5 +148,33 @@ namespace Passado.Analyzers.Tests
             Assert.Equal(error, e);
             Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedTableName, d.Id);
         }
+
+        [Theory]
+        [InlineData(@"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users, name: ""A"", schema: ""Schema1"")
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .PrimaryKey(t => t.UserId)
+                                            .Build())
+                               .Table(d => d.Table(t => t.Addresses, name: ""A"", schema: ""Schema2"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .PrimaryKey(t => t.AddressId)
+                                            .Build())
+                               .Build();")]
+        [InlineData(@"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users, name: ""Addresses"", schema: ""Schema1"")
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .PrimaryKey(t => t.UserId)
+                                            .Build())
+                               .Table(d => d.Table(t => t.Addresses, schema: ""Schema2"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .PrimaryKey(t => t.AddressId)
+                                            .Build())
+                               .Build();")]
+        public async void No_Diagnostic_On_Repeated_Table_Name_And_Differing_Schema(string mb)
+        {
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(0, diagnostics.Count());
+        }
     }
 }
