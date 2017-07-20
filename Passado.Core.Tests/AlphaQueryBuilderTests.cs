@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
+
+using Passado.Core.Query.Dynamic;
 
 namespace Passado.Core.Tests
 {
@@ -33,6 +36,11 @@ namespace Passado.Core.Tests
         public void Query(IQueryBuilder<Database> queryBuilder)
         {
             queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
+
+            var localParam = 7;
+
+            queryBuilder.From(t => t.Users)
+                        .Where(t => Expression.Constant(localParam));
         }
     }
 }
