@@ -96,30 +96,20 @@ namespace Passado.Analyzers.Tests
         }
 
         [Theory]
-        [InlineData("users",  @"qb.From(t => users);")]
-        [InlineData("users",  @"qb.Insert(t => users, t => t.UserId);")]
-        [InlineData("users",  @"qb.Update(t => users);")]
-        [InlineData("users",  @"qb.Delete(t => users);")]
-        [InlineData("users",  @"qb.From(t => t.Users)
-                                 .Join(t => users);")]
-        [InlineData("users",  @"qb.Update(t => t.Users)
-                                 .Join(t => users);")]
-        [InlineData("users",  @"qb.Delete(t => t.Users)
-                                 .Join(t => users);")]
-        [InlineData("users",  @"qb.From(t => t.Users)
-                                 .LeftJoin(t => users);")]
-        [InlineData("users",  @"qb.Update(t => t.Users)
-                                 .LeftJoin(t => users);")]
-        [InlineData("users",  @"qb.Delete(t => t.Users)
-                                 .LeftJoin(t => users);")]
-        [InlineData("users",  @"qb.From(t => t.Users)
-                                 .RightJoin(t => users);")]
-        [InlineData("users",  @"qb.From(t => t.Users)
-                                 .OuterJoin(t => users);")]
-        [InlineData("users",  @"qb.From(t => t.Users)
-                                 .OuterJoin(t => users);")]
-        [InlineData("userId", @"qb.Update(t => t.Users)
-                                  .Set(t => userId, 7);")]
+        [InlineData("users",  "qb.From(t => users);")]
+        [InlineData("users",  "qb.Insert(t => users, t => t.UserId);")]
+        [InlineData("users",  "qb.Update(t => users);")]
+        [InlineData("users",  "qb.Delete(t => users);")]
+        [InlineData("users",  "qb.From(t => t.Users).Join(t => users);")]
+        [InlineData("users",  "qb.Update(t => t.Users).Join(t => users);")]
+        [InlineData("users",  "qb.Delete(t => t.Users).Join(t => users);")]
+        [InlineData("users",  "qb.From(t => t.Users).LeftJoin(t => users);")]
+        [InlineData("users",  "qb.Update(t => t.Users).LeftJoin(t => users);")]
+        [InlineData("users",  "qb.Delete(t => t.Users).LeftJoin(t => users);")]
+        [InlineData("users",  "qb.From(t => t.Users).RightJoin(t => users);")]
+        [InlineData("users",  "qb.From(t => t.Users).OuterJoin(t => users);")]
+        [InlineData("users",  "qb.From(t => t.Users).OuterJoin(t => users);")]
+        [InlineData("userId", "qb.Update(t => t.Users).Set(t => userId, 7);")]
         public async void QueryBuilder_Error_Diagnostic_On_Selector_Invalid(string error, string queryBuilder)
         {
             var diagnostics = await RunQueryBuilderDiagnostics(queryBuilder);

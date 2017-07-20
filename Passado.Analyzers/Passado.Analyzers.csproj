@@ -12,4 +12,8 @@
     <Folder Include="tools\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Passado.Core\Passado.Core.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -13,7 +13,13 @@ namespace Passado.Core.Model.Builder
         public string PropertyName { get; set; }
         public Type PropertyType { get; set; }
 
-        public ColumnOrPrimaryKeyBuilder<TDatabase, TTable> Column<TColumn>(Expression<Func<TTable, TColumn>> columnSelector, SqlType type, bool nullable = false, string name = null, bool identity = false)
+        public ColumnOrPrimaryKeyBuilder<TDatabase, TTable> Column<TColumn>(Expression<Func<TTable, TColumn>> columnSelector,
+                                                                            SqlType type,
+                                                                            bool nullable = false,
+                                                                            string name = null,
+                                                                            TColumn defaultValue = default(TColumn),
+                                                                            bool identity = false,
+                                                                            IDatabaseTypeConverter<TColumn> converter = null)
         {
             var propertyName = Builder.ParsePropertySelector(columnSelector);
 
