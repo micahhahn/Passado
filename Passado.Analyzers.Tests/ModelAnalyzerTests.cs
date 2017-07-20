@@ -107,6 +107,16 @@ namespace Passado.Analyzers.Tests
                                                            .PrimaryKey(t => t.AddressId)
                                                            .Build())
                                               .Build();")]
+        [InlineData("name: \"A\"", @"return mb.Database(nameof(Database))
+                                              .Table(d => d.Table(t => t.Users, name: ""A"", schema: ""Schema"")
+                                                           .Column(t => t.UserId, SqlType.Int)
+                                                           .PrimaryKey(t => t.UserId)
+                                                           .Build())
+                                              .Table(d => d.Table(t => t.Addresses, name: ""A"", schema: ""Schema"")
+                                                           .Column(t => t.AddressId, SqlType.Int)
+                                                           .PrimaryKey(t => t.AddressId)
+                                                           .Build())
+                                              .Build();")]
         [InlineData("t => t.Addresses", @"return mb.Database(nameof(Database))
                                                    .Table(d => d.Table(t => t.Users, name: ""Addresses"")
                                                                 .Column(t => t.UserId, SqlType.Int)
@@ -117,7 +127,17 @@ namespace Passado.Analyzers.Tests
                                                                 .PrimaryKey(t => t.AddressId)
                                                                 .Build())
                                                    .Build();")]
-        public async void Diagnostic_On_Repeated_Table_Name(string error, string mb)
+        [InlineData("t => t.Addresses", @"return mb.Database(nameof(Database))
+                                                   .Table(d => d.Table(t => t.Users, name: ""Addresses"", schema: ""Schema"")
+                                                                .Column(t => t.UserId, SqlType.Int)
+                                                                .PrimaryKey(t => t.UserId)
+                                                                .Build())
+                                                   .Table(d => d.Table(t => t.Addresses, schema: ""Schema"")
+                                                                .Column(t => t.AddressId, SqlType.Int)
+                                                                .PrimaryKey(t => t.AddressId)
+                                                                .Build())
+                                                   .Build();")]
+        public async void Diagnostic_On_Repeated_Table_Name_And_Schema(string error, string mb)
         {
             var diagnostics = await RunModelDiagnostics(mb);
 
