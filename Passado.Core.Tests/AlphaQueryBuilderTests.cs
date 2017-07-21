@@ -30,7 +30,7 @@ namespace Passado.Core.Tests
         public IEnumerable<User> Users { get; set; }
         public IEnumerable<Address> Addresses { get; set; }
     }
-    
+
     public class AlphaQueryBuilderTests
     {
         public void Query(IQueryBuilder<Database> queryBuilder)
@@ -41,6 +41,12 @@ namespace Passado.Core.Tests
 
             queryBuilder.From(t => t.Users)
                         .Where(t => Expression.Constant(localParam));
+        }
+        
+        public void DynamicQuery(IQueryBuilder<Database> queryBuilder)
+        {
+            queryBuilder.From(t => t.Users)
+                        .Join(t => t.Addresses, p => Expression.Constant(true));
         }
     }
 }
