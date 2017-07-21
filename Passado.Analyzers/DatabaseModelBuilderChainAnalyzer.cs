@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.FindSymbols;
 
 using Passado.Analyzers.Model;
 
@@ -20,6 +19,7 @@ namespace Passado.Analyzers
         public static string InvalidTableSelector = "PassadoModelInvalidTableSelector";
         public static string RepeatedTableSelector = "PassadoModelRepeatedTableSelector";
         public static string RepeatedTableName = "PassadoModelRepeatedTableName";
+        public static string InvalidColumnSelector = "PassadoModelInvalidColumnSelector";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -29,7 +29,8 @@ namespace Passado.Analyzers
             {
                 (InvalidTableSelector, "Invalid Table Selector", "The table selector must reference a property of the database."),
                 (RepeatedTableSelector, "Repeated Table Selector", "A table can only modelled once."),
-                (RepeatedTableName, "Repeated Table Name", "Each table name must be unique.")
+                (RepeatedTableName, "Repeated Table Name", "Each table name must be unique."),
+                (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table.")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
@@ -49,7 +50,7 @@ namespace Passado.Analyzers
             return (innerInvocation, innerMethodName);
         }
 
-        static Optional<FuzzyProperty> ParseSimpleProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        static Optional<FuzzyProperty> ParseSimpleProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, string diagnosticId)
         {
             var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
 
@@ -60,7 +61,7 @@ namespace Passado.Analyzers
 
             if (selector == null || !(context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol))
             {
-                context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidTableSelector], argument.GetLocation()));
+                context.ReportDiagnostic(Diagnostic.Create(_descriptors[diagnosticId], argument.GetLocation()));
                 return new Optional<FuzzyProperty>(null);
             }
             else
@@ -103,7 +104,7 @@ namespace Passado.Analyzers
                 var argumentValue = context.SemanticModel.GetConstantValue(argument.Expression);
 
                 return argumentValue.HasValue ? new Optional<string>(argumentValue.Value as string)
-                                       : new Optional<string>();
+                                              : new Optional<string>();
             }
         }
 
@@ -113,7 +114,8 @@ namespace Passado.Analyzers
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
-                Property = ParseSimpleProperty(context, firstArgument)
+                Property = ParseSimpleProperty(context, firstArgument, InvalidTableSelector),
+                Columns = new List<FuzzyColumnModel>()
             };
             
             if (fuzzyTableModel.Property.HasValue)
@@ -156,12 +158,18 @@ namespace Passado.Analyzers
         {
             (var innerInvocation, var innerMethodName) = PeekChain(expression);
 
-            if (innerMethodName == "Column")
-                return ParseTableColumn(context, innerInvocation, partialDatabase);
-            else if (innerMethodName == "Table")
-                return ParseTableTable(context, innerInvocation, partialDatabase);
-            else
-                throw new NotImplementedException();
+            var innerModel = innerMethodName == "Column" ? ParseTableColumn(context, innerInvocation, partialDatabase) :
+                             innerMethodName == "Table" ? ParseTableTable(context, innerInvocation, partialDatabase) :
+                             throw new NotImplementedException();
+
+            var fuzzyColumnModel = new FuzzyColumnModel()
+            {
+                Property = ParseSimpleProperty(context, expression.ArgumentList.Arguments[0], InvalidColumnSelector)
+            };
+        
+            innerModel.Columns.Add(fuzzyColumnModel);
+
+            return innerModel;
         }
 
         static FuzzyTableModel ParseTablePrimaryKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)

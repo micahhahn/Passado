@@ -42,6 +42,7 @@ namespace Passado.Analyzers.Tests
                     public static DatabaseModel ProviderModel(DatabaseModelBuilder<Database> mb)
                     {
                         var users = new List<User>();
+                        var userId = 7;
                         " + modelBuilder + @"
                     }
                 }
@@ -175,6 +176,26 @@ namespace Passado.Analyzers.Tests
             var diagnostics = await RunModelDiagnostics(mb);
 
             Assert.Equal(0, diagnostics.Count());
+        }
+
+        [Fact]
+        public async void Diagnostic_On_Invalid_Column_Selector()
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users)
+                                            .Column(t => userId, SqlType.Int)
+                                            .PrimaryKey(t => t.UserId)
+                                            .Build())
+                               .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal("t => userId", e);
+            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidColumnSelector, d.Id);
         }
     }
 }
