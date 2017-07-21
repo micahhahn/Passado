@@ -20,6 +20,8 @@ namespace Passado.Analyzers
         public static string RepeatedTableSelector = "PassadoModelRepeatedTableSelector";
         public static string RepeatedTableName = "PassadoModelRepeatedTableName";
         public static string InvalidColumnSelector = "PassadoModelInvalidColumnSelector";
+        public static string RepeatedColumnSelector = "PassadoModelRepeatedColumnSelector";
+        public static string RepeatedColumnName = "PassadoModelRepeatedColumnName";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -29,8 +31,10 @@ namespace Passado.Analyzers
             {
                 (InvalidTableSelector, "Invalid Table Selector", "The table selector must reference a property of the database."),
                 (RepeatedTableSelector, "Repeated Table Selector", "A table can only modelled once."),
-                (RepeatedTableName, "Repeated Table Name", "Each table name must be unique."),
-                (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table.")
+                (RepeatedTableName, "Repeated Table Name", "Each table name + schema must be unique."),
+                (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table."),
+                (RepeatedColumnSelector, "Repeated Column Selector", "A column can only be modelled once."),
+                (RepeatedColumnName, "Repeated Column Name", "Each column name must be unique.")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
@@ -131,7 +135,7 @@ namespace Passado.Analyzers
 
             if (nameArgument == null)
             {
-                // If name not specified, then we use the property name
+                // Use property name
                 fuzzyTableModel.Name = fuzzyTableModel.Property.HasValue ? new Optional<string>(fuzzyTableModel.Property.Value?.Name)
                                                                          : new Optional<string>();
             }
@@ -162,13 +166,49 @@ namespace Passado.Analyzers
                              innerMethodName == "Table" ? ParseTableTable(context, innerInvocation, partialDatabase) :
                              throw new NotImplementedException();
 
+            var selector = expression.ArgumentList.Arguments[0];
+
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
-                Property = ParseSimpleProperty(context, expression.ArgumentList.Arguments[0], InvalidColumnSelector)
+                Property = ParseSimpleProperty(context, selector, InvalidColumnSelector)
             };
         
-            innerModel.Columns.Add(fuzzyColumnModel);
+            if (fuzzyColumnModel.Property.HasValue)
+            {
+                if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], selector.GetLocation()));
+            }
 
+            var optionalArgs = RankOptionalArguments(context,
+                                                     expression.ArgumentList.Arguments.Skip(2),
+                                                     new List<string> { "nullable", "name", "defaultValue", "identity", "converter" });
+
+            var nullableArg = optionalArgs[0];
+            var nameArg = optionalArgs[1];
+            var defaultValueArg = optionalArgs[2];
+            var identityArg = optionalArgs[3];
+            var converterArg = optionalArgs[4];
+
+            if (nameArg == null)
+            {
+                // Use property name
+                fuzzyColumnModel.Name = fuzzyColumnModel.Property.HasValue ? new Optional<string>(fuzzyColumnModel.Property.Value?.Name)
+                                                                           : new Optional<string>();
+            }
+            else
+            {
+                fuzzyColumnModel.Name = ParseStringArgument(context, nameArg);
+            }
+
+            if (fuzzyColumnModel.Name.HasValue)
+            {
+                if (innerModel.Columns.Any(c => c.Name.HasValue &&
+                                                c.Name.Value == fuzzyColumnModel.Name.Value))
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? selector.GetLocation() : nameArg.GetLocation()));
+            }
+
+            innerModel.Columns.Add(fuzzyColumnModel);
+            
             return innerModel;
         }
 

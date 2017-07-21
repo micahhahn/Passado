@@ -108,7 +108,6 @@ namespace Passado.Analyzers.Tests
         [InlineData("users",  "qb.Delete(t => t.Users).LeftJoin(t => users);")]
         [InlineData("users",  "qb.From(t => t.Users).RightJoin(t => users);")]
         [InlineData("users",  "qb.From(t => t.Users).OuterJoin(t => users);")]
-        [InlineData("users",  "qb.From(t => t.Users).OuterJoin(t => users);")]
         [InlineData("userId", "qb.Update(t => t.Users).Set(t => userId, 7);")]
         public async void QueryBuilder_Error_Diagnostic_On_Selector_Invalid(string error, string queryBuilder)
         {

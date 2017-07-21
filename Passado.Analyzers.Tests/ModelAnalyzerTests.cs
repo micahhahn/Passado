@@ -197,5 +197,53 @@ namespace Passado.Analyzers.Tests
             Assert.Equal("t => userId", e);
             Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidColumnSelector, d.Id);
         }
+
+        [Fact]
+        public async void Diagnostic_On_Repeated_Column_Selector()
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users)
+                                            .Column(t => t.UserId, SqlType.Int, name: ""A"")
+                                            .Column(t => t.UserId, SqlType.Int, name: ""B"")
+                                            .PrimaryKey(t => t.UserId)
+                                            .Build())
+                               .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal("t => t.UserId", e);
+            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedColumnSelector, d.Id);
+        }
+
+        [Theory]
+        [InlineData("name: \"A\"", @"return mb.Database(nameof(Database))
+                                              .Table(d => d.Table(t => t.Users)
+                                                           .Column(t => t.UserId, SqlType.Int, name: ""A"")
+                                                           .Column(t => t.FirstName, SqlType.String, name: ""A"")
+                                                           .PrimaryKey(t => t.UserId)
+                                                           .Build())
+                                              .Build();")]
+        [InlineData("t => t.FirstName", @"return mb.Database(nameof(Database))
+                                                   .Table(d => d.Table(t => t.Users)
+                                                                .Column(t => t.UserId, SqlType.Int, name: ""FirstName"")
+                                                                .Column(t => t.FirstName, SqlType.String)
+                                                                .PrimaryKey(t => t.UserId)
+                                                                .Build())
+                                                   .Build();")]
+        public async void Diagnostic_On_Repeated_Column_Name(string error, string mb)
+        {
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(error, e);
+            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedColumnName, d.Id);
+        }
     }
 }
