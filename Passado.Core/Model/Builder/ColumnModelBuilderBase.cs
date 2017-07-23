@@ -16,6 +16,7 @@ namespace Passado.Core.Model.Builder
         public ColumnOrPrimaryKeyBuilder<TDatabase, TTable> Column<TColumn>(Expression<Func<TTable, TColumn>> columnSelector,
                                                                             SqlType type,
                                                                             bool nullable = false,
+                                                                            int? maxLength = null,
                                                                             string name = null,
                                                                             TColumn defaultValue = default(TColumn),
                                                                             bool identity = false,

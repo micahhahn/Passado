@@ -23,10 +23,19 @@ namespace Passado.Analyzers.Tests
                 using Passado.Core.Model.Builder;
                 using System.Linq.Expressions;
 
+                public enum UserGrade
+                {
+                    Freshman,
+                    Sophomore,
+                    Junior,
+                    Senior
+                }
+
                 public class User
                 {
                     public int UserId { get; set; }
                     public string FirstName { get; set; }
+                    public UserGrade UserGrade { get; set; }
                 }
 
                 public class Address
@@ -244,6 +253,66 @@ namespace Passado.Analyzers.Tests
 
             Assert.Equal(error, e);
             Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedColumnName, d.Id);
+        }
+
+        [Theory]
+        [InlineData("t => t.UserId", "SqlType.String")]
+        [InlineData("t => t.UserGrade", "SqlType.DateTime")]
+        public async void Diagnostic_On_Incompatible_Select_And_SqlType_Without_Converter(string selector, string type)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(" + selector + ", " + type + @")
+                                             .PrimaryKey(t => t.UserId)
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(type, e);
+            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidSqlType, d.Id);
+        }
+
+        [Theory]
+        [InlineData("SqlType.Int")]
+        [InlineData("SqlType.String")]
+        public async void Enum_Types_Should_Be_Compatible_With_Strings_Or_Integers(string sqlType)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserGrade, " + sqlType + @")
+                                             .PrimaryKey(t => t.UserId)
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(0, diagnostics.Count());
+        }
+
+        [Theory]
+        [InlineData("SqlType.String, maxLength: 2")]
+        public async void Diagnostic_On_Field_Size_Smaller_Than_Enum_Size(string sqlType)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserGrade, " + sqlType + @")
+                                             .PrimaryKey(t => t.UserId)
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            //Assert.Equal(type, e);
+            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidSqlType, d.Id);
         }
     }
 }

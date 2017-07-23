@@ -7,6 +7,7 @@ namespace Passado.Core.Model
     public enum SqlType
     {
         Binary,
+        Bit,
         Boolean,
         Byte,
         DateTime,

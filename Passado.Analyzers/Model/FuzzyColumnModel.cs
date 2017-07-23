@@ -13,6 +13,7 @@ namespace Passado.Analyzers.Model
         public Optional<string> Name { get; set; }
         public Optional<FuzzyProperty> Property { get; set; }
         public Optional<SqlType> Type { get; set; }
+        public Optional<int?> MaxLength { get; set;  }
         public Optional<bool> IsNullable { get; set; }
         public Optional<bool> HasDefaultValue { get; set; }
         public Optional<bool> IsIdentity { get; set; }

@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
+using Passado.Core.Model;
 using Passado.Analyzers.Model;
 
 namespace Passado.Analyzers
@@ -22,6 +23,7 @@ namespace Passado.Analyzers
         public static string InvalidColumnSelector = "PassadoModelInvalidColumnSelector";
         public static string RepeatedColumnSelector = "PassadoModelRepeatedColumnSelector";
         public static string RepeatedColumnName = "PassadoModelRepeatedColumnName";
+        public static string InvalidSqlType = "PassadoInvalidSqlType";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -34,7 +36,8 @@ namespace Passado.Analyzers
                 (RepeatedTableName, "Repeated Table Name", "Each table name + schema must be unique."),
                 (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table."),
                 (RepeatedColumnSelector, "Repeated Column Selector", "A column can only be modelled once."),
-                (RepeatedColumnName, "Repeated Column Name", "Each column name must be unique.")
+                (RepeatedColumnName, "Repeated Column Name", "Each column name must be unique."),
+                (InvalidSqlType, "Invalid Sql Type", "This sql type is incompatible.  Either change the type or provide a type converter.")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
@@ -84,31 +87,31 @@ namespace Passado.Analyzers
         {
             var positionalArguments = arguments.Where(a => a.NameColon == null)
                                                .ToList();
-            
+
             var remainingArgs = arguments.Skip(positionalArguments.Count);
             var remainingOrder = order.Skip(positionalArguments.Count);
 
             var dictionary = remainingArgs.ToDictionary(a => a.NameColon.Name.Identifier.Text);
 
-            var namedArgs = order.Select(o => dictionary.TryGetValue(o, out var arg) ? arg : null);
+            var namedArgs = remainingOrder.Select(o => dictionary.TryGetValue(o, out var arg) ? arg : null);
 
             positionalArguments.AddRange(namedArgs);
 
             return positionalArguments;
         }
 
-        static Optional<string> ParseStringArgument(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        static Optional<T> ParseConstantArgument<T>(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
             if (argument == null)
             {
-                return new Optional<string>(null);
+                return new Optional<T>(default(T));
             }
             else
             {
                 var argumentValue = context.SemanticModel.GetConstantValue(argument.Expression);
 
-                return argumentValue.HasValue ? new Optional<string>(argumentValue.Value as string)
-                                              : new Optional<string>();
+                return argumentValue.HasValue ? new Optional<T>((T)argumentValue.Value)
+                                              : new Optional<T>();
             }
         }
 
@@ -121,7 +124,7 @@ namespace Passado.Analyzers
                 Property = ParseSimpleProperty(context, firstArgument, InvalidTableSelector),
                 Columns = new List<FuzzyColumnModel>()
             };
-            
+
             if (fuzzyTableModel.Property.HasValue)
             {
                 if (partialDatabase.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name))
@@ -141,10 +144,10 @@ namespace Passado.Analyzers
             }
             else
             {
-                fuzzyTableModel.Name = ParseStringArgument(context, nameArgument);
+                fuzzyTableModel.Name = ParseConstantArgument<string>(context, nameArgument);
             }
-            
-            fuzzyTableModel.Schema = ParseStringArgument(context, schemaArgument);
+
+            fuzzyTableModel.Schema = ParseConstantArgument<string>(context, schemaArgument);
 
             if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
@@ -157,6 +160,15 @@ namespace Passado.Analyzers
 
             return fuzzyTableModel;
         }
+
+        static Dictionary<SpecialType, HashSet<SqlType>> _defaultTypeMappings = new Dictionary<SpecialType, HashSet<SqlType>>()
+        {
+            { SpecialType.System_Byte, new HashSet<SqlType>() { SqlType.Byte } },
+            { SpecialType.System_Int16, new HashSet<SqlType>() { SqlType.Short } },
+            { SpecialType.System_Int32, new HashSet<SqlType>() { SqlType.Int } },
+            { SpecialType.System_Int64, new HashSet<SqlType>() { SqlType.Long } },
+            { SpecialType.System_String, new HashSet<SqlType>() { SqlType.String } }
+        };
 
         static FuzzyTableModel ParseTableColumn(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
@@ -179,16 +191,21 @@ namespace Passado.Analyzers
                     context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], selector.GetLocation()));
             }
 
+            var sqlTypeArg = expression.ArgumentList.Arguments[1];
+            var tempSqlType = context.SemanticModel.GetConstantValue(sqlTypeArg.Expression);
+            fuzzyColumnModel.Type = tempSqlType.HasValue ? new Optional<SqlType>((SqlType)tempSqlType.Value) : new Optional<SqlType>(); 
+
             var optionalArgs = RankOptionalArguments(context,
                                                      expression.ArgumentList.Arguments.Skip(2),
-                                                     new List<string> { "nullable", "name", "defaultValue", "identity", "converter" });
-
+                                                     new List<string> { "nullable", "maxLength", "name", "defaultValue", "identity", "converter" });
+            
             var nullableArg = optionalArgs[0];
-            var nameArg = optionalArgs[1];
-            var defaultValueArg = optionalArgs[2];
-            var identityArg = optionalArgs[3];
-            var converterArg = optionalArgs[4];
-
+            var maxLengthArg = optionalArgs[1];
+            var nameArg = optionalArgs[2];
+            var defaultValueArg = optionalArgs[3];
+            var identityArg = optionalArgs[4];
+            var converterArg = optionalArgs[5];
+            
             if (nameArg == null)
             {
                 // Use property name
@@ -197,14 +214,43 @@ namespace Passado.Analyzers
             }
             else
             {
-                fuzzyColumnModel.Name = ParseStringArgument(context, nameArg);
+                fuzzyColumnModel.Name = ParseConstantArgument<string>(context, nameArg);
             }
+
+            fuzzyColumnModel.MaxLength = ParseConstantArgument<int?>(context, maxLengthArg);
 
             if (fuzzyColumnModel.Name.HasValue)
             {
                 if (innerModel.Columns.Any(c => c.Name.HasValue &&
                                                 c.Name.Value == fuzzyColumnModel.Name.Value))
                     context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? selector.GetLocation() : nameArg.GetLocation()));
+            }
+
+
+            if (fuzzyColumnModel.Property.HasValue && fuzzyColumnModel.Type.HasValue)
+            {
+                if (fuzzyColumnModel.Property.Value.Type.TypeKind == TypeKind.Enum)
+                {
+                    if (!(fuzzyColumnModel.Type.Value == SqlType.String || fuzzyColumnModel.Type.Value == SqlType.Int))
+                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
+
+                    if (fuzzyColumnModel.Type.Value == SqlType.String && fuzzyColumnModel.MaxLength.HasValue)
+                    {
+                        var namedType = fuzzyColumnModel.Property.Value.Type as INamedTypeSymbol;
+                        var longestEnum = namedType.MemberNames.Max(n => n.Length);
+
+                        if (fuzzyColumnModel.MaxLength.Value != null && 
+                            fuzzyColumnModel.MaxLength.Value < longestEnum)
+                            context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
+                    }
+                }
+                else
+                {
+                    var propertyType = fuzzyColumnModel.Property.Value.Type.SpecialType;
+
+                    if (!_defaultTypeMappings[propertyType].Contains(fuzzyColumnModel.Type.Value))
+                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
+                }
             }
 
             innerModel.Columns.Add(fuzzyColumnModel);
@@ -238,7 +284,7 @@ namespace Passado.Analyzers
             
             return new FuzzyDatabaseModel()
             {
-               Name = ParseStringArgument(context, nameArgument),
+               Name = ParseConstantArgument<string>(context, nameArgument),
                Tables = new List<FuzzyTableModel>()
             };
         }
