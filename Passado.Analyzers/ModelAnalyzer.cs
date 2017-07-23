@@ -24,6 +24,7 @@ namespace Passado.Analyzers
         public static string RepeatedColumnSelector = "PassadoModelRepeatedColumnSelector";
         public static string RepeatedColumnName = "PassadoModelRepeatedColumnName";
         public static string InvalidSqlType = "PassadoInvalidSqlType";
+        public static string InvalidSqlTypeForIdentity = "PassadoInvalidSqlTypeForIdentity";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -37,7 +38,8 @@ namespace Passado.Analyzers
                 (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table."),
                 (RepeatedColumnSelector, "Repeated Column Selector", "A column can only be modelled once."),
                 (RepeatedColumnName, "Repeated Column Name", "Each column name must be unique."),
-                (InvalidSqlType, "Invalid Sql Type", "This sql type is incompatible.  Either change the type or provide a type converter.")
+                (InvalidSqlType, "Invalid Sql Type", "This sql type is incompatible.  Either change the type or provide a type converter."),
+                (InvalidSqlTypeForIdentity, "Invalid Sql Type For Identity", "This column type cannot be an identity.")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
@@ -163,11 +165,15 @@ namespace Passado.Analyzers
 
         static Dictionary<SpecialType, HashSet<SqlType>> _defaultTypeMappings = new Dictionary<SpecialType, HashSet<SqlType>>()
         {
+            { SpecialType.System_Boolean, new HashSet<SqlType>() { SqlType.Bit } },
             { SpecialType.System_Byte, new HashSet<SqlType>() { SqlType.Byte } },
             { SpecialType.System_Int16, new HashSet<SqlType>() { SqlType.Short } },
             { SpecialType.System_Int32, new HashSet<SqlType>() { SqlType.Int } },
             { SpecialType.System_Int64, new HashSet<SqlType>() { SqlType.Long } },
-            { SpecialType.System_String, new HashSet<SqlType>() { SqlType.String } }
+            { SpecialType.System_String, new HashSet<SqlType>() { SqlType.String } },
+            { SpecialType.System_DateTime, new HashSet<SqlType>() { SqlType.DateTime, SqlType.Date, SqlType.Time } },
+            { SpecialType.System_Single, new HashSet<SqlType>() { SqlType.Single } },
+            { SpecialType.System_Double, new HashSet<SqlType>() { SqlType.Double } }
         };
 
         static FuzzyTableModel ParseTableColumn(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
@@ -218,6 +224,7 @@ namespace Passado.Analyzers
             }
 
             fuzzyColumnModel.MaxLength = ParseConstantArgument<int?>(context, maxLengthArg);
+            fuzzyColumnModel.IsIdentity = ParseConstantArgument<bool>(context, identityArg);
 
             if (fuzzyColumnModel.Name.HasValue)
             {
@@ -225,8 +232,7 @@ namespace Passado.Analyzers
                                                 c.Name.Value == fuzzyColumnModel.Name.Value))
                     context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? selector.GetLocation() : nameArg.GetLocation()));
             }
-
-
+            
             if (fuzzyColumnModel.Property.HasValue && fuzzyColumnModel.Type.HasValue)
             {
                 if (fuzzyColumnModel.Property.Value.Type.TypeKind == TypeKind.Enum)
@@ -244,13 +250,41 @@ namespace Passado.Analyzers
                             context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
                     }
                 }
+                else if (fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" ||
+                         fuzzyColumnModel.Property.Value.Type.Name == "Guid")
+                {
+                    if ((fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" && fuzzyColumnModel.Type.Value != SqlType.DateTimeOffset) ||
+                        (fuzzyColumnModel.Property.Value.Type.Name == "Guid" && fuzzyColumnModel.Type.Value != SqlType.Guid))
+                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
+                }
                 else
                 {
                     var propertyType = fuzzyColumnModel.Property.Value.Type.SpecialType;
-
+                    
                     if (!_defaultTypeMappings[propertyType].Contains(fuzzyColumnModel.Type.Value))
                         context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], sqlTypeArg.GetLocation()));
                 }
+            }
+            
+            if (fuzzyColumnModel.Type.HasValue &&
+                fuzzyColumnModel.IsIdentity.HasValue &&
+                fuzzyColumnModel.IsIdentity.Value == true)
+            {
+                var nonIdentityTypes = new List<SqlType>()
+                {
+                    SqlType.String,
+                    SqlType.Bit,
+                    SqlType.Date,
+                    SqlType.Time,
+                    SqlType.DateTime,
+                    SqlType.DateTimeOffset,
+                    SqlType.Single,
+                    SqlType.Double,
+                    SqlType.Guid
+                };
+
+                if (nonIdentityTypes.Contains(fuzzyColumnModel.Type.Value))
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlTypeForIdentity], identityArg.GetLocation()));
             }
 
             innerModel.Columns.Add(fuzzyColumnModel);

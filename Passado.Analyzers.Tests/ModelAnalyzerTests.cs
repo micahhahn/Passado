@@ -17,6 +17,7 @@ namespace Passado.Analyzers.Tests
         async Task<IEnumerable<(string, Diagnostic)>> RunModelDiagnostics(string modelBuilder)
         {
             var source = @"
+                using System;
                 using System.Collections.Generic;
                 using Passado.Core;
                 using Passado.Core.Model;
@@ -36,6 +37,18 @@ namespace Passado.Analyzers.Tests
                     public int UserId { get; set; }
                     public string FirstName { get; set; }
                     public UserGrade UserGrade { get; set; }
+
+                    public bool BoolColumn { get; set; }
+                    public byte ByteColumn { get; set; }
+                    public short ShortColumn { get; set; }
+                    public int IntColumn { get; set; }
+                    public long LongColumn { get; set; }
+                    public float FloatColumn { get; set; }
+                    public double DoubleColumn { get; set; }
+                    public DateTime DateTimeColumn { get; set; }
+                    public DateTimeOffset DateTimeOffsetColumn { get; set; }
+                    public string StringColumn { get; set; }
+                    public Guid GuidColumn { get; set; }
                 }
 
                 public class Address
@@ -296,7 +309,7 @@ namespace Passado.Analyzers.Tests
 
         [Theory]
         [InlineData("SqlType.String, maxLength: 2")]
-        public async void Diagnostic_On_Field_Size_Smaller_Than_Enum_Size(string sqlType)
+        public async void Diagnostic_On_Type_Size_Smaller_Than_Enum_Size(string sqlType)
         {
             var mb = @"return mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Users)
@@ -313,6 +326,36 @@ namespace Passado.Analyzers.Tests
 
             //Assert.Equal(type, e);
             Assert.Equal(ModelAnalyzer.InvalidSqlType, d.Id);
+        }
+
+        [Theory]
+        [InlineData("t => t.StringColumn", "SqlType.String")]
+        [InlineData("t => t.BoolColumn", "SqlType.Bit")]
+        [InlineData("t => t.DateTimeColumn", "SqlType.DateTime")]
+        [InlineData("t => t.DateTimeColumn", "SqlType.Date")]
+        [InlineData("t => t.DateTimeColumn", "SqlType.Time")]
+        [InlineData("t => t.DateTimeOffsetColumn", "SqlType.DateTimeOffset")]
+        [InlineData("t => t.DoubleColumn", "SqlType.Double")]
+        [InlineData("t => t.FloatColumn", "SqlType.Single")]
+        [InlineData("t => t.GuidColumn", "SqlType.Guid")]
+        public async void Diagnostic_On_Non_Numeric_Identity_Type(string selector, string sqlType)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserId, SqlType.Int)
+                                             .Column(" + selector + ", " + sqlType + @", identity: true)
+                                             .PrimaryKey(t => t.UserId)
+                                             .Build())
+                                .Build();";
+            
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal("identity: true", e);
+            Assert.Equal(ModelAnalyzer.InvalidSqlTypeForIdentity, d.Id);
         }
     }
 }
