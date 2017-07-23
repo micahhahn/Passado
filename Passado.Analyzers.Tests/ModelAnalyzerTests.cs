@@ -12,7 +12,7 @@ namespace Passado.Analyzers.Tests
 {
     public class ModelAnalyzerTests
     {
-        private readonly DatabaseModelBuilderChainAnalyzer _analyzer = new DatabaseModelBuilderChainAnalyzer();
+        private readonly ModelAnalyzer _analyzer = new ModelAnalyzer();
 
         async Task<IEnumerable<(string, Diagnostic)>> RunModelDiagnostics(string modelBuilder)
         {
@@ -79,7 +79,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal("t => users", e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidTableSelector, d.Id);
+            Assert.Equal(ModelAnalyzer.InvalidTableSelector, d.Id);
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal("t => t.Users", e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedTableSelector, d.Id);
+            Assert.Equal(ModelAnalyzer.RepeatedTableSelector, d.Id);
         }
 
         [Theory]
@@ -156,7 +156,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal(error, e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedTableName, d.Id);
+            Assert.Equal(ModelAnalyzer.RepeatedTableName, d.Id);
         }
 
         [Theory]
@@ -204,7 +204,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal("t => userId", e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidColumnSelector, d.Id);
+            Assert.Equal(ModelAnalyzer.InvalidColumnSelector, d.Id);
         }
 
         [Fact]
@@ -225,7 +225,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal("t => t.UserId", e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedColumnSelector, d.Id);
+            Assert.Equal(ModelAnalyzer.RepeatedColumnSelector, d.Id);
         }
 
         [Theory]
@@ -252,7 +252,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal(error, e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.RepeatedColumnName, d.Id);
+            Assert.Equal(ModelAnalyzer.RepeatedColumnName, d.Id);
         }
 
         [Theory]
@@ -274,7 +274,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             Assert.Equal(type, e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidSqlType, d.Id);
+            Assert.Equal(ModelAnalyzer.InvalidSqlType, d.Id);
         }
 
         [Theory]
@@ -312,7 +312,7 @@ namespace Passado.Analyzers.Tests
             (var e, var d) = diagnostics.First();
 
             //Assert.Equal(type, e);
-            Assert.Equal(DatabaseModelBuilderChainAnalyzer.InvalidSqlType, d.Id);
+            Assert.Equal(ModelAnalyzer.InvalidSqlType, d.Id);
         }
     }
 }

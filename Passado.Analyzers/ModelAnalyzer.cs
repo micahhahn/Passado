@@ -15,7 +15,7 @@ using Passado.Analyzers.Model;
 namespace Passado.Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class DatabaseModelBuilderChainAnalyzer : DiagnosticAnalyzer
+    public class ModelAnalyzer : DiagnosticAnalyzer
     {
         public static string InvalidTableSelector = "PassadoModelInvalidTableSelector";
         public static string RepeatedTableSelector = "PassadoModelRepeatedTableSelector";
@@ -27,7 +27,7 @@ namespace Passado.Analyzers
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
-        static DatabaseModelBuilderChainAnalyzer()
+        static ModelAnalyzer()
         {
             var temp = new List<(string Id, string Title, string Message)>()
             {
