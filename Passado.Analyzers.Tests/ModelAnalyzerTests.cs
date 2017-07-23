@@ -357,5 +357,76 @@ namespace Passado.Analyzers.Tests
             Assert.Equal("identity: true", e);
             Assert.Equal(ModelAnalyzer.InvalidSqlTypeForIdentity, d.Id);
         }
+
+        [Theory]
+        [InlineData("t => t.UserId")]
+        [InlineData("t => (Asc)t.UserId")]
+        [InlineData("t => (Desc)t.UserId")]
+        [InlineData("t => new { t.UserId }")]
+        [InlineData("t => new { A = (Asc)t.UserId }")]
+        [InlineData("t => new { A = (Desc)t.UserId }")]
+        [InlineData("t => new { A = t.UserId, B = t.FirstName }")]
+        [InlineData("t => new { A = (Asc)t.UserId, B = t.FirstName }")]
+        [InlineData("t => new { A = (Desc)t.UserId, B = t.FirstName }")]
+        [InlineData("t => new { A = t.UserId, B = (Asc)t.FirstName }")]
+        [InlineData("t => new { A = (Asc)t.UserId, B = (Asc)t.FirstName }")]
+        [InlineData("t => new { A = (Desc)t.UserId, B = (Asc)t.FirstName }")]
+        [InlineData("t => new { A = t.UserId, B = (Desc)t.FirstName }")]
+        [InlineData("t => new { A = (Asc)t.UserId, B = (Desc)t.FirstName }")]
+        [InlineData("t => new { A = (Desc)t.UserId, B = (Desc)t.FirstName }")]
+        public async void No_Diagnostic_On_Valid_PrimaryKey(string selector)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserId, SqlType.Int)
+                                             .Column(t => t.FirstName, SqlType.String)
+                                             .PrimaryKey(" + selector + @")
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(0, diagnostics.Count());
+        }
+        
+        [Theory]
+        [InlineData("int", "t => (int)t.UserId")]
+        public async void Diagnostic_On_PrimaryKey_Cast_Not_Asc_Or_Desc(string error, string selector)
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserId, SqlType.Int)
+                                             .Column(t => t.FirstName, SqlType.String)
+                                             .PrimaryKey(" + selector + @")
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(error, e);
+            Assert.Equal(ModelAnalyzer.InvalidOrderedSelectorCastType, d.Id);
+        }
+        
+        [Fact]
+        public async void Diagnostic_On_Index_Identical_To_PrimaryKey()
+        {
+            Assert.True(false);
+        }
+        
+        [Fact]
+        public async void Diagnostic_On_Multiple_Clustered_Indicies()
+        {
+            Assert.True(false);
+        }
+
+        [Fact]
+        public async void Diagnostic_On_Repeated_Index_Name()
+        {
+            Assert.True(false);
+        }
     }
 }
