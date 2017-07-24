@@ -27,6 +27,7 @@ namespace Passado.Analyzers
         public static string InvalidSqlTypeForIdentity = "PassadoInvalidSqlTypeForIdentity";
         public static string InvalidOrderedMultiSelector = "PassadoInvalidOrderedMultiSelector";
         public static string InvalidOrderedSelectorCastType = "InvalidOrderedSelectorCastType";
+        public static string MultipleClusteredIndicies = "MultipleClusteredIndicies";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -43,7 +44,8 @@ namespace Passado.Analyzers
                 (InvalidSqlType, "Invalid Sql Type", "This sql type is incompatible.  Either change the type or provide a type converter."),
                 (InvalidSqlTypeForIdentity, "Invalid Sql Type For Identity", "This column type cannot be an identity."),
                 (InvalidOrderedMultiSelector, "Invalid Ordered Multi Selector", ""),
-                (InvalidOrderedSelectorCastType, "Invalid Ordered Multi Selector Cast Type", "Only 'Asc' and 'Desc' are valid casts to determine ordering.")
+                (InvalidOrderedSelectorCastType, "Invalid Ordered Multi Selector Cast Type", "Only 'Asc' and 'Desc' are valid casts to determine ordering."),
+                (MultipleClusteredIndicies, "Multiple Clustered Indicies", "Only one index or primary key can be clustered.")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
@@ -94,6 +96,11 @@ namespace Passado.Analyzers
             }
         }
         
+        static Optional<List<FuzzyColumnModel>> ParseMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
+        {
+            throw new NotImplementedException();
+        }
+
         static Optional<List<(SortOrder, FuzzyColumnModel)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, string diagnosticId, List<FuzzyColumnModel> columns)
         {
             (SortOrder, FuzzyColumnModel) ParseOrderedColumn(ExpressionSyntax expression)
@@ -163,21 +170,23 @@ namespace Passado.Analyzers
             throw new NotImplementedException();
         }
 
-        static List<ArgumentSyntax> RankOptionalArguments(SyntaxNodeAnalysisContext context, IEnumerable<ArgumentSyntax> arguments, IEnumerable<string> order)
+        static Dictionary<string, ArgumentSyntax> ParseArguments(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
         {
-            var positionalArguments = arguments.Where(a => a.NameColon == null)
-                                               .ToList();
+            var parameters = (context.SemanticModel.GetSymbolInfo(expression.Expression).Symbol as IMethodSymbol).Parameters;
+            var arguments = expression.ArgumentList.Arguments;
+            
+            var dictionary = arguments.Zip(parameters, (a, p) => (a, p))
+                                      .TakeWhile(z => z.Item1.NameColon == null)
+                                      .ToDictionary(z => z.Item2.Name, z => z.Item1);
 
-            var remainingArgs = arguments.Skip(positionalArguments.Count);
-            var remainingOrder = order.Skip(positionalArguments.Count);
-
-            var dictionary = remainingArgs.ToDictionary(a => a.NameColon.Name.Identifier.Text);
-
-            var namedArgs = remainingOrder.Select(o => dictionary.TryGetValue(o, out var arg) ? arg : null);
-
-            positionalArguments.AddRange(namedArgs);
-
-            return positionalArguments;
+            var remainingArgs = arguments.Skip(dictionary.Count);
+            
+            foreach (var param in parameters.Skip(dictionary.Count))
+            {
+                dictionary.Add(param.Name, remainingArgs.SingleOrDefault(a => a.NameColon.Name.Identifier.Text == param.Name));
+            }
+            
+            return dictionary;
         }
 
         static Optional<T> ParseConstantArgument<T>(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, T defaultValue)
@@ -197,11 +206,15 @@ namespace Passado.Analyzers
 
         static FuzzyTableModel ParseTableTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            var firstArgument = expression.ArgumentList.Arguments[0];
+            var arguments = ParseArguments(context, expression);
+
+            var tableArg = arguments["table"];
+            var nameArg = arguments["name"];
+            var schemaArg = arguments["schema"];
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
-                Property = ParseSimpleProperty(context, firstArgument, InvalidTableSelector),
+                Property = ParseSimpleProperty(context, tableArg, InvalidTableSelector),
                 Columns = new List<FuzzyColumnModel>()
             };
 
@@ -210,13 +223,8 @@ namespace Passado.Analyzers
                 if (partialDatabase.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name))
                     context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableSelector], expression.ArgumentList.Arguments[0].GetLocation()));
             }
-
-            var optionalArgs = RankOptionalArguments(context, expression.ArgumentList.Arguments.Skip(1), new List<string>() { "name", "schema" });
-
-            var nameArgument = optionalArgs[0];
-            var schemaArgument = optionalArgs[1];
-
-            if (nameArgument == null)
+            
+            if (nameArg == null)
             {
                 // Use property name
                 fuzzyTableModel.Name = fuzzyTableModel.Property.HasValue ? new Optional<string>(fuzzyTableModel.Property.Value?.Name)
@@ -224,10 +232,10 @@ namespace Passado.Analyzers
             }
             else
             {
-                fuzzyTableModel.Name = ParseConstantArgument<string>(context, nameArgument, null);
+                fuzzyTableModel.Name = ParseConstantArgument<string>(context, nameArg, null);
             }
 
-            fuzzyTableModel.Schema = ParseConstantArgument<string>(context, schemaArgument, null);
+            fuzzyTableModel.Schema = ParseConstantArgument<string>(context, schemaArg, null);
 
             if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
@@ -235,7 +243,7 @@ namespace Passado.Analyzers
                                                     t.Schema.HasValue &&
                                                     t.Name.Value == fuzzyTableModel.Name.Value &&
                                                     t.Schema.Value == fuzzyTableModel.Schema.Value))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArgument == null ? firstArgument.GetLocation() : nameArgument.GetLocation()));
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArg == null ? tableArg.GetLocation() : nameArg.GetLocation()));
             }
 
             return fuzzyTableModel;
@@ -262,33 +270,30 @@ namespace Passado.Analyzers
                              innerMethodName == "Table" ? ParseTableTable(context, innerInvocation, partialDatabase) :
                              throw new NotImplementedException();
 
-            var selector = expression.ArgumentList.Arguments[0];
-
+            var arguments = ParseArguments(context, expression);
+            var columnArg = arguments["column"];
+            var sqlTypeArg = arguments["type"];
+            var nullableArg = arguments["nullable"];
+            var maxLengthArg = arguments["maxLength"];
+            var nameArg = arguments["name"];
+            var defaultValueArg = arguments["defaultValue"];
+            var identityArg = arguments["identity"];
+            var converterArg = arguments["converter"];
+            
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
-                Property = ParseSimpleProperty(context, selector, InvalidColumnSelector)
+                Property = ParseSimpleProperty(context, columnArg, InvalidColumnSelector)
             };
         
             if (fuzzyColumnModel.Property.HasValue)
             {
                 if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], selector.GetLocation()));
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], columnArg.GetLocation()));
             }
 
-            var sqlTypeArg = expression.ArgumentList.Arguments[1];
+            
             var tempSqlType = context.SemanticModel.GetConstantValue(sqlTypeArg.Expression);
             fuzzyColumnModel.Type = tempSqlType.HasValue ? new Optional<SqlType>((SqlType)tempSqlType.Value) : new Optional<SqlType>(); 
-
-            var optionalArgs = RankOptionalArguments(context,
-                                                     expression.ArgumentList.Arguments.Skip(2),
-                                                     new List<string> { "nullable", "maxLength", "name", "defaultValue", "identity", "converter" });
-            
-            var nullableArg = optionalArgs[0];
-            var maxLengthArg = optionalArgs[1];
-            var nameArg = optionalArgs[2];
-            var defaultValueArg = optionalArgs[3];
-            var identityArg = optionalArgs[4];
-            var converterArg = optionalArgs[5];
             
             if (nameArg == null)
             {
@@ -308,7 +313,7 @@ namespace Passado.Analyzers
             {
                 if (innerModel.Columns.Any(c => c.Name.HasValue &&
                                                 c.Name.Value == fuzzyColumnModel.Name.Value))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? selector.GetLocation() : nameArg.GetLocation()));
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? columnArg.GetLocation() : nameArg.GetLocation()));
             }
             
             if (fuzzyColumnModel.Property.HasValue && fuzzyColumnModel.Type.HasValue)
@@ -377,17 +382,15 @@ namespace Passado.Analyzers
             var innerModel = (innerMethodName == "Column") ? ParseTableColumn(context, innerInvocation, partialDatabase) :
                              throw new NotImplementedException();
 
+            var arguments = ParseArguments(context, expression);
+
             var fuzzyPrimaryKey = new FuzzyPrimaryKeyModel()
             {
-                Columns = ParseOrderedMultiProperty(context, expression.ArgumentList.Arguments[0], "", innerModel.Columns)
+                Columns = ParseOrderedMultiProperty(context, arguments["keyColumns"], "", innerModel.Columns)
             };
-
-            var optionalArgs = RankOptionalArguments(context,
-                                                     expression.ArgumentList.Arguments.Skip(1),
-                                                     new List<string>() { "name", "clustered" });
-
-            var nameArg = optionalArgs[0];
-            var clusteredArg = optionalArgs[1];
+            
+            var nameArg = arguments["name"];
+            var clusteredArg = arguments["clustered"];
 
             if (nameArg == null)
             {
@@ -416,12 +419,69 @@ namespace Passado.Analyzers
             return innerModel;
         }
 
+        static FuzzyTableModel ParseTableIndex(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
+        {
+            (var innerInvocation, var innerMethodName) = PeekChain(expression);
+
+            var innerModel = (innerMethodName == "PrimaryKey") ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
+                             (innerMethodName == "Index") ? ParseTableIndex(context, innerInvocation, partialDatabase) :
+                             throw new NotImplementedException();
+            
+            var arguments = ParseArguments(context, expression);
+
+            var keyColumnsArg = arguments["keyColumns"];
+            var uniqueArg = arguments["unique"];
+            var nameArg = arguments["name"];
+            var clusteredArg = arguments["clustered"];
+            var includedColumnsArg = arguments["includedColumns"];
+
+            var fuzzyIndex = new FuzzyIndexModel()
+            {
+                Columns = ParseOrderedMultiProperty(context, arguments["keyColumns"], "", innerModel.Columns)
+            };
+            
+            if (nameArg == null)
+            {
+                if (!innerModel.Name.HasValue ||
+                    !innerModel.Schema.HasValue ||
+                    !fuzzyIndex.Columns.HasValue ||
+                    fuzzyIndex.Columns.Value.Any(c => !c.Item2.Name.HasValue))
+                {
+                    fuzzyIndex.Name = new Optional<string>();
+                }
+                else
+                {
+                    fuzzyIndex.Name = new Optional<string>(BuildDefaultKeyName("IX", innerModel.Schema.Value, innerModel.Name.Value, fuzzyIndex.Columns.Value.Select(c => c.Item2.Name.Value)));
+                }
+            }
+            else
+            {
+                fuzzyIndex.Name = ParseConstantArgument<string>(context, nameArg, null);
+            }
+
+            fuzzyIndex.IsUnique = ParseConstantArgument(context, uniqueArg, false);
+            fuzzyIndex.IsClustered = ParseConstantArgument(context, clusteredArg, false);
+
+            if (fuzzyIndex.IsClustered.HasValue && fuzzyIndex.IsClustered.Value == true)
+            {
+                if ((innerModel.PrimaryKey.IsClustered.HasValue && innerModel.PrimaryKey.IsClustered.Value == true) ||
+                    (innerModel.Indicies.Any(i => i.IsClustered.HasValue && i.IsClustered.Value == true)))
+                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[MultipleClusteredIndicies], clusteredArg.GetLocation()));
+            }
+
+            innerModel.Indicies.Add(fuzzyIndex);
+
+            return innerModel;
+        }
+
         static FuzzyTableModel ParseTableBuild(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
             (var innerInvocation, var innerMethodName) = PeekChain(expression);
 
             if (innerMethodName == "PrimaryKey")
                 return ParseTablePrimaryKey(context, innerInvocation, partialDatabase);
+            if (innerMethodName == "Index")
+                return ParseTableIndex(context, innerInvocation, partialDatabase);
             else
                 throw new NotImplementedException();
         }

@@ -412,19 +412,52 @@ namespace Passado.Analyzers.Tests
         }
         
         [Fact]
-        public async void Diagnostic_On_Index_Identical_To_PrimaryKey()
+        public async void No_Diagnostic_On_Valid_Index()
+        {
+            var mb = @"return mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                             .Column(t => t.UserId, SqlType.Int)
+                                             .Column(t => t.FirstName, SqlType.String, maxLength: 32)
+                                             .PrimaryKey(t => t.UserId)
+                                             .Index(t => t.FirstName)
+                                             .Build())
+                                .Build();";
+
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(0, diagnostics.Count());
+        }
+
+        [Fact]
+        public void Diagnostic_On_Index_Identical_To_PrimaryKey()
         {
             Assert.True(false);
         }
         
-        [Fact]
-        public async void Diagnostic_On_Multiple_Clustered_Indicies()
+        [Theory]
+        [InlineData("clustered: true",
+                    @"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users)
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .Column(t => t.FirstName, SqlType.String, maxLength: 32)
+                                            .PrimaryKey(t => t.UserId)
+                                            .Index(t => t.FirstName, clustered: true)
+                                            .Build())
+                               .Build();")]
+        public async void Diagnostic_On_Multiple_Clustered_Indicies(string error, string mb)
         {
-            Assert.True(false);
-        }
+            var diagnostics = await RunModelDiagnostics(mb);
 
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(error, e);
+            Assert.Equal(ModelAnalyzer.MultipleClusteredIndicies, d.Id);
+        }
+        
         [Fact]
-        public async void Diagnostic_On_Repeated_Index_Name()
+        public void Diagnostic_On_Repeated_Index_Name()
         {
             Assert.True(false);
         }

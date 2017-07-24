@@ -10,9 +10,9 @@ namespace Passado.Core.Model.Builder
     {
         public List<ColumnModel> Columns { get; set; }
 
-        public ForeignKeyOrIndexBuilder<TDatabase, TTable> PrimaryKey(Expression<Func<TTable, object>> columns, string name = null, bool clustered = true)
+        public ForeignKeyOrIndexBuilder<TDatabase, TTable> PrimaryKey(Expression<Func<TTable, object>> keyColumns, string name = null, bool clustered = true)
         {
-            var columnModels = Builder.ParseOrderedColumnSelector(columns, Columns);
+            var columnModels = Builder.ParseOrderedColumnSelector(keyColumns, Columns);
 
             var primaryKeyName = name ?? $"PK_{(Schema != null ? $"{Schema}_" : "")}{Name}_{string.Join("_", columnModels.Select(c => c.ColumnName))}";
 

@@ -13,7 +13,7 @@ namespace Passado.Core.Model.Builder
         public string PropertyName { get; set; }
         public Type PropertyType { get; set; }
 
-        public ColumnOrPrimaryKeyBuilder<TDatabase, TTable> Column<TColumn>(Expression<Func<TTable, TColumn>> columnSelector,
+        public ColumnOrPrimaryKeyBuilder<TDatabase, TTable> Column<TColumn>(Expression<Func<TTable, TColumn>> column,
                                                                             SqlType type,
                                                                             bool nullable = false,
                                                                             int? maxLength = null,
@@ -22,10 +22,10 @@ namespace Passado.Core.Model.Builder
                                                                             bool identity = false,
                                                                             IDatabaseTypeConverter<TColumn> converter = null)
         {
-            var propertyName = Builder.ParsePropertySelector(columnSelector);
+            var propertyName = Builder.ParsePropertySelector(column);
 
             if (propertyName == null)
-                throw new ModelException($"{Builder.GetTablePrefix<TTable>()}{nameof(columnSelector)}' must refer to a property of '{typeof(TTable).Name}'.");
+                throw new ModelException($"{Builder.GetTablePrefix<TTable>()}{nameof(column)}' must refer to a property of '{typeof(TTable).Name}'.");
 
             var newColumnModel = new ColumnModel(propertyName: propertyName,
                                                  columnName: name ?? propertyName,

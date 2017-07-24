@@ -7,9 +7,9 @@ namespace Passado.Core.Model.Builder
 {
     public class TableModelBuilder<TDatabase>
     {
-        public ColumnModelBuilder<TDatabase, TTable> Table<TTable>(Expression<Func<TDatabase, IEnumerable<TTable>>> tableSelector, string name = null, string schema = null)
+        public ColumnModelBuilder<TDatabase, TTable> Table<TTable>(Expression<Func<TDatabase, IEnumerable<TTable>>> table, string name = null, string schema = null)
         {
-            var propertyName = Builder.ParsePropertySelector(tableSelector);
+            var propertyName = Builder.ParsePropertySelector(table);
 
             if (propertyName == null)
                 throw new Exception();
