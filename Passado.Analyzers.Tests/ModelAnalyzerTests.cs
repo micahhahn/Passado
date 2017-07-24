@@ -456,10 +456,26 @@ namespace Passado.Analyzers.Tests
             Assert.Equal(ModelAnalyzer.MultipleClusteredIndicies, d.Id);
         }
         
-        [Fact]
-        public void Diagnostic_On_Repeated_Index_Name()
+        [Theory]
+        [InlineData(@"name: ""A""",
+                    @"return mb.Database(nameof(Database))
+                               .Table(d => d.Table(t => t.Users)
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .PrimaryKey(t => t.UserId)
+                                            .Index(t => t.UserId, name: ""A"")
+                                            .Index(t => t.UserId, name: ""A"")
+                                            .Build())
+                               .Build();")]
+        public async void Diagnostic_On_Repeated_Index_Name(string error, string mb)
         {
-            Assert.True(false);
+            var diagnostics = await RunModelDiagnostics(mb);
+
+            Assert.Equal(1, diagnostics.Count());
+
+            (var e, var d) = diagnostics.First();
+
+            Assert.Equal(error, e);
+            Assert.Equal(ModelAnalyzer.ModelIndex, d.Id);
         }
     }
 }

@@ -28,6 +28,7 @@ namespace Passado.Analyzers
         public static string InvalidOrderedMultiSelector = "PassadoInvalidOrderedMultiSelector";
         public static string InvalidOrderedSelectorCastType = "InvalidOrderedSelectorCastType";
         public static string MultipleClusteredIndicies = "MultipleClusteredIndicies";
+        public static string ModelIndex = "PS1001";
 
         static Dictionary<string, DiagnosticDescriptor> _descriptors;
 
@@ -45,7 +46,8 @@ namespace Passado.Analyzers
                 (InvalidSqlTypeForIdentity, "Invalid Sql Type For Identity", "This column type cannot be an identity."),
                 (InvalidOrderedMultiSelector, "Invalid Ordered Multi Selector", ""),
                 (InvalidOrderedSelectorCastType, "Invalid Ordered Multi Selector Cast Type", "Only 'Asc' and 'Desc' are valid casts to determine ordering."),
-                (MultipleClusteredIndicies, "Multiple Clustered Indicies", "Only one index or primary key can be clustered.")
+                (MultipleClusteredIndicies, "Multiple Clustered Indicies", "Only one index or primary key can be clustered."),
+                (ModelIndex, "Invalid index specification", "{0}")
             };
 
             _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
