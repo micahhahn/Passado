@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using Passado.Core.Model;
+using Passado.Core.Model.Builder;
 using Passado.Analyzers.Model;
 
 namespace Passado.Analyzers
@@ -421,13 +422,19 @@ namespace Passado.Analyzers
             return innerModel;
         }
 
-        static FuzzyTableModel ParseTableIndex(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
+        static FuzzyTableModel ParseInnerKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
             (var innerInvocation, var innerMethodName) = PeekChain(expression);
 
-            var innerModel = (innerMethodName == "PrimaryKey") ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
-                             (innerMethodName == "Index") ? ParseTableIndex(context, innerInvocation, partialDatabase) :
-                             throw new NotImplementedException();
+            return (innerMethodName == nameof(ColumnOrPrimaryKeyBuilder<object, object>.PrimaryKey)) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
+                   (innerMethodName == nameof(ForeignKeyOrIndexBuilder<object, object>.ForeignKey)) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
+                   (innerMethodName == nameof(ForeignKeyOrIndexBuilder<object, object>.Index)) ? ParseTableIndex(context, innerInvocation, partialDatabase) :
+                   throw new NotImplementedException();
+        }
+
+        static FuzzyTableModel ParseTableIndex(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
+        {
+            var innerModel = ParseInnerKey(context, expression, partialDatabase);
             
             var arguments = ParseArguments(context, expression);
 
@@ -476,16 +483,27 @@ namespace Passado.Analyzers
             return innerModel;
         }
 
+        static FuzzyTableModel ParseTableForeignKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
+        {
+            var innerModel = ParseInnerKey(context, expression, partialDatabase);
+
+            var arguments = ParseArguments(context, expression);
+
+            var keyColumnsArg = arguments["keyColumns"];
+            var referenceTableArg = arguments["referenceTable"];
+            var referenceColumnsArg = arguments["referenceColumns"];
+            var updateActionArg = arguments["updateAction"];
+            var deleteActionArg = arguments["deleteAction"];
+            var nameArg = arguments["name"];
+            
+            return innerModel;
+        }
+        
         static FuzzyTableModel ParseTableBuild(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            (var innerInvocation, var innerMethodName) = PeekChain(expression);
+            var innerModel = ParseInnerKey(context, expression, partialDatabase);
 
-            if (innerMethodName == "PrimaryKey")
-                return ParseTablePrimaryKey(context, innerInvocation, partialDatabase);
-            if (innerMethodName == "Index")
-                return ParseTableIndex(context, innerInvocation, partialDatabase);
-            else
-                throw new NotImplementedException();
+            return innerModel;
         }
 
         static FuzzyDatabaseModel ParseDatabase(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)

@@ -358,6 +358,12 @@ namespace Passado.Analyzers.Tests
             Assert.Equal(ModelAnalyzer.InvalidSqlTypeForIdentity, d.Id);
         }
 
+        [Fact]
+        public async void Diagnostic_On_Property_Type_NonNullable_And_Nullable_Is_True()
+        {
+
+        }
+
         [Theory]
         [InlineData("t => t.UserId")]
         [InlineData("t => (Asc)t.UserId")]
