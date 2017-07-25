@@ -99,8 +99,17 @@ namespace Passado.Analyzers
             }
         }
         
-        static Optional<List<FuzzyColumnModel>> ParseMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
+        static Optional<List<(FuzzyProperty, Location)>> ParseMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
+
+
+            throw new NotImplementedException();
+        }
+
+        static Optional<List<FuzzyColumnModel>> ParseMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
+        {
+
+
             throw new NotImplementedException();
         }
 
@@ -496,6 +505,8 @@ namespace Passado.Analyzers
             var deleteActionArg = arguments["deleteAction"];
             var nameArg = arguments["name"];
             
+
+
             return innerModel;
         }
         

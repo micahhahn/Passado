@@ -17,6 +17,9 @@ namespace Passado.Analyzers.Model
         public Optional<ForeignKeyAction> UpdateAction { get; set; }
         public Optional<ForeignKeyAction> DeleteAction { get; set; }
 
-
+        // Temporary placeholders for ReferenceTable and ReferenceColumns as the referenced table and colums
+        // might not be defined at the time we parse the foriegn key.
+        public Optional<(FuzzyProperty, Location)> ReferenceTableSelector { get; set; }
+        public Optional<List<(FuzzyProperty, Location)>> ReferenceColumnSelectors { get; set; }
     }
 }
