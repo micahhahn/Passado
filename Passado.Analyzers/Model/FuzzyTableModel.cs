@@ -14,5 +14,6 @@ namespace Passado.Analyzers.Model
         public List<FuzzyColumnModel> Columns { get; set; }
         public FuzzyPrimaryKeyModel PrimaryKey { get; set; }
         public List<FuzzyIndexModel> Indicies { get; set; }
+        public List<FuzzyForeignKeyModel> ForeignKeys { get; set; }
     }
 }

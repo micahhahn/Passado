@@ -15,11 +15,16 @@ namespace Passado.Analyzers
 {
     public static class AnalyzerHelpers
     {
-        static Optional<T> MakeOptional<T>(T arg)
+        public static Optional<T> Just<T>(T arg)
         {
             return new Optional<T>(arg);
         }
 
+        /// <summary>
+        /// Peeks the previous method in the call chain returning the prior invocation and method name.
+        /// </summary>
+        /// <param name="expression">The current invocation.</param>
+        /// <returns>The prior invocation and prior method name.</returns>
         public static (InvocationExpressionSyntax, string) PeekChain(InvocationExpressionSyntax expression)
         {
             var innerInvocation = (expression.Expression as MemberAccessExpressionSyntax)
@@ -31,6 +36,12 @@ namespace Passado.Analyzers
             return (innerInvocation, innerMethodName);
         }
 
+        /// <summary>
+        /// Parses the arguments of an invocation expression and returns them in a dictionary keyed by name.
+        /// </summary>
+        /// <param name="context">The current context.</param>
+        /// <param name="expression">The invocation expression.</param>
+        /// <returns>A dictionary mapping every parameter name to its argument syntax.  If a parameter is not specified then the argument syntax is null.</returns>
         public static Dictionary<string, ArgumentSyntax> ParseArguments(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
         {
             var parameters = (context.SemanticModel.GetSymbolInfo(expression.Expression).Symbol as IMethodSymbol).Parameters;
@@ -50,11 +61,11 @@ namespace Passado.Analyzers
             return dictionary;
         }
 
-        public static Optional<T> ParseConstantArgument<T>(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, T defaultValue)
+        public static Optional<T> ParseConstantArgument<T>(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, Func<Optional<T>> defaultValue)
         {
             if (argument == null)
             {
-                return new Optional<T>(defaultValue);
+                return defaultValue();
             }
             else
             {
@@ -63,6 +74,16 @@ namespace Passado.Analyzers
                 return argumentValue.HasValue ? new Optional<T>((T)argumentValue.Value)
                                               : new Optional<T>();
             }
+        }
+        
+        public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        {
+            var optional = ParseProperty(context, argument);
+
+            if (!optional.HasValue)
+                return new Optional<(FuzzyProperty, Location)>();
+
+            return Just((optional.Value, argument.GetLocation()));
         }
 
         public static Optional<FuzzyProperty> ParseProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
@@ -126,13 +147,13 @@ namespace Passado.Analyzers
                 {
                     var anonymousObject = lambdaBody as AnonymousObjectCreationExpressionSyntax;
 
-                    return MakeOptional(anonymousObject.Initializers
+                    return Just(anonymousObject.Initializers
                                                        .Select(i => ParseProperty(i.Expression))
                                                        .ToList());
                 }
                 else if (lambdaBody is MemberAccessExpressionSyntax)
                 {
-                    return MakeOptional(new List<(FuzzyProperty, Location)>() { ParseProperty(lambdaBody as ExpressionSyntax) });
+                    return Just(new List<(FuzzyProperty, Location)>() { ParseProperty(lambdaBody as ExpressionSyntax) });
                 }
 
                 throw new NotImplementedException();
@@ -148,7 +169,7 @@ namespace Passado.Analyzers
             if (!optionalMultiProperty.HasValue)
                 return new Optional<List<FuzzyColumnModel>>();
             
-            return MakeOptional(optionalMultiProperty.Value.Select(p =>
+            return Just(optionalMultiProperty.Value.Select(p =>
             {
                 var column = columns.FirstOrDefault(c => c.Property.HasValue && c.Property.Value.Name == p.Item1.Name);
 
@@ -203,13 +224,13 @@ namespace Passado.Analyzers
                 {
                     var anonymousObject = lambdaBody as AnonymousObjectCreationExpressionSyntax;
 
-                    return MakeOptional(anonymousObject.Initializers
+                    return Just(anonymousObject.Initializers
                                                        .Select(i => ParseOrderedProperty(i.Expression))
                                                        .ToList());
                 }
                 else if (lambdaBody is MemberAccessExpressionSyntax)
                 {
-                    return MakeOptional(new List<(SortOrder, FuzzyProperty, Location)>() { ParseOrderedProperty(lambdaBody as ExpressionSyntax) });
+                    return Just(new List<(SortOrder, FuzzyProperty, Location)>() { ParseOrderedProperty(lambdaBody as ExpressionSyntax) });
                 }
 
                 throw new NotImplementedException();
@@ -225,7 +246,7 @@ namespace Passado.Analyzers
             if (!optionalOrderedMultiProperty.HasValue)
                 return new Optional<List<(SortOrder, FuzzyColumnModel)>>();
 
-            return MakeOptional(optionalOrderedMultiProperty.Value.Select(p =>
+            return Just(optionalOrderedMultiProperty.Value.Select(p =>
             {
                 var column = columns.FirstOrDefault(c => c.Property.HasValue && c.Property.Value.Name == p.Item2.Name);
 

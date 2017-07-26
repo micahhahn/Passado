@@ -359,7 +359,7 @@ namespace Passado.Analyzers.Tests
         }
 
         [Fact]
-        public async void Diagnostic_On_Property_Type_NonNullable_And_Nullable_Is_True()
+        public void Diagnostic_On_Property_Type_NonNullable_And_Nullable_Is_True()
         {
 
         }
