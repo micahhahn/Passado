@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Text;
 
 using Passado.Core.Query.Dynamic;
+using Passado.Core.Model;
 
 namespace Passado.Core.Tests
 {
@@ -29,6 +30,17 @@ namespace Passado.Core.Tests
     {
         public IEnumerable<User> Users { get; set; }
         public IEnumerable<Address> Addresses { get; set; }
+
+        public static DatabaseModel Model(IDatabaseBuilder<Database> db)
+        {
+            return db.Database(nameof(Database))
+                     .Table(d => d.Table(t => t.Users)
+                                  .Column(t => t.UserId, SqlType.Int)
+                                  .PrimaryKey(t => t.UserId)
+                                  .Index(t => t.UserId)
+                                  .Build())
+                     .Build();
+        }
     }
 
     public class AlphaQueryBuilderTests

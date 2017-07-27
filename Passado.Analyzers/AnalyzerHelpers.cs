@@ -117,6 +117,10 @@ namespace Passado.Analyzers
                 }
             }
 
+            // If the argument is null, this must be an optional property
+            if (argument == null)
+                return new Optional<FuzzyProperty>(null);
+
             var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
 
             if (lambdaExpression == null)
