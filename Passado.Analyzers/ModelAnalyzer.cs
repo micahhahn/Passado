@@ -64,9 +64,9 @@ namespace Passado.Analyzers
             return $"{prefix}_{(schema != null ? $"{schema}_" : "")}{tableName}__{string.Join("_", columns)}";
         }
 
-        static string BuildDefaultForiegnKeyName(string schema, string tableName, IEnumerable<string> keyColumns, string referenceSchema, string referenceTableName, IEnumerable<string> referenceColumns)
+        static string BuildDefaultForiegnKeyName(string schema, string tableName, IEnumerable<string> keyColumns, string referenceSchema, string referenceTableName)
         {
-            return $"FK_{(schema != null ? $"{schema}_" : "")}{tableName}__{string.Join("_", keyColumns)}__{(referenceSchema != null ? $"{referenceSchema}_" : "")}{referenceTableName}__{string.Join("_", referenceColumns)}";
+            return $"FK_{(schema != null ? $"{schema}_" : "")}{tableName}__{string.Join("_", keyColumns)}__{(referenceSchema != null ? $"{referenceSchema}_" : "")}{referenceTableName}";
         }
 
         static FuzzyTableModel ParseTableTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
@@ -77,7 +77,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = AH.ParseProperty(context, tableArg);
+            var property = AH.ParseSelector(context, tableArg, "table", false);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -140,7 +140,7 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseProperty(context, columnArg);
+            var property = AH.ParseSelector(context, columnArg, "column", false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {

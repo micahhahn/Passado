@@ -15,11 +15,25 @@ namespace Passado.Analyzers
 {
     public static class AnalyzerHelpers
     {
+        public static string InvalidSelector                     = "PS1001";
+        public static string InvalidMultiPropertySelector        = "PS1002";
+        public static string InvalidOrderedMultiPropertySelector = "PS1003";
+
+        public static List<(string Id, string Title, string Message)> DescriptorsTemp = new List<(string Id, string Title, string Message)>()
+        {
+            (InvalidSelector, "Invalid Selector", "A {0} selector must be a property of the parameter.  E.g. t => t.A"),
+            (InvalidMultiPropertySelector, "Invalid Multi Property Selector", "A {0} selector must be a multi property selector. E.g. t => t.A or t => new { t.A, t.B }"),
+            (InvalidOrderedMultiPropertySelector, "Invalid Ordered Multi Property Selector", "A {0} selector must be a multi property selector with optional orderings.")
+        };
+
+        public static Dictionary<string, DiagnosticDescriptor> Descriptors = DescriptorsTemp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
+                                                                                            .ToDictionary(t => t.Id);
+
         public static Optional<T> Just<T>(T arg)
         {
             return new Optional<T>(arg);
         }
-
+        
         /// <summary>
         /// Peeks the previous method in the call chain returning the prior invocation and method name.
         /// </summary>
@@ -60,7 +74,7 @@ namespace Passado.Analyzers
 
             return dictionary;
         }
-
+        
         public static Optional<T> ParseConstantArgument<T>(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, Func<Optional<T>> defaultValue)
         {
             if (argument == null)
@@ -78,7 +92,7 @@ namespace Passado.Analyzers
         
         public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
-            var optional = ParseProperty(context, argument);
+            var optional = ParseSelector(context, argument, "", false);
 
             if (!optional.HasValue)
                 return new Optional<(FuzzyProperty, Location)>();
@@ -86,8 +100,23 @@ namespace Passado.Analyzers
             return Just((optional.Value, argument.GetLocation()));
         }
 
-        public static Optional<FuzzyProperty> ParseProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, string selectorType, bool isOptional)
         {
+            // Check if argument is null.  
+            var constant = context.SemanticModel.GetConstantValue(argument.Expression);
+            if (constant.HasValue && constant.Value == null)
+            {
+                if (isOptional)
+                {
+                    return new Optional<FuzzyProperty>(null);
+                }
+                else
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors[InvalidSelector], argument.GetLocation(), $"A {selectorType} selector cannot be null."));
+                    return new Optional<FuzzyProperty>();
+                }
+            }
+
             var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
 
             if (lambdaExpression == null)
@@ -164,6 +193,9 @@ namespace Passado.Analyzers
 
         public static Optional<List<FuzzyColumnModel>> ParseMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
         {
+            if (argument == null)
+                return new Optional<List<FuzzyColumnModel>>(null);
+
             var optionalMultiProperty = ParseMultiProperty(context, argument);
 
             if (!optionalMultiProperty.HasValue)
