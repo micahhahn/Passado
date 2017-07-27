@@ -9,7 +9,7 @@ namespace Passado.Core.Model
 {
     public static class TableModelBuilderExtensions
     {
-        public static Table<TDatabase, TTable> Table<TDatabase, TTable>(this ITableBuilder<TDatabase> @this,
+        public static ITable<TDatabase, TTable> Table<TDatabase, TTable>(this ITableBuilder<TDatabase> @this,
                                                                         Expression<Func<TDatabase, IEnumerable<TTable>>> tableSelector,
                                                                         string name = null,
                                                                         string schema = null)
@@ -17,7 +17,7 @@ namespace Passado.Core.Model
             throw new NotImplementedException();
         }
 
-        public static Column<TDatabase, TTable> Column<TDatabase, TTable, TColumn>(this IColumnBuilder<TDatabase, TTable> @this,
+        public static IColumn<TDatabase, TTable> Column<TDatabase, TTable, TColumn>(this IColumnBuilder<TDatabase, TTable> @this,
                                                                                    Expression<Func<TTable, TColumn>> column,
                                                                                    SqlType type,
                                                                                    bool nullable = false,
@@ -27,28 +27,34 @@ namespace Passado.Core.Model
                                                                                    bool identity = false,
                                                                                    IDatabaseTypeConverter<TColumn> converter = null)
         {
+            var builder = @this as TableBuilder<TDatabase, TTable>;
+
             throw new NotImplementedException();
         }
 
-        public static PrimaryKey<TDatabase, TTable> PrimaryKey<TDatabase, TTable>(this IPrimaryKeyBuilder<TDatabase, TTable> @this,
+        public static IPrimaryKey<TDatabase, TTable> PrimaryKey<TDatabase, TTable>(this IPrimaryKeyBuilder<TDatabase, TTable> @this,
                                                                                   Expression<Func<TTable, object>> keyColumns,
                                                                                   string name = null,
                                                                                   bool clustered = true)
         {
+            var builder = @this as TableBuilder<TDatabase, TTable>;
+
             throw new NotImplementedException();
         }
 
-        public static Index<TDatabase, TTable> Index<TDatabase, TTable>(this IIndexBuilder<TDatabase, TTable> @this,
+        public static IIndex<TDatabase, TTable> Index<TDatabase, TTable>(this IIndexBuilder<TDatabase, TTable> @this,
                                                                         Expression<Func<TTable, object>> keyColumns,
                                                                         bool unique = false,
                                                                         string name = null,
                                                                         bool clustered = false,
                                                                         Expression<Func<TTable, object>> includedColumns = null)
         {
+            var builder = @this as TableBuilder<TDatabase, TTable>;
+            
             throw new NotImplementedException();
         }
 
-        public static ForeignKey<TDatabase, TTable> ForeignKey<TDatabase, TTable, TReference>(this IForeignKeyBuilder<TDatabase, TTable> @this,
+        public static IForeignKey<TDatabase, TTable> ForeignKey<TDatabase, TTable, TReference>(this IForeignKeyBuilder<TDatabase, TTable> @this,
                                                                                               Expression<Func<TTable, object>> keyColumns,
                                                                                               Expression<Func<TDatabase, IEnumerable<TReference>>> referenceTable,
                                                                                               Expression<Func<TReference, object>> referenceColumns,
@@ -56,11 +62,15 @@ namespace Passado.Core.Model
                                                                                               ForeignKeyAction deleteAction = ForeignKeyAction.Cascade,
                                                                                               string name = null)
         {
+            var builder = @this as TableBuilder<TDatabase, TTable>;
+
             throw new NotImplementedException();
         }
 
         public static TableModel Build<TDatabase, TTable>(this ITableModelBuilder<TDatabase, TTable> @this)
         {
+            var builder = @this as TableBuilder<TDatabase, TTable>;
+
             throw new NotImplementedException();
         }
     }

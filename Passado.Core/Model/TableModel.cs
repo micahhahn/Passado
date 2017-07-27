@@ -3,17 +3,35 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
+using Passado.Core.Model.Table;
+
 namespace Passado.Core.Model
 {
     public class TableModel
     {
-        public string Name { get; set; }
-        public string Schema { get; set; }
-        public string PropertyName { get; set; }
-        public Type PropertyType { get; set; }
-        public ImmutableList<ColumnModel> Columns { get; set; }
-        public PrimaryKeyModel PrimaryKey { get; set; }
-        public ImmutableList<ForeignKeyModel> ForeignKeys { get; set; }
-        public ImmutableList<IndexModel> Indexes { get; set; }
+        public TableModel(string name,
+                          string schema,
+                          string propertyName,
+                          ImmutableList<ColumnModel> columns,
+                          PrimaryKeyModel primaryKey,
+                          ImmutableList<ForeignKeyModel> foreignKeys,
+                          ImmutableList<IndexModel> indexes)
+        {
+            Name = name;
+            Schema = schema;
+            PropertyName = propertyName;
+            Columns = columns;
+            PrimaryKey = primaryKey;
+            ForeignKeys = foreignKeys;
+            Indexes = indexes;
+        }
+
+        public string Name { get; }
+        public string Schema { get; }
+        public string PropertyName { get; }
+        public ImmutableList<ColumnModel> Columns { get; }
+        public PrimaryKeyModel PrimaryKey { get; }
+        public ImmutableList<ForeignKeyModel> ForeignKeys { get; }
+        public ImmutableList<IndexModel> Indexes { get; }
     }
 }

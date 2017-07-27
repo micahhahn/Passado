@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Passado.Core.Model
+namespace Passado.Core
 {
     /// <summary>
     /// A placeholder type to declare that a column should be sorted in ascending order in the index.

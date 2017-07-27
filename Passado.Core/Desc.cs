@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado.Core.Model
+namespace Passado.Core
 {
     /// <summary>
     /// A placeholder type to declare that a column should be sorted in descending order in the index.

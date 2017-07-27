@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Passado.Core.Model.Database
 {
-    public class Database<TDatabase> : ITableBuilder<TDatabase>
+    public interface IDatabase<TDatabase> : ITableBuilder<TDatabase>
     {
+
     }
 }

@@ -7,16 +7,13 @@ namespace Passado.Core.Model
 {
     public class DatabaseModel
     {
-        private readonly string _name;
-        private ImmutableList<TableModel> _tables;
-
-        public DatabaseModel(string name, IEnumerable<TableModel> tables)
+        public DatabaseModel(string name, ImmutableList<TableModel> tables)
         {
-            _name = name;
-            _tables = tables.ToImmutableList();
+            Name = name;
+            Tables = tables.ToImmutableList();
         }
 
-        public string Name => _name;
-        public ImmutableList<TableModel> Tables => _tables;
+        public string Name { get; }
+        public ImmutableList<TableModel> Tables { get; }
     }
 }

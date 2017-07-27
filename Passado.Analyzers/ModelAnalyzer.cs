@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using Passado.Core.Model;
-using Passado.Core.Model.Builder;
+
 using Passado.Analyzers.Model;
 
 using AH = Passado.Analyzers.AnalyzerHelpers;
@@ -126,8 +126,8 @@ namespace Passado.Analyzers
         {
             (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
 
-            var innerModel = innerMethodName == "Column" ? ParseTableColumn(context, innerInvocation, partialDatabase) :
-                             innerMethodName == "Table" ? ParseTableTable(context, innerInvocation, partialDatabase) :
+            var innerModel = innerMethodName == nameof(TableModelBuilderExtensions.Column) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
+                             innerMethodName == nameof(TableModelBuilderExtensions.Table) ? ParseTableTable(context, innerInvocation, partialDatabase) :
                              throw new NotImplementedException();
 
             var arguments = AH.ParseArguments(context, expression);
@@ -229,7 +229,7 @@ namespace Passado.Analyzers
         {
             (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
 
-            var innerModel = (innerMethodName == "Column") ? ParseTableColumn(context, innerInvocation, partialDatabase) :
+            var innerModel = (innerMethodName == nameof(TableModelBuilderExtensions.Column)) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
                              throw new NotImplementedException();
 
             var arguments = AH.ParseArguments(context, expression);
@@ -258,9 +258,9 @@ namespace Passado.Analyzers
         {
             (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
 
-            return (innerMethodName == nameof(ColumnOrPrimaryKeyBuilder<object, object>.PrimaryKey)) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
-                   (innerMethodName == nameof(ForeignKeyOrIndexBuilder<object, object>.ForeignKey)) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
-                   (innerMethodName == nameof(ForeignKeyOrIndexBuilder<object, object>.Index)) ? ParseTableIndex(context, innerInvocation, partialDatabase) :
+            return (innerMethodName == nameof(TableModelBuilderExtensions.PrimaryKey)) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
+                   (innerMethodName == nameof(TableModelBuilderExtensions.ForeignKey)) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
+                   (innerMethodName == nameof(TableModelBuilderExtensions.Index)) ? ParseTableIndex(context, innerInvocation, partialDatabase) :
                    throw new NotImplementedException();
         }
 
@@ -351,8 +351,8 @@ namespace Passado.Analyzers
         {
             (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
 
-            var innerModel = (innerMethodName == nameof(TableModelBuilder<object>.Table)) ? ParseTable(context, innerInvocation) :
-                             (innerMethodName == nameof(DatabaseModelBuilder<object>.Database)) ? ParseDatabase(context, innerInvocation) :
+            var innerModel = (innerMethodName == nameof(DatabaseModelBuilderExtensions.Table)) ? ParseTable(context, innerInvocation) :
+                             (innerMethodName == nameof(DatabaseModelBuilderExtensions.Database)) ? ParseDatabase(context, innerInvocation) :
                              throw new NotImplementedException();
 
             var firstArgument = expression.ArgumentList.Arguments[0];

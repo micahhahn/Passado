@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado.Core.Model
+namespace Passado.Core
 {
     public class ModelException : Exception
     {

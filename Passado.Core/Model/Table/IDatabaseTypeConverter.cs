@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado.Core.Model
+namespace Passado.Core.Model.Table
 {
     public interface IDatabaseTypeConverter<TType>
     {
