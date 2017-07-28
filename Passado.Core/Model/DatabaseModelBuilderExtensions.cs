@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 using Passado.Core.Model.Database;
@@ -12,8 +13,13 @@ namespace Passado.Core.Model
                                                                string name)
         {
             var builder = @this as DatabaseBuilder<TDatabase>;
-            
-            throw new NotImplementedException();
+
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ModelException("");
+
+            builder.Name = name;
+
+            return builder;
         }
 
         public static ITable<TDatabase> Table<TDatabase>(this Database.ITableBuilder<TDatabase> @this,
@@ -21,17 +27,20 @@ namespace Passado.Core.Model
         {
             var builder = @this as DatabaseBuilder<TDatabase>;
 
-            throw new NotImplementedException();
+            builder.Tables.Add(buildTableModel(null));
+
+            return builder;
         }
 
         public static DatabaseModel Build<TDatabase>(this IDatabaseModelBuilder<TDatabase> @this)
         {
             var builder = @this as DatabaseBuilder<TDatabase>;
 
-            // Check for object name uniqueness
-            // Fill out foreign keys
+            // TODO: Check for object name uniqueness
+            // TODO: Fill out foreign keys
 
-            throw new NotImplementedException();
+            return new DatabaseModel(name: builder.Name,
+                                     tables: builder.Tables.ToImmutableList());
         }
     }
 }
