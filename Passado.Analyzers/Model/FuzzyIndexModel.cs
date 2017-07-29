@@ -4,7 +4,7 @@ using System.Text;
 
 using Microsoft.CodeAnalysis;
 
-using Passado.Core.Model;
+using Passado.Model;
 
 namespace Passado.Analyzers.Model
 {

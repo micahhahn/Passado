@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using Passado.Analyzers.Model;
-using Passado.Core.Model;
+using Passado.Model;
 
 namespace Passado.Analyzers
 {

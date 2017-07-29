@@ -13,7 +13,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
-using Passado.Core;
+using Passado;
 
 namespace Passado.Analyzers.Tests
 {

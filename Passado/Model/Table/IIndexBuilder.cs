@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado.Model.Database
+namespace Passado.Model.Table
 {
-    public interface ITableBuilder<TDatabase>
+    public interface IIndexBuilder<TDatabase, TTable>
     {
 
     }

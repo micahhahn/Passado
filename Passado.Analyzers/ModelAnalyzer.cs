@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-using Passado.Core.Model;
+using Passado.Model;
 
 using Passado.Analyzers.Model;
 
@@ -395,7 +395,7 @@ namespace Passado.Analyzers
                 {
                     var methodSymbol = syntaxContext.SemanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IMethodSymbol;
 
-                    if (methodSymbol?.ToString()?.StartsWith("Passado.Core.Model.Builder.DatabaseTableModelBuilder") == true)
+                    if (methodSymbol?.ToString()?.StartsWith("Passado.Model.Builder.DatabaseTableModelBuilder") == true)
                     {
                         ParseTable(syntaxContext, memberAccessExpression.Expression as InvocationExpressionSyntax);
                     }

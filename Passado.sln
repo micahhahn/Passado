@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Core", "Passado.Core\Passado.Core.csproj", "{1ECBC4AB-566C-4D8A-9569-DB8394CA2BE3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado", "Passado\Passado.csproj", "{1ECBC4AB-566C-4D8A-9569-DB8394CA2BE3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Core.Tests", "Passado.Core.Tests\Passado.Core.Tests.csproj", "{B6BD1351-87F2-4EAF-8754-44FFBD2998E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Tests", "Passado.Tests\Passado.Tests.csproj", "{B6BD1351-87F2-4EAF-8754-44FFBD2998E8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Passado.Analyzers", "Passado.Analyzers\Passado.Analyzers.csproj", "{E2A5A9AD-617F-4F9C-8079-C16BE363DFCB}"
 EndProject

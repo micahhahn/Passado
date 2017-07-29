@@ -19,9 +19,9 @@ namespace Passado.Analyzers.Tests
             var source = @"
                 using System;
                 using System.Collections.Generic;
-                using Passado.Core;
-                using Passado.Core.Model;
-                using Passado.Core.Model.Builder;
+                using Passado;
+                using Passado.Model;
+                using Passado.Model.Builder;
                 using System.Linq.Expressions;
 
                 public class User
@@ -75,7 +75,7 @@ namespace Passado.Analyzers.Tests
         }
 
         [Fact]
-        public async void No_Diagnostic_On_Null_Optional_Selector()
+        public void No_Diagnostic_On_Null_Optional_Selector()
         {
             Assert.True(TodoDisabled);
         }

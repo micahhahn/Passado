@@ -19,9 +19,9 @@ namespace Passado.Analyzers.Tests
             var source = @"
                 using System;
                 using System.Collections.Generic;
-                using Passado.Core;
-                using Passado.Core.Model;
-                using Passado.Core.Model.Builder;
+                using Passado;
+                using Passado.Model;
+                using Passado.Model.Builder;
                 using System.Linq.Expressions;
 
                 public enum UserGrade
