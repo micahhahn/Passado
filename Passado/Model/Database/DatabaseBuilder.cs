@@ -4,10 +4,8 @@ using System.Text;
 
 namespace Passado.Model.Database
 {
-    public class DatabaseBuilder<TDatabase> : IDatabase<TDatabase>,
-                                              ITable<TDatabase>
+    public class DatabaseBuilder<TDatabase> : IDatabaseBuilder<TDatabase>
     {
-        public string Name { get; set; }
-        public List<TableModel> Tables { get; set; }
+
     }
 }

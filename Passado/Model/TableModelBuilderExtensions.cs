@@ -11,14 +11,14 @@ namespace Passado.Model
     public static class TableModelBuilderExtensions
     {
         public static ITable<TDatabase, TTable> Table<TDatabase, TTable>(this ITableBuilder<TDatabase> @this,
-                                                                         Expression<Func<TDatabase, IEnumerable<TTable>>> tableSelector,
+                                                                         Expression<Func<TDatabase, IEnumerable<TTable>>> table,
                                                                          string name = null,
                                                                          string schema = null)
         {
             var builder = @this as TableBuilder<TDatabase, TTable>;
 
             if (string.IsNullOrWhiteSpace(name))
-                throw new ModelException("");
+                //throw new ModelBuilderException("");
 
             builder.Name = name;
             builder.Schema = schema;

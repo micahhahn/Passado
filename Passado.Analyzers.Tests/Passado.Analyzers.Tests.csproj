@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Passado.Analyzers\Passado.Analyzers.csproj" />
+    <ProjectReference Include="..\Passado.Tests\Passado.Tests.csproj" />
     <ProjectReference Include="..\Passado\Passado.csproj" />
   </ItemGroup>
 

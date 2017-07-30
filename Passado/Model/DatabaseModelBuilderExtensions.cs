@@ -12,10 +12,10 @@ namespace Passado.Model
         public static IDatabase<TDatabase> Database<TDatabase>(this IDatabaseBuilder<TDatabase> @this,
                                                                string name)
         {
-            var builder = @this as DatabaseBuilder<TDatabase>;
+            var builder = new InternalDatabaseBuilder<TDatabase>();
 
             if (string.IsNullOrWhiteSpace(name))
-                throw new ModelException("");
+                throw new ModelBuilderException(ModelBuilderError.InvalidDatabaseName, "A database name cannot be null.");
 
             builder.Name = name;
 
@@ -25,7 +25,7 @@ namespace Passado.Model
         public static ITable<TDatabase> Table<TDatabase>(this Database.ITableBuilder<TDatabase> @this,
                                                          Func<ITableBuilder<TDatabase>, TableModel> buildTableModel)
         {
-            var builder = @this as DatabaseBuilder<TDatabase>;
+            var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             builder.Tables.Add(buildTableModel(null));
 
@@ -34,7 +34,7 @@ namespace Passado.Model
 
         public static DatabaseModel Build<TDatabase>(this IDatabaseModelBuilder<TDatabase> @this)
         {
-            var builder = @this as DatabaseBuilder<TDatabase>;
+            var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             // TODO: Check for object name uniqueness
             // TODO: Fill out foreign keys

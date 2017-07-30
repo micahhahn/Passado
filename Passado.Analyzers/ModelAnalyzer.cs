@@ -57,7 +57,7 @@ namespace Passado.Analyzers
                                .ToDictionary(t => t.Id);
         }
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => _descriptors.Values.ToImmutableArray();
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ModelBuilderErrorExtensions.AllDiagnostics();
 
         static string BuildDefaultKeyName(string prefix, string schema, string tableName, IEnumerable<string> columns)
         {
@@ -261,6 +261,7 @@ namespace Passado.Analyzers
             return (innerMethodName == nameof(TableModelBuilderExtensions.PrimaryKey)) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
                    (innerMethodName == nameof(TableModelBuilderExtensions.ForeignKey)) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
                    (innerMethodName == nameof(TableModelBuilderExtensions.Index)) ? ParseTableIndex(context, innerInvocation, partialDatabase) :
+                   (innerMethodName == nameof(TableModelBuilderExtensions.Column)) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
                    throw new NotImplementedException();
         }
 
@@ -338,13 +339,19 @@ namespace Passado.Analyzers
 
         static FuzzyDatabaseModel ParseDatabase(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
         {
-            var nameArgument = expression.ArgumentList.Arguments[0];
+            var arguments = AH.ParseArguments(context, expression);
+            var nameArg = arguments["name"];
             
-            return new FuzzyDatabaseModel()
+            var databaseModel = new FuzzyDatabaseModel()
             {
-               Name = AH.ParseConstantArgument<string>(context, nameArgument, null),
+               Name = AH.ParseConstantArgument<string>(context, nameArg, null),
                Tables = new List<FuzzyTableModel>()
             };
+
+            if (databaseModel.Name.HasValue && databaseModel.Name.Value == null)
+                context.ReportDiagnostic(ModelBuilderError.InvalidDatabaseName.MakeDiagnostic(nameArg.GetLocation(), "A database name cannot be null."));
+
+            return databaseModel;
         }
 
         static FuzzyDatabaseModel ParseTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
@@ -395,7 +402,7 @@ namespace Passado.Analyzers
                 {
                     var methodSymbol = syntaxContext.SemanticModel.GetSymbolInfo(memberAccessExpression).Symbol as IMethodSymbol;
 
-                    if (methodSymbol?.ToString()?.StartsWith("Passado.Model.Builder.DatabaseTableModelBuilder") == true)
+                    if (methodSymbol?.ToString()?.StartsWith("Passado.Model.Database.IDatabaseModelBuilder") == true)
                     {
                         ParseTable(syntaxContext, memberAccessExpression.Expression as InvocationExpressionSyntax);
                     }
