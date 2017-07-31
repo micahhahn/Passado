@@ -20,43 +20,6 @@ namespace Passado.Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class ModelAnalyzer : DiagnosticAnalyzer
     {
-        public static string InvalidTableSelector = "PassadoModelInvalidTableSelector";
-        public static string RepeatedTableSelector = "PassadoModelRepeatedTableSelector";
-        public static string RepeatedTableName = "PassadoModelRepeatedTableName";
-        public static string InvalidColumnSelector = "PassadoModelInvalidColumnSelector";
-        public static string RepeatedColumnSelector = "PassadoModelRepeatedColumnSelector";
-        public static string RepeatedColumnName = "PassadoModelRepeatedColumnName";
-        public static string InvalidSqlType = "PassadoInvalidSqlType";
-        public static string InvalidSqlTypeForIdentity = "PassadoInvalidSqlTypeForIdentity";
-        public static string InvalidOrderedMultiSelector = "PassadoInvalidOrderedMultiSelector";
-        public static string InvalidOrderedSelectorCastType = "InvalidOrderedSelectorCastType";
-        public static string MultipleClusteredIndicies = "MultipleClusteredIndicies";
-        public static string ModelIndex = "PS1001";
-
-        static Dictionary<string, DiagnosticDescriptor> _descriptors;
-
-        static ModelAnalyzer()
-        {
-            var temp = new List<(string Id, string Title, string Message)>()
-            {
-                (InvalidTableSelector, "Invalid Table Selector", "The table selector must reference a property of the database."),
-                (RepeatedTableSelector, "Repeated Table Selector", "A table can only modelled once."),
-                (RepeatedTableName, "Repeated Table Name", "Each table name + schema must be unique."),
-                (InvalidColumnSelector, "Invalid Column Selector", "The column selector must reference a property of the table."),
-                (RepeatedColumnSelector, "Repeated Column Selector", "A column can only be modelled once."),
-                (RepeatedColumnName, "Repeated Column Name", "Each column name must be unique."),
-                (InvalidSqlType, "Invalid Sql Type", "This sql type is incompatible.  Either change the type or provide a type converter."),
-                (InvalidSqlTypeForIdentity, "Invalid Sql Type For Identity", "This column type cannot be an identity."),
-                (InvalidOrderedMultiSelector, "Invalid Ordered Multi Selector", ""),
-                (InvalidOrderedSelectorCastType, "Invalid Ordered Multi Selector Cast Type", "Only 'Asc' and 'Desc' are valid casts to determine ordering."),
-                (MultipleClusteredIndicies, "Multiple Clustered Indicies", "Only one index or primary key can be clustered."),
-                (ModelIndex, "Invalid index specification", "{0}")
-            };
-
-            _descriptors = temp.Select(t => new DiagnosticDescriptor(t.Id, t.Title, t.Message, "Passado", DiagnosticSeverity.Error, true))
-                               .ToDictionary(t => t.Id);
-        }
-
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ModelBuilderErrorExtensions.AllDiagnostics();
 
         static string BuildDefaultKeyName(string prefix, string schema, string tableName, IEnumerable<string> columns)
@@ -93,17 +56,17 @@ namespace Passado.Analyzers
 
             if (fuzzyTableModel.Property.HasValue)
             {
-                if (partialDatabase.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableSelector], expression.ArgumentList.Arguments[0].GetLocation()));
+                //if (partialDatabase.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableSelector], expression.ArgumentList.Arguments[0].GetLocation()));
             }
             
             if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
-                if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
-                                                    t.Schema.HasValue &&
-                                                    t.Name.Value == fuzzyTableModel.Name.Value &&
-                                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArg == null ? tableArg.GetLocation() : nameArg.GetLocation()));
+                //if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
+                //                                    t.Schema.HasValue &&
+                //                                    t.Name.Value == fuzzyTableModel.Name.Value &&
+                //                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArg == null ? tableArg.GetLocation() : nameArg.GetLocation()));
             }
 
             return fuzzyTableModel;
@@ -155,47 +118,47 @@ namespace Passado.Analyzers
         
             if (fuzzyColumnModel.Property.HasValue)
             {
-                if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], columnArg.GetLocation()));
+                //if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], columnArg.GetLocation()));
             }
 
             if (fuzzyColumnModel.Name.HasValue)
             {
-                if (innerModel.Columns.Any(c => c.Name.HasValue &&
-                                                c.Name.Value == fuzzyColumnModel.Name.Value))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? columnArg.GetLocation() : nameArg.GetLocation()));
+                //if (innerModel.Columns.Any(c => c.Name.HasValue &&
+                //                                c.Name.Value == fuzzyColumnModel.Name.Value))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnName], nameArg == null ? columnArg.GetLocation() : nameArg.GetLocation()));
             }
             
             if (fuzzyColumnModel.Property.HasValue && fuzzyColumnModel.Type.HasValue)
             {
                 if (fuzzyColumnModel.Property.Value.Type.TypeKind == TypeKind.Enum)
                 {
-                    if (!(fuzzyColumnModel.Type.Value == SqlType.String || fuzzyColumnModel.Type.Value == SqlType.Int))
-                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                    //if (!(fuzzyColumnModel.Type.Value == SqlType.String || fuzzyColumnModel.Type.Value == SqlType.Int))
+                    //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
 
                     if (fuzzyColumnModel.Type.Value == SqlType.String && fuzzyColumnModel.MaxLength.HasValue)
                     {
                         var namedType = fuzzyColumnModel.Property.Value.Type as INamedTypeSymbol;
                         var longestEnum = namedType.MemberNames.Max(n => n.Length);
 
-                        if (fuzzyColumnModel.MaxLength.Value != null && 
-                            fuzzyColumnModel.MaxLength.Value < longestEnum)
-                            context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                        //if (fuzzyColumnModel.MaxLength.Value != null && 
+                        //    fuzzyColumnModel.MaxLength.Value < longestEnum)
+                        //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
                     }
                 }
                 else if (fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" ||
                          fuzzyColumnModel.Property.Value.Type.Name == "Guid")
                 {
-                    if ((fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" && fuzzyColumnModel.Type.Value != SqlType.DateTimeOffset) ||
-                        (fuzzyColumnModel.Property.Value.Type.Name == "Guid" && fuzzyColumnModel.Type.Value != SqlType.Guid))
-                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                    //if ((fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" && fuzzyColumnModel.Type.Value != SqlType.DateTimeOffset) ||
+                    //    (fuzzyColumnModel.Property.Value.Type.Name == "Guid" && fuzzyColumnModel.Type.Value != SqlType.Guid))
+                    //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
                 }
                 else
                 {
                     var propertyType = fuzzyColumnModel.Property.Value.Type.SpecialType;
                     
-                    if (!_defaultTypeMappings[propertyType].Contains(fuzzyColumnModel.Type.Value))
-                        context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                    //if (!_defaultTypeMappings[propertyType].Contains(fuzzyColumnModel.Type.Value))
+                    //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
                 }
             }
             
@@ -216,8 +179,8 @@ namespace Passado.Analyzers
                     SqlType.Guid
                 };
 
-                if (nonIdentityTypes.Contains(fuzzyColumnModel.Type.Value))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlTypeForIdentity], identityArg.GetLocation()));
+                //if (nonIdentityTypes.Contains(fuzzyColumnModel.Type.Value))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlTypeForIdentity], identityArg.GetLocation()));
             }
 
             innerModel.Columns.Add(fuzzyColumnModel);
@@ -292,9 +255,9 @@ namespace Passado.Analyzers
             
             if (fuzzyIndex.IsClustered.HasValue && fuzzyIndex.IsClustered.Value == true)
             {
-                if ((innerModel.PrimaryKey.IsClustered.HasValue && innerModel.PrimaryKey.IsClustered.Value == true) ||
-                    (innerModel.Indicies.Any(i => i.IsClustered.HasValue && i.IsClustered.Value == true)))
-                    context.ReportDiagnostic(Diagnostic.Create(_descriptors[MultipleClusteredIndicies], clusteredArg.GetLocation()));
+                //if ((innerModel.PrimaryKey.IsClustered.HasValue && innerModel.PrimaryKey.IsClustered.Value == true) ||
+                //    (innerModel.Indicies.Any(i => i.IsClustered.HasValue && i.IsClustered.Value == true)))
+                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[MultipleClusteredIndicies], clusteredArg.GetLocation()));
             }
 
             innerModel.Indicies.Add(fuzzyIndex);
@@ -362,28 +325,37 @@ namespace Passado.Analyzers
                              (innerMethodName == nameof(DatabaseModelBuilderExtensions.Database)) ? ParseDatabase(context, innerInvocation) :
                              throw new NotImplementedException();
 
-            var firstArgument = expression.ArgumentList.Arguments[0];
+            var arguments = AH.ParseArguments(context, expression);
 
-            if (firstArgument.Expression is MemberAccessExpressionSyntax)
+            var tableArg = arguments["table"];
+            
+            if (tableArg.Expression is MemberAccessExpressionSyntax)
             {
-                var _ = context.SemanticModel.GetSymbolInfo(firstArgument.Expression);
+                var _ = context.SemanticModel.GetSymbolInfo(tableArg.Expression);
                 
                 // Static class function reference (e.g. User.ProvideModel)
-                var staticFunctionMember = firstArgument.Expression as MemberAccessExpressionSyntax;
+                var staticFunctionMember = tableArg.Expression as MemberAccessExpressionSyntax;
                 var className = (staticFunctionMember.Expression as IdentifierNameSyntax).Identifier.Text;
                 var functionName = (staticFunctionMember?.Name?.Identifier)?.Text;
 
                 throw new NotImplementedException();
             }
-            else if (firstArgument.Expression is SimpleLambdaExpressionSyntax)
+            else if (tableArg.Expression is SimpleLambdaExpressionSyntax)
             {
                 // Defined inline
                 //ParseTableChain(context, firstArgument.Expression);
-                var lambdaExpression = firstArgument.Expression as SimpleLambdaExpressionSyntax;
+                var lambdaExpression = tableArg.Expression as SimpleLambdaExpressionSyntax;
 
                 var table = ParseTableBuild(context, lambdaExpression.Body as InvocationExpressionSyntax, innerModel);
 
                 innerModel.Tables.Add(table);
+            }
+            else
+            {
+                var constant = context.SemanticModel.GetConstantValue(tableArg.Expression);
+
+                if (constant.HasValue && constant.Value == null)
+                    context.ReportDiagnostic(ModelBuilderError.InvalidTableBuilder.MakeDiagnostic(tableArg.GetLocation(), "The table builder cannot be null."));
             }
 
             return innerModel;

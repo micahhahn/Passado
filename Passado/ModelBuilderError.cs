@@ -21,5 +21,6 @@ namespace Passado
         public string MessageFormat { get; }
 
         public static ModelBuilderError InvalidDatabaseName = new ModelBuilderError("PS1001", "Invalid Database Name", "{0}");
+        public static ModelBuilderError InvalidTableBuilder = new ModelBuilderError("PS1002", "Invalid Table Builder", "{0}");
     }
 }

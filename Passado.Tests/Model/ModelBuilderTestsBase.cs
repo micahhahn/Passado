@@ -85,11 +85,13 @@ namespace Passado.Tests.Model
             return errors.Select(e => (e.ErrorId, e.ErrorText, e.Location == null ? null : source.Substring(e.Location.SourceSpan.Start, e.Location.SourceSpan.Length))).ToList();
         }
 
+        public static bool TodoDisabled = true;
+
         [Theory]
         [InlineData("null")]
         [InlineData("(string)null")]
         //[InlineData("null as string")] GetConstantValue is not (currently) parsing "null as string" as a constant
-        public async void Database_Error_On_Name_Null(string databaseName)
+        public async void Database__Error_On_Name_Null(string databaseName)
         {
             var mb = @"var _ = mb.Database(" + databaseName + @")
                                  .Table(d => d.Table(t => t.Users)
@@ -108,6 +110,38 @@ namespace Passado.Tests.Model
             if (error.LocationText != null)
             {
                 Assert.Equal(databaseName, error.LocationText);
+            }
+        }
+
+        [Theory]
+        [InlineData("[")]
+        [InlineData("]")]
+        public void Database__Error_On_Name_Contains_Unescaped_Delimiter(string databaseName)
+        {
+            // Do once naming convention guidlines are established between database vendors
+            Assert.True(TodoDisabled);
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("(Func<ITableBuilder<Database>, TableModel>)null")]
+        public async void Table__Error_On_Null_Table_Builder(string tableBuilder)
+        {
+            var mb = @"var _ = mb.Database(nameof(Database))
+                                 .Table(" + tableBuilder + @")
+                                 .Build();";
+
+            var errors = await GetErrorsFromModelBuilder(mb);
+
+            Assert.Equal(1, errors.Count);
+
+            var error = errors.First();
+
+            Assert.Equal(ModelBuilderError.InvalidTableBuilder.ErrorId, error.ErrorId);
+
+            if (error.LocationText != null)
+            {
+                Assert.Equal(tableBuilder, error.LocationText);
             }
         }
     }
