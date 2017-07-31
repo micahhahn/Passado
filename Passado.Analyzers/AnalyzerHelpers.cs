@@ -127,11 +127,10 @@ namespace Passado.Analyzers
                 return new Optional<FuzzyProperty>();
 
             var selector = lambdaExpression.Body as MemberAccessExpressionSyntax;
-
+            
             if (selector == null || !(context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol))
             {
-                throw new NotImplementedException();
-                //context.ReportDiagnostic(Diagnostic.Create(_descriptors[diagnosticId], argument.GetLocation()));
+                context.ReportDiagnostic(error.MakeDiagnostic(argument.GetLocation(), $"The table selector must be a property of ''."));
                 return new Optional<FuzzyProperty>(null);
             }
             else

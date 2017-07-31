@@ -150,5 +150,19 @@ namespace Passado.Tests.Model
 
             await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
         }
+
+        [Theory]
+        [InlineData("t => users")]
+        public async void Table__Error_On_Table_Selector_Not_Property(string selector)
+        {
+            var mb = @"var users = new List<User>();
+                       var _ = mb.Database(nameof(Database))
+                                 .Table(d => d.Table(" + selector + @")
+                                              .Column(t => t.UserId, SqlType.Int)
+                                              .Build())
+                                 .Build();";
+
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
+        }
     }
 }

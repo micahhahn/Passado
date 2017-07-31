@@ -15,11 +15,16 @@ namespace Passado.Model
                                                                          string name = null,
                                                                          string schema = null)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = new InternalTableBuilder<TDatabase, TTable>();
 
             if (table == null)
                 throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, "The table selector cannot be null.");
-            
+
+            builder.PropertyName = BuilderHelper.ParseSelector(table);
+
+            if (builder.PropertyName == null)
+                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"The table selector must be a property of '{typeof(TDatabase).Name}'.");
+
             builder.Name = name;
             builder.Schema = schema;
 
@@ -36,7 +41,7 @@ namespace Passado.Model
                                                                                     bool identity = false,
                                                                                     IDatabaseTypeConverter<TColumn> converter = null)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             return builder;
         }
@@ -46,7 +51,7 @@ namespace Passado.Model
                                                                                    string name = null,
                                                                                    bool clustered = true)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             return builder;
         }
@@ -58,7 +63,7 @@ namespace Passado.Model
                                                                          bool clustered = false,
                                                                          Expression<Func<TTable, object>> includedColumns = null)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             return builder;
         }
@@ -71,14 +76,14 @@ namespace Passado.Model
                                                                                                ForeignKeyAction deleteAction = ForeignKeyAction.Cascade,
                                                                                                string name = null)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             return builder;
         }
 
         public static TableModel Build<TDatabase, TTable>(this ITableModelBuilder<TDatabase, TTable> @this)
         {
-            var builder = @this as TableBuilder<TDatabase, TTable>;
+            var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             return new TableModel(name: builder.Name,
                                   schema: builder.Schema,
