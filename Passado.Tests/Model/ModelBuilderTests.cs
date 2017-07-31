@@ -26,7 +26,7 @@ namespace Passado.Tests.Model
 
                 if (!result.Success)
                 {
-                    throw new NotImplementedException();
+                    throw new Exception(string.Join("\n", result.Diagnostics.Select(d => d.ToString()).ToArray()));
                 }
                 else
                 {

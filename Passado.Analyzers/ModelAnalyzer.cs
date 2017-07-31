@@ -40,7 +40,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = AH.ParseSelector(context, tableArg, "table", false);
+            var property = AH.ParseSelector(context, tableArg, ModelBuilderError.InvalidTableSelector, "table", false);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -103,7 +103,7 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseSelector(context, columnArg, "column", false);
+            var property = AH.ParseSelector(context, columnArg, null, "column", false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -281,7 +281,7 @@ namespace Passado.Analyzers
             var fuzzyForeignKey = new FuzzyForeignKeyModel()
             {
                 KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
-                ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg),
+                ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
                 ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg),
                 UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade)),

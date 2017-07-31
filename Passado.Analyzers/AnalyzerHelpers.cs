@@ -90,9 +90,9 @@ namespace Passado.Analyzers
             }
         }
         
-        public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError error)
         {
-            var optional = ParseSelector(context, argument, "", false);
+            var optional = ParseSelector(context, argument, error, "", false);
 
             if (!optional.HasValue)
                 return new Optional<(FuzzyProperty, Location)>();
@@ -100,7 +100,7 @@ namespace Passado.Analyzers
             return Just((optional.Value, argument.GetLocation()));
         }
 
-        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, string selectorType, bool isOptional)
+        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError error, string selectorType, bool isOptional)
         {
             // Check if argument is null.  
             var constant = context.SemanticModel.GetConstantValue(argument.Expression);
@@ -112,7 +112,7 @@ namespace Passado.Analyzers
                 }
                 else
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors[InvalidSelector], argument.GetLocation(), $"A {selectorType} selector cannot be null."));
+                    context.ReportDiagnostic(error.MakeDiagnostic(argument.GetLocation(), $"A {selectorType} selector cannot be null."));
                     return new Optional<FuzzyProperty>();
                 }
             }

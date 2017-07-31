@@ -17,9 +17,9 @@ namespace Passado.Model
         {
             var builder = @this as TableBuilder<TDatabase, TTable>;
 
-            if (string.IsNullOrWhiteSpace(name))
-                //throw new ModelBuilderException("");
-
+            if (table == null)
+                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, "The table selector cannot be null.");
+            
             builder.Name = name;
             builder.Schema = schema;
 

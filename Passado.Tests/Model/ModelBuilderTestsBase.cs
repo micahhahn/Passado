@@ -37,6 +37,7 @@ namespace Passado.Tests.Model
                 using System;
                 using System.Collections.Generic;
                 using Passado.Model;
+                using System.Linq.Expressions;
 
                 public class User
                 {
@@ -50,8 +51,6 @@ namespace Passado.Tests.Model
 
                     public static DatabaseModel ProvideModel(IDatabaseBuilder<Database> mb)
                     {
-                        var users = new List<User>();
-                        var userId = 7;
                         " + mb + @"
                         throw new NotImplementedException();
                     }
@@ -85,6 +84,22 @@ namespace Passado.Tests.Model
             return errors.Select(e => (e.ErrorId, e.ErrorText, e.Location == null ? null : source.Substring(e.Location.SourceSpan.Start, e.Location.SourceSpan.Length))).ToList();
         }
 
+        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, string locationText)
+        {
+            var errors = await GetErrorsFromModelBuilder(mb);
+
+            Assert.Equal(1, errors.Count);
+
+            var error = errors.First();
+
+            Assert.Equal(modelError.ErrorId, error.ErrorId);
+
+            if (error.LocationText != null)
+            {
+                Assert.Equal(locationText, error.LocationText);
+            }
+        }
+
         public static bool TodoDisabled = true;
 
         [Theory]
@@ -99,18 +114,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            var errors = await GetErrorsFromModelBuilder(mb);
-
-            Assert.Equal(1, errors.Count);
-
-            var error = errors.First();
-
-            Assert.Equal(ModelBuilderError.InvalidDatabaseName.ErrorId, error.ErrorId);
-            
-            if (error.LocationText != null)
-            {
-                Assert.Equal(databaseName, error.LocationText);
-            }
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidDatabaseName, databaseName);
         }
 
         [Theory]
@@ -131,18 +135,20 @@ namespace Passado.Tests.Model
                                  .Table(" + tableBuilder + @")
                                  .Build();";
 
-            var errors = await GetErrorsFromModelBuilder(mb);
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableBuilder, tableBuilder);
+        }
 
-            Assert.Equal(1, errors.Count);
+        [Theory]
+        [InlineData("(Expression<Func<Database, IEnumerable<User>>>)null")]
+        public async void Table__Error_On_Null_Table_Selector(string selector)
+        {
+            var mb = @"var _ = mb.Database(nameof(Database))
+                                 .Table(d => d.Table(" + selector + @")
+                                              .Column(t => t.UserId, SqlType.Int)
+                                              .Build())
+                                 .Build();";
 
-            var error = errors.First();
-
-            Assert.Equal(ModelBuilderError.InvalidTableBuilder.ErrorId, error.ErrorId);
-
-            if (error.LocationText != null)
-            {
-                Assert.Equal(tableBuilder, error.LocationText);
-            }
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
         }
     }
 }

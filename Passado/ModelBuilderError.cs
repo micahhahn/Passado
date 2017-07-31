@@ -20,7 +20,8 @@ namespace Passado
         public string Title { get; }
         public string MessageFormat { get; }
 
-        public static ModelBuilderError InvalidDatabaseName = new ModelBuilderError("PS1001", "Invalid Database Name", "{0}");
-        public static ModelBuilderError InvalidTableBuilder = new ModelBuilderError("PS1002", "Invalid Table Builder", "{0}");
+        public static ModelBuilderError InvalidDatabaseName  = new ModelBuilderError("PS1001", "Invalid Database Name", "{0}");
+        public static ModelBuilderError InvalidTableBuilder  = new ModelBuilderError("PS1002", "Invalid Table Builder", "{0}");
+        public static ModelBuilderError InvalidTableSelector = new ModelBuilderError("PS1003", "Invalid Table Selector", "{0}");
     }
 }
