@@ -347,7 +347,7 @@ namespace Passado.Analyzers.Tests
                                              .PrimaryKey(t => t.UserId)
                                              .Build())
                                 .Build();";
-            
+
             var diagnostics = await RunModelDiagnostics(mb);
 
             Assert.Equal(1, diagnostics.Count());
@@ -394,7 +394,7 @@ namespace Passado.Analyzers.Tests
 
             Assert.Equal(0, diagnostics.Count());
         }
-        
+
         [Theory]
         [InlineData("int", "t => (int)t.UserId")]
         public async void Diagnostic_On_PrimaryKey_Cast_Not_Asc_Or_Desc(string error, string selector)
@@ -416,7 +416,7 @@ namespace Passado.Analyzers.Tests
             Assert.Equal(error, e);
             Assert.Equal(ModelAnalyzer.InvalidOrderedSelectorCastType, d.Id);
         }
-        
+
         [Fact]
         public async void No_Diagnostic_On_Valid_Index()
         {
@@ -439,7 +439,7 @@ namespace Passado.Analyzers.Tests
         {
             Assert.True(false);
         }
-        
+
         [Theory]
         [InlineData("clustered: true",
                     @"return mb.Database(nameof(Database))
@@ -461,7 +461,7 @@ namespace Passado.Analyzers.Tests
             Assert.Equal(error, e);
             Assert.Equal(ModelAnalyzer.MultipleClusteredIndicies, d.Id);
         }
-        
+
         [Theory]
         [InlineData(@"name: ""A""",
                     @"return mb.Database(nameof(Database))

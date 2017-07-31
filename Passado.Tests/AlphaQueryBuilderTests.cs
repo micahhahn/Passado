@@ -54,7 +54,7 @@ namespace Passado.Tests
             queryBuilder.From(t => t.Users)
                         .Where(t => Expression.Constant(localParam));
         }
-        
+
         public void DynamicQuery(IQueryBuilder<Database> queryBuilder)
         {
             queryBuilder.From(t => t.Users)
