@@ -180,9 +180,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnalyzerHelperTests.cs" />
-    <Compile Include="CodeAnalyzerHelper.cs" />
-    <Compile Include="ModelAnalyzerTests.cs" />
     <Compile Include="ModelBuilderAnalyzerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
