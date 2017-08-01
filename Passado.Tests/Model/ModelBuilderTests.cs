@@ -18,7 +18,7 @@ namespace Passado.Tests.Model
 {
     public class ModelBuilderTests : ModelBuilderTestsBase
     {
-        public async override Task<List<(string ErrorId, string ErrorText, Location Location)>> GetErrorsFromCompilation(Compilation compilation)
+        public override Task<List<(string ErrorId, string ErrorText, Location Location)>> GetErrorsFromCompilation(Compilation compilation)
         {
             using (var memoryStream = new MemoryStream())
             {
@@ -53,15 +53,15 @@ namespace Passado.Tests.Model
                         if (ex.InnerException is ModelBuilderException)
                         {
                             var mbException = ex.InnerException as ModelBuilderException;
-
-                            return new List<(string ErrorId, string ErrorText, Location Location)>()
+                            
+                            return Task.FromResult(new List<(string ErrorId, string ErrorText, Location Location)>()
                             {
                                 (mbException.ErrorId, mbException.Message, null)
-                            };
+                            });
                         }
                     }
 
-                    return new List<(string ErrorId, string ErrorText, Location Location)>();
+                    return Task.FromResult(new List<(string ErrorId, string ErrorText, Location Location)>());
                 }
             }
         }

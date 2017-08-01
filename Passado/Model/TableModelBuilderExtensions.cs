@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -15,7 +16,8 @@ namespace Passado.Model
                                                                          string name = null,
                                                                          string schema = null)
         {
-            var builder = new InternalTableBuilder<TDatabase, TTable>();
+
+            var builder = new InternalTableBuilder<TDatabase, TTable>((@this as TableBuilder<TDatabase>).DatabaseBuilder);
 
             if (table == null)
                 throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, "The table selector cannot be null.");
@@ -25,8 +27,16 @@ namespace Passado.Model
             if (builder.PropertyName == null)
                 throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"The table selector must be a property of '{typeof(TDatabase).Name}'.");
 
-            builder.Name = name;
+            {
+                var priorTable = builder.DatabaseBuilder.Tables.FirstOrDefault(t => t.PropertyName == builder.PropertyName);
+                if (priorTable != null)
+                    throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"Property '{builder.PropertyName}' of type '{typeof(TDatabase).Name}' has already been used as a table specification for table '{BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)}'.");
+            }
+
+            builder.Name = name != null ? name : builder.PropertyName;
             builder.Schema = schema;
+            
+
 
             return builder;
         }

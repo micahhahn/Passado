@@ -30,5 +30,13 @@ namespace Passado.Model
                 return memberExpression.Member.Name;
             }
         }
+
+        public static string GetTableName(string schema, string table)
+        {
+            if (schema == null)
+                return table;
+            else
+                return $"{schema}.{table}";
+        }
     }
 }

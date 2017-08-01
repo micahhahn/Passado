@@ -30,7 +30,7 @@ namespace Passado.Model
             if (table == null)
                 throw new ModelBuilderException(ModelBuilderError.InvalidTableBuilder, "The table builder cannot be null.");
 
-            builder.Tables.Add(table(new Table.TableBuilder<TDatabase>()));
+            builder.Tables.Add(table(new Table.TableBuilder<TDatabase>(builder)));
 
             return builder;
         }

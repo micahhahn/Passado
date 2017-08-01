@@ -164,5 +164,19 @@ namespace Passado.Tests.Model
 
             await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
         }
+
+        [Theory]
+        [InlineData("t => t.Users", @"var _ = mb.Database(nameof(Database))
+                                                .Table(d => d.Table(t => t.Users)
+                                                             .Column(t => t.UserId, SqlType.Int)
+                                                             .Build())
+                                                .Table(d => d.Table(t => t.Users)
+                                                             .Column(t => t.UserId, SqlType.Int)
+                                                             .Build())
+                                                .Build();")]
+        public async void Table__Error_On_Repeated_Table_Selector(string error, string mb)
+        {
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, error);
+        }
     }
 }
