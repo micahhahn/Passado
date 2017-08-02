@@ -15,7 +15,7 @@ namespace Passado.Model
             var builder = new InternalDatabaseBuilder<TDatabase>();
 
             if (string.IsNullOrWhiteSpace(name))
-                throw new ModelBuilderException(ModelBuilderError.InvalidDatabaseName, "A database name cannot be null.");
+                throw ModelBuilderError.NullDatabaseName().AsException();
             
             builder.Name = name;
 
@@ -28,7 +28,7 @@ namespace Passado.Model
             var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             if (table == null)
-                throw new ModelBuilderException(ModelBuilderError.InvalidTableBuilder, "The table builder cannot be null.");
+                throw ModelBuilderError.NullTableBuilder().AsException();
 
             builder.Tables.Add(table(new Table.TableBuilder<TDatabase>(builder)));
 

@@ -11,8 +11,8 @@ namespace Passado
             throw new NotImplementedException();
         }
 
-        public ModelBuilderException(ModelBuilderError error, string message)
-            : base(string.Format(error.MessageFormat, message))
+        public ModelBuilderException(ModelBuilderError error)
+            : base(error.Message)
         {
             ErrorId = error.ErrorId;
             Title = error.Title;

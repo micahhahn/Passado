@@ -104,6 +104,7 @@ namespace Passado.Tests.Model
             var error = errors.First();
 
             Assert.Equal(modelError.ErrorId, error.ErrorId);
+            Assert.Equal(modelError.Message, error.ErrorText);
 
             if (error.LocationText != null)
             {
@@ -130,7 +131,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidDatabaseName, databaseName);
+            await VerifyErrorRaised(mb, ModelBuilderError.NullDatabaseName(), databaseName);
         }
 
         [Theory]
@@ -151,7 +152,7 @@ namespace Passado.Tests.Model
                                  .Table(" + tableBuilder + @")
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableBuilder, tableBuilder);
+            await VerifyErrorRaised(mb, ModelBuilderError.NullTableBuilder(), tableBuilder);
         }
 
         [Theory]
@@ -164,7 +165,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.TableNullSelector(), selector);
         }
 
         [Theory]
@@ -178,7 +179,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.TableInvalidSelector("Database"), selector);
         }
 
         [Theory]
@@ -192,12 +193,13 @@ namespace Passado.Tests.Model
                                                 .Build();")]
         public async void Table__Error_On_Repeated_Table_Selector(string error, string mb)
         {
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, error);
+            await VerifyErrorRaised(mb, ModelBuilderError.TableRepeatedSelector("Database", "Users", "Users"), error);
         }
 
         [Theory]
         [InlineData("t => t.Users", 
                     null,
+                    "Users",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Addresses, name: ""Users"")
                                                 .Column(t => t.AddressId, SqlType.Int)
@@ -208,6 +210,7 @@ namespace Passado.Tests.Model
                                 .Build();")]
         [InlineData("name: \"Users\"",
                     null,
+                    "Users",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Users)
                                             .Column(t => t.UserId, SqlType.Int)
@@ -218,6 +221,7 @@ namespace Passado.Tests.Model
                                 .Build();")]
         [InlineData("name: \"A\"",
                     null,
+                    "A",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Users, name: ""A"")
                                             .Column(t => t.UserId, SqlType.Int)
@@ -228,6 +232,7 @@ namespace Passado.Tests.Model
                                 .Build();")]
         [InlineData("t => t.Users",
                     "schema: \"A\"",
+                    "A.Users",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Addresses, schema: ""A"", name: ""Users"")
                                                 .Column(t => t.AddressId, SqlType.Int)
@@ -238,6 +243,7 @@ namespace Passado.Tests.Model
                                 .Build();")]
         [InlineData("name: \"Users\"", 
                     "schema: \"A\"",
+                    "A.Users",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Users, schema: ""A"")
                                             .Column(t => t.UserId, SqlType.Int)
@@ -248,6 +254,7 @@ namespace Passado.Tests.Model
                                 .Build();")]
         [InlineData("name: \"A\"", 
                     "schema: \"A\"",
+                    "A.A",
                     @"var _ = mb.Database(nameof(Database))
                                 .Table(d => d.Table(t => t.Users, schema: ""A"", name: ""A"")
                                             .Column(t => t.UserId, SqlType.Int)
@@ -256,9 +263,9 @@ namespace Passado.Tests.Model
                                             .Column(t => t.AddressId, SqlType.Int)
                                             .Build())
                                 .Build();")]
-        public async void Table__Error_On_Repeated_Table_Name(string error, string additionalLocation, string mb)
+        public async void Table__Error_On_Repeated_Table_Name(string error, string additionalLocation, string name, string mb)
         {
-            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, error, additionalLocation);
+            await VerifyErrorRaised(mb, ModelBuilderError.TableRepeatedName(name), error, additionalLocation);
         }
     }
 }

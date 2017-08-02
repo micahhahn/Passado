@@ -20,26 +20,24 @@ namespace Passado.Model
             var builder = new InternalTableBuilder<TDatabase, TTable>((@this as TableBuilder<TDatabase>).DatabaseBuilder);
 
             if (table == null)
-                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, "The table selector cannot be null.");
+                throw ModelBuilderError.TableNullSelector().AsException();
 
             builder.PropertyName = BuilderHelper.ParseSelector(table);
 
             if (builder.PropertyName == null)
-                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"The table selector must be a property of '{typeof(TDatabase).Name}'.");
-
+                throw ModelBuilderError.TableInvalidSelector(database: typeof(TDatabase).Name).AsException();
+            
             {
                 var priorTable = builder.DatabaseBuilder.Tables.FirstOrDefault(t => t.PropertyName == builder.PropertyName);
                 if (priorTable != null)
-                    throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"Property '{builder.PropertyName}' of type '{typeof(TDatabase).Name}' has already been used as a table specification for table '{BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)}'.");
+                    throw ModelBuilderError.TableRepeatedSelector(database: typeof(TDatabase).Name, property: builder.PropertyName, otherTable: BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)).AsException();
             }
 
             builder.Name = name != null ? name : builder.PropertyName;
             builder.Schema = schema;
             
             if (builder.DatabaseBuilder.Tables.Any(t => t.Schema == builder.Schema && t.Name == builder.Name))
-            {
-                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"Table name '{BuilderHelper.GetTableName(builder.Schema, builder.Name)}' has already been used.");
-            }
+                throw ModelBuilderError.TableRepeatedName(BuilderHelper.GetTableName(builder.Schema, builder.Name)).AsException();
             
             return builder;
         }
@@ -55,7 +53,7 @@ namespace Passado.Model
                                                                                     IDatabaseTypeConverter<TColumn> converter = null)
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
-
+            
             return builder;
         }
 

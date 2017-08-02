@@ -90,17 +90,17 @@ namespace Passado.Analyzers
             }
         }
         
-        public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError error)
-        {
-            var optional = ParseSelector(context, argument, error, "", false);
+        //public static Optional<(FuzzyProperty, Location)> ParsePropertyLocation(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError error)
+        //{
+        //    var optional = ParseSelector(context, argument, error, "", false);
 
-            if (!optional.HasValue)
-                return new Optional<(FuzzyProperty, Location)>();
+        //    if (!optional.HasValue)
+        //        return new Optional<(FuzzyProperty, Location)>();
 
-            return Just((optional.Value, argument.GetLocation()));
-        }
+        //    return Just((optional.Value, argument.GetLocation()));
+        //}
 
-        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError error, string selectorType, bool isOptional)
+        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError nullError, ModelBuilderError propertyError, bool isOptional)
         {
             // Check if argument is null.  
             var constant = context.SemanticModel.GetConstantValue(argument.Expression);
@@ -112,7 +112,7 @@ namespace Passado.Analyzers
                 }
                 else
                 {
-                    context.ReportDiagnostic(error.MakeDiagnostic(argument.GetLocation(), $"A {selectorType} selector cannot be null."));
+                    context.ReportDiagnostic(nullError.MakeDiagnostic(argument.GetLocation()));
                     return new Optional<FuzzyProperty>();
                 }
             }
@@ -120,7 +120,7 @@ namespace Passado.Analyzers
             // If the argument is null, this must be an optional property
             if (argument == null)
                 return new Optional<FuzzyProperty>(null);
-
+            
             var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
 
             if (lambdaExpression == null)
@@ -130,7 +130,7 @@ namespace Passado.Analyzers
             
             if (selector == null || !(context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol))
             {
-                context.ReportDiagnostic(error.MakeDiagnostic(argument.GetLocation(), $"The table selector must be a property of ''."));
+                context.ReportDiagnostic(propertyError.MakeDiagnostic(argument.GetLocation()));
                 return new Optional<FuzzyProperty>(null);
             }
             else

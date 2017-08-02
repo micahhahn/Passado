@@ -19,13 +19,13 @@ namespace Passado.Analyzers.Tests
 {
     public class ModelBuilderAnalyzerTests : ModelBuilderTestsBase
     {
+        public static ModelAnalyzer _modelAnalyzer = new ModelAnalyzer();
+
         public override async Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation)
         {
             var compilationDiagnostics = compilation.GetDiagnostics();
-
-            var analyzer = new ModelAnalyzer();
-
-            var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(analyzer));
+            
+            var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(_modelAnalyzer));
 
             var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
 

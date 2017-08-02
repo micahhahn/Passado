@@ -32,6 +32,24 @@ namespace Passado.Analyzers
             return $"FK_{(schema != null ? $"{schema}_" : "")}{tableName}__{string.Join("_", keyColumns)}__{(referenceSchema != null ? $"{referenceSchema}_" : "")}{referenceTableName}";
         }
 
+        static string ToString(Optional<string> name)
+        {
+            return name.HasValue ? name.Value : "?";
+        }
+
+        static string ToString(Optional<FuzzyProperty> property)
+        {
+            return property.HasValue ? property.Value.Name : "?";
+        }
+
+        static string ToString(FuzzyTableModel table)
+        {
+            var schema = table.Schema.HasValue ? table.Schema.Value : "?";
+            var name = table.Name.HasValue ? table.Name.Value : "?";
+
+            return schema == null ? name : $"{schema}.{name}";
+        }
+
         static FuzzyTableModel ParseTableTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
             var arguments = AH.ParseArguments(context, expression);
@@ -40,7 +58,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = AH.ParseSelector(context, tableArg, ModelBuilderError.InvalidTableSelector, "table", false);
+            var property = AH.ParseSelector(context, tableArg, ModelBuilderError.TableNullSelector(), ModelBuilderError.TableInvalidSelector(ToString(partialDatabase.Name)), false);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -56,17 +74,19 @@ namespace Passado.Analyzers
 
             if (fuzzyTableModel.Property.HasValue)
             {
-                if (partialDatabase.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name))
-                    context.ReportDiagnostic(ModelBuilderError.InvalidTableSelector.MakeDiagnostic(tableArg.GetLocation(), ""));
+                var priorTable = partialDatabase.Tables.FirstOrDefault(t => t.Property.HasValue && t.Property.Value.Name == fuzzyTableModel.Property.Value.Name);
+                if (priorTable != null)
+                    context.ReportDiagnostic(ModelBuilderError.TableRepeatedSelector(ToString(partialDatabase.Name), ToString(fuzzyTableModel.Property), ToString(priorTable)).MakeDiagnostic(tableArg.GetLocation()));
             }
             
             if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
-                if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
-                                                    t.Schema.HasValue &&
-                                                    t.Name.Value == fuzzyTableModel.Name.Value &&
-                                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
-                    context.ReportDiagnostic(ModelBuilderError.InvalidTableSelector.MakeDiagnostic(nameArg != null ? nameArg.GetLocation() : tableArg.GetLocation(), "", schemaArg != null ? new List<Location>() { schemaArg.GetLocation() } : null));
+                var priorTable = partialDatabase.Tables.FirstOrDefault(t => t.Name.HasValue &&
+                                                                            t.Schema.HasValue &&
+                                                                            t.Name.Value == fuzzyTableModel.Name.Value &&
+                                                                            t.Schema.Value == fuzzyTableModel.Schema.Value);
+                if (priorTable != null)
+                    context.ReportDiagnostic(ModelBuilderError.TableRepeatedName(ToString(priorTable)).MakeDiagnostic(nameArg != null ? nameArg.GetLocation() : tableArg.GetLocation(), schemaArg != null ? new List<Location>() { schemaArg.GetLocation() } : null));
             }
 
             return fuzzyTableModel;
@@ -103,7 +123,7 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseSelector(context, columnArg, null, "column", false);
+            var property = AH.ParseSelector(context, columnArg, null, null, false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -281,7 +301,7 @@ namespace Passado.Analyzers
             var fuzzyForeignKey = new FuzzyForeignKeyModel()
             {
                 KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
-                ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
+                //ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
                 ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg),
                 UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
@@ -312,7 +332,7 @@ namespace Passado.Analyzers
             };
 
             if (databaseModel.Name.HasValue && databaseModel.Name.Value == null)
-                context.ReportDiagnostic(ModelBuilderError.InvalidDatabaseName.MakeDiagnostic(nameArg.GetLocation(), "A database name cannot be null."));
+                context.ReportDiagnostic(ModelBuilderError.NullDatabaseName().MakeDiagnostic(nameArg.GetLocation()));
 
             return databaseModel;
         }
@@ -355,7 +375,7 @@ namespace Passado.Analyzers
                 var constant = context.SemanticModel.GetConstantValue(tableArg.Expression);
 
                 if (constant.HasValue && constant.Value == null)
-                    context.ReportDiagnostic(ModelBuilderError.InvalidTableBuilder.MakeDiagnostic(tableArg.GetLocation(), "The table builder cannot be null."));
+                    context.ReportDiagnostic(ModelBuilderError.NullTableBuilder().MakeDiagnostic(tableArg.GetLocation()));
             }
 
             return innerModel;

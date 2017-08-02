@@ -10,21 +10,21 @@ namespace Passado.Analyzers
 {
     public static class ModelBuilderErrorExtensions
     {
-        public static Diagnostic MakeDiagnostic(this ModelBuilderError error, Location location, string message, IEnumerable<Location> additionalLocations = null)
+        public static Diagnostic MakeDiagnostic(this ModelBuilderError error, Location location, IEnumerable<Location> additionalLocations = null)
         {
-            return Diagnostic.Create(error.AsDiagnostic(), location, additionalLocations, message);
+            return Diagnostic.Create(error.AsDiagnostic(), location, additionalLocations);
         }
 
         public static DiagnosticDescriptor AsDiagnostic(this ModelBuilderError error)
         {
-            return new DiagnosticDescriptor(error.ErrorId, error.Title, error.MessageFormat, "Passado", DiagnosticSeverity.Error, true);
+            return new DiagnosticDescriptor(error.ErrorId, error.Title, error.Message, "Passado", DiagnosticSeverity.Error, true);
         }
 
         public static ImmutableArray<DiagnosticDescriptor> AllDiagnostics()
         {
-            return typeof(ModelBuilderError).GetRuntimeFields()
-                                            .Where(f => f.FieldType == typeof(ModelBuilderError))
-                                            .Select(f => (f.GetValue(null) as ModelBuilderError).AsDiagnostic())
+            return typeof(ModelBuilderError).GetRuntimeMethods()
+                                            .Where(m => m.ReturnType == typeof(ModelBuilderError))
+                                            .Select(m => (m.Invoke(null, m.GetParameters().Select(p => null as object).ToArray()) as ModelBuilderError).AsDiagnostic())
                                             .ToImmutableArray();
         }
     }
