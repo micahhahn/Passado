@@ -68,7 +68,12 @@ namespace Passado.Model
                     throw ModelBuilderError.ColumnRepeatedSelector(typeof(TTable).Name, columnProperty, priorColumn.Name).AsException();
             }
 
-            builder.Columns.Add(new ColumnModel(name: "A",
+            var columnName = name != null ? name : columnProperty;
+
+            if (builder.Columns.Any(t => t.Name == columnName))
+                throw ModelBuilderError.ColumnRepeatedName(builder.Name, columnName).AsException();
+
+            builder.Columns.Add(new ColumnModel(name: columnName,
                                                 propertyName: columnProperty,
                                                 sqlType: type,
                                                 isNullable: nullable,

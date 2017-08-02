@@ -294,7 +294,7 @@ namespace Passado.Tests.Model
         }
 
         [Fact]
-        public async void Column__Error_On_Repeated_Column_Name()
+        public async void Column__Error_On_Repeated_Column_Selector()
         {
             var selector = "t => t.UserId";
             var mb = @"mb.Database(nameof(Database))
@@ -305,6 +305,21 @@ namespace Passado.Tests.Model
                          .Build();";
 
             await VerifyErrorRaised(mb, ModelBuilderError.ColumnRepeatedSelector("User", "UserId", "A"), selector);
+        }
+
+        [Theory]
+        [InlineData("t => t.FirstName", ".Column({0}, SqlType.String)")]
+        [InlineData("name: \"FirstName\"", ".Column(t => t.FirstName, SqlType.String, {0})")]
+        public async void Column__Error_On_Repeated_Column_Name(string errorLocation, string column)
+        {
+            var mb = @"mb.Database(nameof(Database))
+                         .Table(d => d.Table(t => t.Users)
+                                      .Column(t => t.UserId, SqlType.Int, name: ""FirstName"")
+                                      " + string.Format(column, errorLocation) + @"
+                                      .Build())
+                         .Build();";
+
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnRepeatedName("Users", "FirstName"), errorLocation);
         }
     }
 }
