@@ -148,8 +148,9 @@ namespace Passado.Analyzers
 
             if (fuzzyColumnModel.Property.HasValue)
             {
-                //if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
-                //    context.ReportDiagnostic(ModelBuilderError.ColumnInvalidSelector(ToString(innerModel.Property)).MakeDiagnostic(columnArg.GetLocation()));
+                var otherColumn = innerModel.Columns.FirstOrDefault(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name);
+                if (otherColumn != null)
+                    context.ReportDiagnostic(ModelBuilderError.ColumnRepeatedSelector(ToTypeString(innerModel.Property), ToString(fuzzyColumnModel.Property), ToString(otherColumn.Name)).MakeDiagnostic(columnArg.GetLocation()));
             }
 
             if (fuzzyColumnModel.Name.HasValue)

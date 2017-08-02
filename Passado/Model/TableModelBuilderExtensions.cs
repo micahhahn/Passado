@@ -62,6 +62,19 @@ namespace Passado.Model
             if (columnProperty == null)
                 throw ModelBuilderError.ColumnInvalidSelector(typeof(TTable).Name).AsException();
 
+            {
+                var priorColumn = builder.Columns.FirstOrDefault(c => c.PropertyName == columnProperty);
+                if (priorColumn != null)
+                    throw ModelBuilderError.ColumnRepeatedSelector(typeof(TTable).Name, columnProperty, priorColumn.Name).AsException();
+            }
+
+            builder.Columns.Add(new ColumnModel(name: "A",
+                                                propertyName: columnProperty,
+                                                sqlType: type,
+                                                isNullable: nullable,
+                                                isIdentity: identity,
+                                                defaultValue: defaultValue));
+
             return builder;
         }
 

@@ -292,5 +292,19 @@ namespace Passado.Tests.Model
         {
             await VerifyErrorRaised(mb, ModelBuilderError.ColumnInvalidSelector("User"), selector);
         }
+
+        [Fact]
+        public async void Column__Error_On_Repeated_Column_Name()
+        {
+            var selector = "t => t.UserId";
+            var mb = @"mb.Database(nameof(Database))
+                         .Table(d => d.Table(t => t.Users)
+                                      .Column(" + selector + @", SqlType.Int, name: ""A"")
+                                      .Column(" + selector + @", SqlType.Int)
+                                      .Build())
+                         .Build();";
+
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnRepeatedSelector("User", "UserId", "A"), selector);
+        }
     }
 }
