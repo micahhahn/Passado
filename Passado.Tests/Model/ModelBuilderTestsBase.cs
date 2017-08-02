@@ -267,5 +267,18 @@ namespace Passado.Tests.Model
         {
             await VerifyErrorRaised(mb, ModelBuilderError.TableRepeatedName(name), error, additionalLocation);
         }
+
+        [Theory]
+        [InlineData("(Expression<Func<User, int>>)null")]
+        public async void Column__Error_On_Null_Column_Selector(string selector)
+        {
+            var mb = @"var _ = mb.Database(nameof(Database))
+                                 .Table(d => d.Table(t => t.Users)
+                                              .Column(" + selector + @", SqlType.Int)
+                                              .Build())
+                                 .Build();";
+
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnNullSelector(), selector);
+        }
     }
 }

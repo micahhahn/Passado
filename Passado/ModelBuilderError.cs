@@ -27,6 +27,9 @@ namespace Passado
         public static ModelBuilderError TableNullSelector() => new ModelBuilderError("PS1003", "Null Table Selector", "A table selector cannot be null.");
         public static ModelBuilderError TableInvalidSelector(string database) => new ModelBuilderError("PS1004", "Invalid Table Selector", $"The table selector must be a property of '{database}'.");
         public static ModelBuilderError TableRepeatedSelector(string database, string property, string otherTable) => new ModelBuilderError("PS1005", "Repeated Table Selector", $"Property '{property}' of type '{database}' has already been used as a table specification for table '{otherTable}'.");
-        public static ModelBuilderError TableRepeatedName(string name) => new ModelBuilderError("PS1006", "Repeated Table Name", $"Table name '{name}' has already been used.");   
+        public static ModelBuilderError TableRepeatedName(string name) => new ModelBuilderError("PS1006", "Repeated Table Name", $"Table name '{name}' has already been used.");
+
+        // Column errors
+        public static ModelBuilderError ColumnNullSelector() => new ModelBuilderError("PS1007", "Null Column Selector", "A column selector cannot be null.");
     }
 }

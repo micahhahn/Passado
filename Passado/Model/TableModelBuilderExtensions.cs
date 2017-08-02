@@ -53,7 +53,10 @@ namespace Passado.Model
                                                                                     IDatabaseTypeConverter<TColumn> converter = null)
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
-            
+
+            if (column == null)
+                throw ModelBuilderError.ColumnNullSelector().AsException();
+
             return builder;
         }
 

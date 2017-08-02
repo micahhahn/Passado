@@ -123,7 +123,7 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseSelector(context, columnArg, null, null, false);
+            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ColumnNullSelector(), null, false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -136,6 +136,8 @@ namespace Passado.Analyzers
                                                                         AH.Just(property.Value?.Name))
             };
         
+
+
             if (fuzzyColumnModel.Property.HasValue)
             {
                 //if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
