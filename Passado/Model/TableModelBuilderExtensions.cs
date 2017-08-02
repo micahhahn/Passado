@@ -56,6 +56,11 @@ namespace Passado.Model
 
             if (column == null)
                 throw ModelBuilderError.ColumnNullSelector().AsException();
+            
+            var columnProperty = BuilderHelper.ParseSelector(column);
+
+            if (columnProperty == null)
+                throw ModelBuilderError.ColumnInvalidSelector(typeof(TTable).Name).AsException();
 
             return builder;
         }

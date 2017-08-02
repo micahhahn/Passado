@@ -272,13 +272,25 @@ namespace Passado.Tests.Model
         [InlineData("(Expression<Func<User, int>>)null")]
         public async void Column__Error_On_Null_Column_Selector(string selector)
         {
-            var mb = @"var _ = mb.Database(nameof(Database))
-                                 .Table(d => d.Table(t => t.Users)
-                                              .Column(" + selector + @", SqlType.Int)
-                                              .Build())
-                                 .Build();";
+            var mb = @"mb.Database(nameof(Database))
+                         .Table(d => d.Table(t => t.Users)
+                                      .Column(" + selector + @", SqlType.Int)
+                                      .Build())
+                         .Build();";
 
             await VerifyErrorRaised(mb, ModelBuilderError.ColumnNullSelector(), selector);
+        }
+
+        [Theory]
+        [InlineData("t => userId", @"var userId = 0;
+                                     mb.Database(nameof(Database))
+                                       .Table(d => d.Table(t => t.Users)
+                                                    .Column(t => userId, SqlType.Int)
+                                                    .Build())
+                                       .Build();")]
+        public async void Column__Error_On_Invalid_Column_Selector(string selector, string mb)
+        {
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnInvalidSelector("User"), selector);
         }
     }
 }

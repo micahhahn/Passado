@@ -42,6 +42,14 @@ namespace Passado.Analyzers
             return property.HasValue ? property.Value.Name : "?";
         }
 
+        static string ToTypeString(Optional<FuzzyProperty> property)
+        {
+            if (property.HasValue)
+                return (property.Value.Type as INamedTypeSymbol).TypeArguments[0].Name;
+            else
+                return "?";
+        }
+
         static string ToString(FuzzyTableModel table)
         {
             var schema = table.Schema.HasValue ? table.Schema.Value : "?";
@@ -123,7 +131,7 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ColumnNullSelector(), null, false);
+            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ColumnNullSelector(), ModelBuilderError.ColumnInvalidSelector(ToTypeString(innerModel.Property)), false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -141,7 +149,7 @@ namespace Passado.Analyzers
             if (fuzzyColumnModel.Property.HasValue)
             {
                 //if (innerModel.Columns.Any(t => t.Property.HasValue && t.Property.Value.Name == fuzzyColumnModel.Property.Value.Name))
-                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedColumnSelector], columnArg.GetLocation()));
+                //    context.ReportDiagnostic(ModelBuilderError.ColumnInvalidSelector(ToString(innerModel.Property)).MakeDiagnostic(columnArg.GetLocation()));
             }
 
             if (fuzzyColumnModel.Name.HasValue)

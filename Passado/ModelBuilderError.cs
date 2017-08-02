@@ -31,5 +31,6 @@ namespace Passado
 
         // Column errors
         public static ModelBuilderError ColumnNullSelector() => new ModelBuilderError("PS1007", "Null Column Selector", "A column selector cannot be null.");
+        public static ModelBuilderError ColumnInvalidSelector(string table) => new ModelBuilderError("PS1008", "Invalid Column Selector", $"The column selector must be a property of '{table}'.");
     }
 }
