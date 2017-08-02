@@ -62,11 +62,11 @@ namespace Passado.Analyzers
             
             if (fuzzyTableModel.Name.HasValue && fuzzyTableModel.Schema.HasValue)
             {
-                //if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
-                //                                    t.Schema.HasValue &&
-                //                                    t.Name.Value == fuzzyTableModel.Name.Value &&
-                //                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
-                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[RepeatedTableName], nameArg == null ? tableArg.GetLocation() : nameArg.GetLocation()));
+                if (partialDatabase.Tables.Any(t => t.Name.HasValue &&
+                                                    t.Schema.HasValue &&
+                                                    t.Name.Value == fuzzyTableModel.Name.Value &&
+                                                    t.Schema.Value == fuzzyTableModel.Schema.Value))
+                    context.ReportDiagnostic(ModelBuilderError.InvalidTableSelector.MakeDiagnostic(nameArg != null ? nameArg.GetLocation() : tableArg.GetLocation(), "", schemaArg != null ? new List<Location>() { schemaArg.GetLocation() } : null));
             }
 
             return fuzzyTableModel;

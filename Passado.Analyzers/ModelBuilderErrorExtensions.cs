@@ -10,9 +10,9 @@ namespace Passado.Analyzers
 {
     public static class ModelBuilderErrorExtensions
     {
-        public static Diagnostic MakeDiagnostic(this ModelBuilderError error, Location location, string message)
+        public static Diagnostic MakeDiagnostic(this ModelBuilderError error, Location location, string message, IEnumerable<Location> additionalLocations = null)
         {
-            return Diagnostic.Create(error.AsDiagnostic(), location, message);
+            return Diagnostic.Create(error.AsDiagnostic(), location, additionalLocations, message);
         }
 
         public static DiagnosticDescriptor AsDiagnostic(this ModelBuilderError error)

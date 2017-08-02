@@ -29,9 +29,9 @@ namespace Passado.Tests.Model
             MetadataReference.CreateFromFile(typeof(IQueryBuilder<>).GetTypeInfo().Assembly.Location),
         };
 
-        public abstract Task<List<(string ErrorId, string ErrorText, Location Location)>> GetErrorsFromCompilation(Compilation compilation);
+        public abstract Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation);
 
-        async Task<List<(string ErrorId, string ErrorText, string LocationText)>> GetErrorsFromModelBuilder(string mb)
+        async Task<List<(string ErrorId, string ErrorText, string LocationText, string AdditionalLocationText)>> GetErrorsFromModelBuilder(string mb)
         {
             var source = @"
                 using System;
@@ -45,9 +45,15 @@ namespace Passado.Tests.Model
                     public string FirstName { get; set; }
                 }
 
+                public class Address
+                {
+                    public int AddressId { get; set; }
+                }
+
                 public class Database
                 {
                     public IEnumerable<User> Users { get; set; }
+                    public IEnumerable<Address> Addresses { get; set; }
 
                     public static DatabaseModel ProvideModel(IDatabaseBuilder<Database> mb)
                     {
@@ -81,10 +87,15 @@ namespace Passado.Tests.Model
 
             var errors = await GetErrorsFromCompilation(await project.GetCompilationAsync());
 
-            return errors.Select(e => (e.ErrorId, e.ErrorText, e.Location == null ? null : source.Substring(e.Location.SourceSpan.Start, e.Location.SourceSpan.Length))).ToList();
+            string GetLocationText(Location location)
+            {
+                return location == null ? null : source.Substring(location.SourceSpan.Start, location.SourceSpan.Length);
+            }
+
+            return errors.Select(e => (e.ErrorId, e.ErrorText, GetLocationText(e.Location), GetLocationText(e.AdditionalLocation))).ToList();
         }
 
-        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, string locationText)
+        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, string locationText, string additionalLocationText = null)
         {
             var errors = await GetErrorsFromModelBuilder(mb);
 
@@ -97,6 +108,11 @@ namespace Passado.Tests.Model
             if (error.LocationText != null)
             {
                 Assert.Equal(locationText, error.LocationText);
+
+                if (additionalLocationText != null)
+                {
+                    Assert.Equal(additionalLocationText, error.AdditionalLocationText);
+                }
             }
         }
 
@@ -170,13 +186,79 @@ namespace Passado.Tests.Model
                                                 .Table(d => d.Table(t => t.Users)
                                                              .Column(t => t.UserId, SqlType.Int)
                                                              .Build())
-                                                .Table(d => d.Table(t => t.Users)
+                                                .Table(d => d.Table(t => t.Users, name: ""A"")
                                                              .Column(t => t.UserId, SqlType.Int)
                                                              .Build())
                                                 .Build();")]
         public async void Table__Error_On_Repeated_Table_Selector(string error, string mb)
         {
             await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, error);
+        }
+
+        [Theory]
+        [InlineData("t => t.Users", 
+                    null,
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Addresses, name: ""Users"")
+                                                .Column(t => t.AddressId, SqlType.Int)
+                                                .Build())
+                                .Table(d => d.Table(t => t.Users)
+                                                .Column(t => t.UserId, SqlType.Int)
+                                                .Build())
+                                .Build();")]
+        [InlineData("name: \"Users\"",
+                    null,
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users)
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .Build())
+                                .Table(d => d.Table(t => t.Addresses, name: ""Users"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .Build())
+                                .Build();")]
+        [InlineData("name: \"A\"",
+                    null,
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users, name: ""A"")
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .Build())
+                                .Table(d => d.Table(t => t.Addresses, name: ""A"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .Build())
+                                .Build();")]
+        [InlineData("t => t.Users",
+                    "schema: \"A\"",
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Addresses, schema: ""A"", name: ""Users"")
+                                                .Column(t => t.AddressId, SqlType.Int)
+                                                .Build())
+                                .Table(d => d.Table(t => t.Users, schema: ""A"")
+                                                .Column(t => t.UserId, SqlType.Int)
+                                                .Build())
+                                .Build();")]
+        [InlineData("name: \"Users\"", 
+                    "schema: \"A\"",
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users, schema: ""A"")
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .Build())
+                                .Table(d => d.Table(t => t.Addresses, schema: ""A"", name: ""Users"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .Build())
+                                .Build();")]
+        [InlineData("name: \"A\"", 
+                    "schema: \"A\"",
+                    @"var _ = mb.Database(nameof(Database))
+                                .Table(d => d.Table(t => t.Users, schema: ""A"", name: ""A"")
+                                            .Column(t => t.UserId, SqlType.Int)
+                                            .Build())
+                                .Table(d => d.Table(t => t.Addresses, schema: ""A"", name: ""A"")
+                                            .Column(t => t.AddressId, SqlType.Int)
+                                            .Build())
+                                .Build();")]
+        public async void Table__Error_On_Repeated_Table_Name(string error, string additionalLocation, string mb)
+        {
+            await VerifyErrorRaised(mb, ModelBuilderError.InvalidTableSelector, error, additionalLocation);
         }
     }
 }

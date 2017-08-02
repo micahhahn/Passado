@@ -19,7 +19,7 @@ namespace Passado.Analyzers.Tests
 {
     public class ModelBuilderAnalyzerTests : ModelBuilderTestsBase
     {
-        public override async Task<List<(string ErrorId, string ErrorText, Location Location)>> GetErrorsFromCompilation(Compilation compilation)
+        public override async Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation)
         {
             var compilationDiagnostics = compilation.GetDiagnostics();
 
@@ -30,7 +30,7 @@ namespace Passado.Analyzers.Tests
             var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
 
             return diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
-                              .Select(d => (d.Id, d.GetMessage(), d.Location))
+                              .Select(d => (d.Id, d.GetMessage(), d.Location, d.AdditionalLocations.FirstOrDefault()))
                               .ToList();
         }
     }

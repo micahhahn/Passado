@@ -36,8 +36,11 @@ namespace Passado.Model
             builder.Name = name != null ? name : builder.PropertyName;
             builder.Schema = schema;
             
-
-
+            if (builder.DatabaseBuilder.Tables.Any(t => t.Schema == builder.Schema && t.Name == builder.Name))
+            {
+                throw new ModelBuilderException(ModelBuilderError.InvalidTableSelector, $"Table name '{BuilderHelper.GetTableName(builder.Schema, builder.Name)}' has already been used.");
+            }
+            
             return builder;
         }
 
