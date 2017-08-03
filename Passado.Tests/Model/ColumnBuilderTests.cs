@@ -101,22 +101,35 @@ namespace Passado.Tests.Model
             await VerifyErrorRaised(mb, ModelBuilderError.ColumnEnumNotStringOrIntegralType(), errorLocation);
         }
 
-        [Fact]
-        public void Error_On_Enum_Max_Length_Bigger_Than_String_Size()
+        [Theory]
+        [InlineData("maxLength: 2", ".Column(t => t.UserType, SqlType.String, {0})")]
+        public async void Error_On_Enum_Max_Length_Bigger_Than_String_Size(string errorLocation, string column)
         {
+            var mb = @"mb.Database(nameof(Database))
+                         .Table(d => d.Table(t => t.Users)
+                                      " + string.Format(column, errorLocation) + @"
+                                      .Build())
+                         .Build();";
 
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnEnumLongerThanMaxStringSize("UserType.Winner", 2), errorLocation);
         }
 
         [Fact]
         public void Error_On_Enum_Value_Larger_Than_Int_Capacity()
         {
-
+            Assert.True(TodoDisabled);
         }
 
         [Fact]
         public void Column__Error_On_Column_Type_Not_Comparable()
         {
+            Assert.True(TodoDisabled);
+        }
 
+        [Fact]
+        public void Handling_Of_Flags_Enums()
+        {
+            Assert.True(TodoDisabled);
         }
     }
 

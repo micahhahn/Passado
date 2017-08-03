@@ -36,5 +36,6 @@ namespace Passado
         public static ModelBuilderError ColumnRepeatedName(string table, string name) => new ModelBuilderError("PS1010", "Repeated Column Name", $"Column name '{name}' already exists in table '{table}'.");
         public static ModelBuilderError ColumnIdentityNullable() => new ModelBuilderError("PS1011", "Nullable Identity Column", "An identity column cannot be nullable.");
         public static ModelBuilderError ColumnEnumNotStringOrIntegralType() => new ModelBuilderError("PS1012", "Enum Column Not String Or Int", "An enum must be mapped to either SqlType.Int or SqlType.String.");
+        public static ModelBuilderError ColumnEnumLongerThanMaxStringSize(string maxEnumValue, int maxLength) => new ModelBuilderError("PS1013", "Enum Longer Than Max String Size", $"The enum value '{maxEnumValue}' would exceed the max length of {maxLength}.");
     }
 }

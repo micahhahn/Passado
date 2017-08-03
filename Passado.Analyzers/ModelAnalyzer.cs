@@ -171,11 +171,11 @@ namespace Passado.Analyzers
                     if (fuzzyColumnModel.Type.Value == SqlType.String && fuzzyColumnModel.MaxLength.HasValue)
                     {
                         var namedType = fuzzyColumnModel.Property.Value.Type as INamedTypeSymbol;
-                        var longestEnum = namedType.MemberNames.Max(n => n.Length);
+                        var longestEnum = namedType.MemberNames.OrderByDescending(n => n.Length).First();
 
-                        //if (fuzzyColumnModel.MaxLength.Value != null && 
-                        //    fuzzyColumnModel.MaxLength.Value < longestEnum)
-                        //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                        if (fuzzyColumnModel.MaxLength.Value != null &&
+                            longestEnum.Length > fuzzyColumnModel.MaxLength.Value)
+                            context.ReportDiagnostic(ModelBuilderError.ColumnEnumLongerThanMaxStringSize($"{namedType.Name}.{longestEnum}", (int)fuzzyColumnModel.MaxLength.Value).MakeDiagnostic(maxLengthArg.GetLocation()));
                     }
                 }
                 else if (fuzzyColumnModel.Property.Value.Type.Name == "DateTimeOffset" ||

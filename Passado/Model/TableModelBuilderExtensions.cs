@@ -81,6 +81,23 @@ namespace Passado.Model
             {
                 if (!(type == SqlType.String || SqlTypeHelpers.IsIntegral(type)))
                     throw ModelBuilderError.ColumnEnumNotStringOrIntegralType().AsException();
+
+                var values = Enum.GetValues(property.Type);
+                
+                if (type == SqlType.String)
+                {
+                    var maxValue = values.Cast<object>()
+                                         .Select(e => e.ToString())
+                                         .OrderByDescending(e => e.Length)
+                                         .First();
+
+                    if (maxLength != null && maxValue.Length > maxLength)
+                        throw ModelBuilderError.ColumnEnumLongerThanMaxStringSize($"{property.Type.ToString()}.{maxValue}", (int)maxLength).AsException();
+                }
+                else
+                {
+
+                }
             }
 
             builder.Columns.Add(new ColumnModel(name: columnName,
