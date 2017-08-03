@@ -34,5 +34,6 @@ namespace Passado
         public static ModelBuilderError ColumnInvalidSelector(string table) => new ModelBuilderError("PS1008", "Invalid Column Selector", $"The column selector must be a property of '{table}'.");
         public static ModelBuilderError ColumnRepeatedSelector(string table, string property, string otherColumn) => new ModelBuilderError("PS1009", "Repeated Column Selector", $"Property '{property}' of type '{table}' has already been used as a column specification for column '{otherColumn}'.");
         public static ModelBuilderError ColumnRepeatedName(string table, string name) => new ModelBuilderError("PS1010", "Repeated Column Name", $"Column name '{name}' already exists in table '{table}'.");
+        public static ModelBuilderError ColumnIdentityNullable() => new ModelBuilderError("PS1011", "Nullable Identity Column", "An identity column cannot be nullable.");
     }
 }

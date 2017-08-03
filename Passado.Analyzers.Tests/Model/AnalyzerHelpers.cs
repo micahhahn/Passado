@@ -15,17 +15,15 @@ using Microsoft.CodeAnalysis.Text;
 
 using Passado.Tests.Model;
 
-namespace Passado.Analyzers.Tests
+namespace Passado.Analyzers.Tests.Model
 {
-    public class ModelBuilderAnalyzerTests : ModelBuilderTestsBase
+    public static class AnalyzerHelpers
     {
-        public static ModelAnalyzer _modelAnalyzer = new ModelAnalyzer();
-
-        public override async Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation)
+        public static async Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation)
         {
             var compilationDiagnostics = compilation.GetDiagnostics();
             
-            var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(_modelAnalyzer));
+            var compilationWithAnalyzers = compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new ModelAnalyzer()));
 
             var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync();
 
