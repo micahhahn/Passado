@@ -117,6 +117,9 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
+            if (keyColumns == null)
+                throw ModelBuilderError.PrimaryKeyNullSelector().AsException();
+
             return builder;
         }
 

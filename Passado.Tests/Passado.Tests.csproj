@@ -177,6 +177,7 @@
     <Compile Include="Model\ModelBuilderTests.cs" />
     <Compile Include="Model\ColumnBuilderTests.cs" />
     <Compile Include="Model\DatabaseBuilderTests.cs" />
+    <Compile Include="Model\PrimaryKeyBuilderTests.cs" />
     <Compile Include="Model\TableBuilderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -219,7 +219,7 @@ namespace Passado.Analyzers
             }).ToList());
         }
 
-        public static Optional<List<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        public static Optional<List<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError nullError)
         {
             (SortOrder, FuzzyProperty, Location) ParseOrderedProperty(ExpressionSyntax expression)
             {
@@ -251,7 +251,13 @@ namespace Passado.Analyzers
                 }
             }
 
-            if (argument.Expression is SimpleLambdaExpressionSyntax)
+            // Parse null constant
+            var constant = context.SemanticModel.GetConstantValue(argument.Expression);
+            if (constant.HasValue && constant.Value == null)
+            {
+                context.ReportDiagnostic(nullError.MakeDiagnostic(argument.GetLocation()));
+            }
+            else if (argument.Expression is SimpleLambdaExpressionSyntax)
             {
                 var lambdaBody = (argument.Expression as SimpleLambdaExpressionSyntax).Body;
 
@@ -274,9 +280,9 @@ namespace Passado.Analyzers
             return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
         }
 
-        public static Optional<List<(SortOrder, FuzzyColumnModel)>> ParseOrderedMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
+        public static Optional<List<(SortOrder, FuzzyColumnModel)>> ParseOrderedMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns, ModelBuilderError nullError)
         {
-            var optionalOrderedMultiProperty = ParseOrderedMultiProperty(context, argument);
+            var optionalOrderedMultiProperty = ParseOrderedMultiProperty(context, argument, nullError);
 
             if (!optionalOrderedMultiProperty.HasValue)
                 return new Optional<List<(SortOrder, FuzzyColumnModel)>>();

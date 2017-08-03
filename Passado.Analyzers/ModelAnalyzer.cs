@@ -237,7 +237,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var clusteredArg = arguments["clustered"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns);
+            var columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ModelBuilderError.PrimaryKeyNullSelector());
 
             var fuzzyPrimaryKey = new FuzzyPrimaryKeyModel()
             {
@@ -276,7 +276,7 @@ namespace Passado.Analyzers
             var clusteredArg = arguments["clustered"];
             var includedColumnsArg = arguments["includedColumns"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, arguments["keyColumns"], innerModel.Columns);
+            var columns = AH.ParseOrderedMultiColumn(context, arguments["keyColumns"], innerModel.Columns, null);
 
             var fuzzyIndex = new FuzzyIndexModel()
             {
