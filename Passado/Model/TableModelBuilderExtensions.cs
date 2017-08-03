@@ -73,6 +73,9 @@ namespace Passado.Model
             if (builder.Columns.Any(t => t.Name == columnName))
                 throw ModelBuilderError.ColumnRepeatedName(builder.Name, columnName).AsException();
 
+            if (nullable && identity)
+                throw ModelBuilderError.ColumnIdentityNullable().AsException();
+
             builder.Columns.Add(new ColumnModel(name: columnName,
                                                 propertyName: columnProperty,
                                                 sqlType: type,

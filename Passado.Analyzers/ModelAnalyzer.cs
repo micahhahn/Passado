@@ -138,6 +138,7 @@ namespace Passado.Analyzers
                 Property = property,
                 MaxLength = AH.ParseConstantArgument(context, maxLengthArg, () => AH.Just(null as int?)),
                 IsIdentity = AH.ParseConstantArgument(context, identityArg, () => AH.Just(false)),
+                IsNullable = AH.ParseConstantArgument(context, nullableArg, () => AH.Just(false)),
                 Type = AH.ParseConstantArgument(context, typeArg, () => new Optional<SqlType>()),
                 Name = AH.ParseConstantArgument(context, nameArg, () => !property.HasValue ?
                                                                         new Optional<string>() :
@@ -213,6 +214,10 @@ namespace Passado.Analyzers
                 //if (nonIdentityTypes.Contains(fuzzyColumnModel.Type.Value))
                 //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlTypeForIdentity], identityArg.GetLocation()));
             }
+
+            if (fuzzyColumnModel.IsIdentity.HasValue && fuzzyColumnModel.IsIdentity.Value == true &&
+                fuzzyColumnModel.IsNullable.HasValue && fuzzyColumnModel.IsNullable.Value == true)
+                context.ReportDiagnostic(ModelBuilderError.ColumnIdentityNullable().MakeDiagnostic(nullableArg.GetLocation()));
 
             innerModel.Columns.Add(fuzzyColumnModel);
             

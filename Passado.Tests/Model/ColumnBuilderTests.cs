@@ -75,7 +75,7 @@ namespace Passado.Tests.Model
                                       .Build())
                          .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ColumnRepeatedName("Users", "FirstName"), errorLocation);
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnIdentityNullable(), errorLocation);
         }
 
         [Fact]
