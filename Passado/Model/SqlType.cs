@@ -7,20 +7,32 @@ namespace Passado.Model
     public enum SqlType
     {
         Binary,
+
         Bit,
         Boolean,
-        Byte,
+        
+        Guid,
+        
+        // String Types
+        String,
+
+        // Date Types
         Date,
+        Time,
         DateTime,
         DateTimeOffset,
-        Decimal,
-        Double,
-        Guid,
+
+        // Integral Types
+        Byte,
+        Short,
         Int,
         Long,
-        Short,
+
+        // Floating Point Types
         Single,
-        String,
-        Time
+        Double,
+
+        // Fixed Point Types
+        Decimal,
     }
 }

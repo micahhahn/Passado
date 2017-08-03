@@ -4,6 +4,8 @@ using System.Text;
 using System.Linq.Expressions;
 using System.Reflection;
 
+using Passado.Model.Table;
+
 namespace Passado.Model
 {
     public static class BuilderHelper
@@ -15,7 +17,7 @@ namespace Passado.Model
         /// <typeparam name="TProperty"></typeparam>
         /// <param name="selector"></param>
         /// <returns></returns>
-        public static string ParseSelector<TObject, TProperty>(Expression<Func<TObject, TProperty>> selector)
+        public static PropertyModel ParseSelector<TObject, TProperty>(Expression<Func<TObject, TProperty>> selector)
         {
             var memberExpression = selector?.Body as MemberExpression;
 
@@ -27,7 +29,7 @@ namespace Passado.Model
             }
             else
             {
-                return memberExpression.Member.Name;
+                return new PropertyModel(memberExpression.Member.Name, memberExpression.Type);
             }
         }
 

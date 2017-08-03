@@ -39,10 +39,17 @@ namespace Passado.Tests.Model
                 using Passado.Model;
                 using System.Linq.Expressions;
 
+                public enum UserType
+                {
+                    Winner,
+                    Loser
+                }
+
                 public class User
                 {
                     public int UserId { get; set; }
                     public string FirstName { get; set; }
+                    public UserType UserType { get; set; }
                 }
 
                 public class Address

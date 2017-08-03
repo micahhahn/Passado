@@ -11,7 +11,7 @@ namespace Passado.Model
     {
         public TableModel(string name,
                           string schema,
-                          string propertyName,
+                          PropertyModel property,
                           ImmutableList<ColumnModel> columns,
                           PrimaryKeyModel primaryKey,
                           ImmutableList<ForeignKeyModel> foreignKeys,
@@ -19,7 +19,7 @@ namespace Passado.Model
         {
             Name = name;
             Schema = schema;
-            PropertyName = propertyName;
+            Property = property;
             Columns = columns;
             PrimaryKey = primaryKey;
             ForeignKeys = foreignKeys;
@@ -28,7 +28,7 @@ namespace Passado.Model
 
         public string Name { get; }
         public string Schema { get; }
-        public string PropertyName { get; }
+        public PropertyModel Property { get; }
         public ImmutableList<ColumnModel> Columns { get; }
         public PrimaryKeyModel PrimaryKey { get; }
         public ImmutableList<ForeignKeyModel> ForeignKeys { get; }

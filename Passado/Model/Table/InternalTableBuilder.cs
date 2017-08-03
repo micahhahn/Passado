@@ -22,7 +22,7 @@ namespace Passado.Model.Table
 
         public string Name { get; set; }
         public string Schema { get; set; }
-        public string PropertyName { get; set; }
+        public PropertyModel Property { get; set; }
         public List<ColumnModel> Columns { get; set; }
         public PrimaryKeyModel PrimaryKey { get; set; }
         public List<ForeignKeyModel> ForeignKeys { get; set; }

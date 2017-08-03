@@ -78,6 +78,41 @@ namespace Passado.Tests.Model
             await VerifyErrorRaised(mb, ModelBuilderError.ColumnIdentityNullable(), errorLocation);
         }
 
+        [Theory]
+        [InlineData("SqlType.Binary",           ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Bit",              ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Boolean",          ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Guid",             ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Date",             ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Time",             ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.DateTime",         ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.DateTimeOffset",   ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Single",           ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Double",           ".Column(t => t.UserType, {0})")]
+        [InlineData("SqlType.Decimal",          ".Column(t => t.UserType, {0})")]
+        public async void Error_On_Enum_Backed_Column_Not_String_Or_Integral_Type(string errorLocation, string column)
+        {
+            var mb = @"mb.Database(nameof(Database))
+                         .Table(d => d.Table(t => t.Users)
+                                      " + string.Format(column, errorLocation) + @"
+                                      .Build())
+                         .Build();";
+
+            await VerifyErrorRaised(mb, ModelBuilderError.ColumnEnumNotStringOrIntegralType(), errorLocation);
+        }
+
+        [Fact]
+        public void Error_On_Enum_Max_Length_Bigger_Than_String_Size()
+        {
+
+        }
+
+        [Fact]
+        public void Error_On_Enum_Value_Larger_Than_Int_Capacity()
+        {
+
+        }
+
         [Fact]
         public void Column__Error_On_Column_Type_Not_Comparable()
         {

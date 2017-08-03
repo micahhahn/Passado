@@ -165,8 +165,8 @@ namespace Passado.Analyzers
             {
                 if (fuzzyColumnModel.Property.Value.Type.TypeKind == TypeKind.Enum)
                 {
-                    //if (!(fuzzyColumnModel.Type.Value == SqlType.String || fuzzyColumnModel.Type.Value == SqlType.Int))
-                    //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[InvalidSqlType], typeArg.GetLocation()));
+                    if (!(fuzzyColumnModel.Type.Value == SqlType.String || SqlTypeHelpers.IsIntegral(fuzzyColumnModel.Type.Value)))
+                        context.ReportDiagnostic(ModelBuilderError.ColumnEnumNotStringOrIntegralType().MakeDiagnostic(typeArg.GetLocation()));
 
                     if (fuzzyColumnModel.Type.Value == SqlType.String && fuzzyColumnModel.MaxLength.HasValue)
                     {

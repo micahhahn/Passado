@@ -5,10 +5,10 @@ namespace Passado.Model.Table
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public class ColumnModel
     {
-        public ColumnModel(string name, string propertyName, SqlType sqlType, bool isNullable, bool isIdentity, object defaultValue)
+        public ColumnModel(string name, PropertyModel property, SqlType sqlType, bool isNullable, bool isIdentity, object defaultValue)
         {
             Name = name;
-            PropertyName = propertyName;
+            Property = property;
             SqlType = sqlType;
             IsNullable = isNullable;
             IsIdentity = isIdentity;
@@ -16,7 +16,7 @@ namespace Passado.Model.Table
         }
 
         public string Name { get; }
-        public string PropertyName { get; }
+        public PropertyModel Property { get; }
         public SqlType SqlType { get; }
         public bool IsNullable { get; }
         public bool IsIdentity { get; }

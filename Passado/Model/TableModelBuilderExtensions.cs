@@ -3,6 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Text;
 
 using Passado.Model.Table;
@@ -22,18 +23,18 @@ namespace Passado.Model
             if (table == null)
                 throw ModelBuilderError.TableNullSelector().AsException();
 
-            builder.PropertyName = BuilderHelper.ParseSelector(table);
+            builder.Property = BuilderHelper.ParseSelector(table);
 
-            if (builder.PropertyName == null)
+            if (builder.Property == null)
                 throw ModelBuilderError.TableInvalidSelector(database: typeof(TDatabase).Name).AsException();
             
             {
-                var priorTable = builder.DatabaseBuilder.Tables.FirstOrDefault(t => t.PropertyName == builder.PropertyName);
+                var priorTable = builder.DatabaseBuilder.Tables.FirstOrDefault(t => t.Property.Name == builder.Property.Name);
                 if (priorTable != null)
-                    throw ModelBuilderError.TableRepeatedSelector(database: typeof(TDatabase).Name, property: builder.PropertyName, otherTable: BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)).AsException();
+                    throw ModelBuilderError.TableRepeatedSelector(database: typeof(TDatabase).Name, property: builder.Property.Name, otherTable: BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)).AsException();
             }
 
-            builder.Name = name != null ? name : builder.PropertyName;
+            builder.Name = name ?? builder.Property.Name;
             builder.Schema = schema;
             
             if (builder.DatabaseBuilder.Tables.Any(t => t.Schema == builder.Schema && t.Name == builder.Name))
@@ -57,27 +58,33 @@ namespace Passado.Model
             if (column == null)
                 throw ModelBuilderError.ColumnNullSelector().AsException();
             
-            var columnProperty = BuilderHelper.ParseSelector(column);
+            var property = BuilderHelper.ParseSelector(column);
 
-            if (columnProperty == null)
+            if (property == null)
                 throw ModelBuilderError.ColumnInvalidSelector(typeof(TTable).Name).AsException();
 
             {
-                var priorColumn = builder.Columns.FirstOrDefault(c => c.PropertyName == columnProperty);
+                var priorColumn = builder.Columns.FirstOrDefault(c => c.Property.Name == property.Name);
                 if (priorColumn != null)
-                    throw ModelBuilderError.ColumnRepeatedSelector(typeof(TTable).Name, columnProperty, priorColumn.Name).AsException();
+                    throw ModelBuilderError.ColumnRepeatedSelector(typeof(TTable).Name, property.Name, priorColumn.Name).AsException();
             }
 
-            var columnName = name != null ? name : columnProperty;
+            var columnName = name ?? property.Name;
 
             if (builder.Columns.Any(t => t.Name == columnName))
                 throw ModelBuilderError.ColumnRepeatedName(builder.Name, columnName).AsException();
 
             if (nullable && identity)
                 throw ModelBuilderError.ColumnIdentityNullable().AsException();
+            
+            if (property.Type.GetTypeInfo().IsEnum)
+            {
+                if (!(type == SqlType.String || SqlTypeHelpers.IsIntegral(type)))
+                    throw ModelBuilderError.ColumnEnumNotStringOrIntegralType().AsException();
+            }
 
             builder.Columns.Add(new ColumnModel(name: columnName,
-                                                propertyName: columnProperty,
+                                                property: property,
                                                 sqlType: type,
                                                 isNullable: nullable,
                                                 isIdentity: identity,
@@ -127,7 +134,7 @@ namespace Passado.Model
 
             return new TableModel(name: builder.Name,
                                   schema: builder.Schema,
-                                  propertyName: builder.PropertyName,
+                                  property: builder.Property,
                                   columns: builder.Columns.ToImmutableList(),
                                   primaryKey: builder.PrimaryKey,
                                   foreignKeys: builder.ForeignKeys.ToImmutableList(),

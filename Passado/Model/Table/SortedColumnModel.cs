@@ -8,7 +8,7 @@ namespace Passado.Model.Table
     {
         public SortedColumnModel(ColumnModel model, SortOrder sortOrder)
             : base(name: model.Name,
-                   propertyName: model.PropertyName, 
+                   property: model.Property, 
                    sqlType: model.SqlType,
                    isNullable: model.IsNullable, 
                    isIdentity: model.IsIdentity, 
