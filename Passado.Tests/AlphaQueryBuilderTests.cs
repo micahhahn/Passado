@@ -54,9 +54,9 @@ namespace Passado.Tests
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)
                         .Where(t => t.T1.FirstName == "John" && t.T1.LastName == "Doe")
-                        .GroupBy(t => t.T1.FirstName, t => t.T1.LastName)
-                        .Select(t => new { Name = t.Key1, Age = t.Key2 })
-                        .OrderBy(t => new { t.Asc.Age, t.Desc.Name })
+                        .GroupBy(t => new { t.T1.FirstName })
+                        .Select(t => new { t.Keys.FirstName, Count = t.Count(a => a.T1.FirstName) })
+                        .OrderBy(t => new { t.Asc.FirstName, t.Desc.Count })
                         .Build();
         }
 
