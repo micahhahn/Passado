@@ -1,40 +1,47 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace Passado.Model.Table
 {
     public class ForeignKeyModel
     {
-        private LambdaExpression _referenceTableExpression;
-        private LambdaExpression _referenceColumnsExpression;
+        private PropertyInfo _referenceTable;
+        private ImmutableArray<PropertyInfo> _referenceColumns;
 
         public ForeignKeyModel(string name,
-                               ImmutableList<ColumnModel> keyColumns,
-                               LambdaExpression referenceTableExpression,
-                               LambdaExpression referenceColumnsExpression,
+                               ImmutableArray<ColumnModel> keyColumns,
+                               PropertyInfo referenceTable,
+                               ImmutableArray<PropertyInfo> referenceColumns,
                                ForeignKeyAction updateAction,
                                ForeignKeyAction deleteAction)
         {
             Name = name;
             KeyColumns = keyColumns;
-            _referenceTableExpression = referenceTableExpression;
-            _referenceColumnsExpression = referenceColumnsExpression;
+            _referenceTable = referenceTable;
+            _referenceColumns = referenceColumns;
             UpdateAction = updateAction;
             DeleteAction = deleteAction;
         }
 
-        public void FreezeReferenceExpressions(DatabaseModel model)
+        public void FreezeReference(IEnumerable<TableModel> tables)
         {
+            ReferenceTable = tables.FirstOrDefault(t => t.Property.Name == _referenceTable.Name);
 
+            if (ReferenceTable == null)
+                throw new NotImplementedException();
+
+            ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Columns).ToImmutableArray();
         }
 
         public string Name { get; }
-        public ImmutableList<ColumnModel> KeyColumns { get; }
-        public TableModel ReferenceTable { get; }
-        public ImmutableList<ColumnModel> ReferenceColumns { get; }
+        public ImmutableArray<ColumnModel> KeyColumns { get; }
+        public TableModel ReferenceTable { get; private set; }
+        public ImmutableArray<ColumnModel> ReferenceColumns { get; private set; }
         public ForeignKeyAction UpdateAction { get; }
         public ForeignKeyAction DeleteAction { get; }
     }

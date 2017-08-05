@@ -8,10 +8,10 @@ namespace Passado.Model.Table
     public class IndexModel
     {
         public IndexModel(string name, 
-                          ImmutableList<SortedColumnModel> keyColumns, 
+                          ImmutableArray<SortedColumnModel> keyColumns, 
                           bool isUnique, 
                           bool isClustered, 
-                          ImmutableList<ColumnModel> includedColumns)
+                          ImmutableArray<ColumnModel> includedColumns)
         {
             Name = name;
             KeyColumns = keyColumns;
@@ -21,9 +21,9 @@ namespace Passado.Model.Table
         }
 
         public string Name { get; }
-        public ImmutableList<SortedColumnModel> KeyColumns { get; }
+        public ImmutableArray<SortedColumnModel> KeyColumns { get; }
         public bool IsUnique { get; }
         public bool IsClustered { get; }
-        public ImmutableList<ColumnModel> IncludedColumns { get; }
+        public ImmutableArray<ColumnModel> IncludedColumns { get; }
     }
 }

@@ -7,13 +7,13 @@ namespace Passado.Model
 {
     public class DatabaseModel
     {
-        public DatabaseModel(string name, ImmutableList<TableModel> tables)
+        public DatabaseModel(string name, ImmutableArray<TableModel> tables)
         {
             Name = name;
-            Tables = tables.ToImmutableList();
+            Tables = tables.ToImmutableArray();
         }
 
         public string Name { get; }
-        public ImmutableList<TableModel> Tables { get; }
+        public ImmutableArray<TableModel> Tables { get; }
     }
 }

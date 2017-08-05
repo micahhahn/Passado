@@ -8,7 +8,7 @@ namespace Passado.Model.Table
     public class PrimaryKeyModel
     {
         public PrimaryKeyModel(string name,
-                               ImmutableList<SortedColumnModel> columns, 
+                               ImmutableArray<SortedColumnModel> columns, 
                                bool isClustered)
         {
             Name = name;
@@ -17,7 +17,7 @@ namespace Passado.Model.Table
         }
 
         public string Name { get; }
-        public ImmutableList<SortedColumnModel> Columns { get; }
+        public ImmutableArray<SortedColumnModel> Columns { get; }
         public bool IsClustered { get; }
     }
 }

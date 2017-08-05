@@ -33,6 +33,11 @@ namespace Passado.Model
             }
         }
 
+        public static string GenerateKeyName(string prefix, string schema, string tableName, IEnumerable<string> columnNames)
+        {
+            return $"{prefix}_{(schema != null ? schema + "_" : "")}{tableName}__{string.Join("_", columnNames)}";
+        }
+
         public static string GetTableName(string schema, string table)
         {
             if (schema == null)

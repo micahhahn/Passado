@@ -12,10 +12,10 @@ namespace Passado.Model
         public TableModel(string name,
                           string schema,
                           PropertyModel property,
-                          ImmutableList<ColumnModel> columns,
+                          ImmutableArray<ColumnModel> columns,
                           PrimaryKeyModel primaryKey,
-                          ImmutableList<ForeignKeyModel> foreignKeys,
-                          ImmutableList<IndexModel> indexes)
+                          ImmutableArray<ForeignKeyModel> foreignKeys,
+                          ImmutableArray<IndexModel> indexes)
         {
             Name = name;
             Schema = schema;
@@ -29,9 +29,9 @@ namespace Passado.Model
         public string Name { get; }
         public string Schema { get; }
         public PropertyModel Property { get; }
-        public ImmutableList<ColumnModel> Columns { get; }
+        public ImmutableArray<ColumnModel> Columns { get; }
         public PrimaryKeyModel PrimaryKey { get; }
-        public ImmutableList<ForeignKeyModel> ForeignKeys { get; }
-        public ImmutableList<IndexModel> Indexes { get; }
+        public ImmutableArray<ForeignKeyModel> ForeignKeys { get; }
+        public ImmutableArray<IndexModel> Indexes { get; }
     }
 }

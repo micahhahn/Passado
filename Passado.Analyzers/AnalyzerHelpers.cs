@@ -231,12 +231,12 @@ namespace Passado.Analyzers
 
                     var typeName = ((castExpression.Type as IdentifierNameSyntax)?.Identifier)?.Text;
 
-                    if (typeName == nameof(Asc))
-                        sortOrder = SortOrder.Ascending;
-                    else if (typeName == nameof(Desc))
-                        sortOrder = SortOrder.Descending;
-                    else
-                        throw new NotImplementedException();
+                    //if (typeName == nameof(Asc))
+                    //    sortOrder = SortOrder.Ascending;
+                    //else if (typeName == nameof(Desc))
+                    //    sortOrder = SortOrder.Descending;
+                    //else
+                    //    throw new NotImplementedException();
 
                     expression = castExpression.Expression;
                 }

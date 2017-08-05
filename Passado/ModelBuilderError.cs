@@ -40,5 +40,14 @@ namespace Passado
 
         // PrimaryKey errors
         public static ModelBuilderError PrimaryKeyNullSelector() => new ModelBuilderError("PS1014", "Null Primary Key Selector", "A primary key selector cannot be null.");
+
+        // Property Selectors
+
+        // Multi Column Selectors
+
+        // Ordered Multi Column Selectors
+        public static ModelBuilderError OrderedMultiColumnSelectorNull() => new ModelBuilderError("PSxxxx", "Null Ordered Multi Column Selector", "");
+        public static ModelBuilderError OrderedMultiColumnSelectorNotMemberOrAnonymousObject() => new ModelBuilderError("PSxxxx", "Ordered Multi Column Selector Not Member Or Anonymous Object", "");
+        public static ModelBuilderError OrderedMultiColumnSelectorMemberAccessNotOnParameter() => new ModelBuilderError("PSxxxx", "", "");
     }
 }

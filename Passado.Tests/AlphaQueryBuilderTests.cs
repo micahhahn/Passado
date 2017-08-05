@@ -36,8 +36,8 @@ namespace Passado.Tests
             return db.Database(nameof(Database))
                      .Table(d => d.Table(t => t.Users)
                                   .Column(t => t.UserId, SqlType.Int)
-                                  .PrimaryKey(t => t.UserId)
-                                  .Index(t => t.UserId)
+                                  .PrimaryKey(t => t.Asc.UserId)
+                                  .Index(t => t.Desc.UserId)
                                   .Build())
                      .Build();
         }
@@ -52,13 +52,19 @@ namespace Passado.Tests
             var localParam = 7;
 
             queryBuilder.From(t => t.Users)
-                        .Where(t => Expression.Constant(localParam));
+                        .Join(t => t.Addresses)
+                        .Where(t => t.T1.FirstName == "John" && t.T1.LastName == "Doe")
+                        .GroupBy(t => t.T1.FirstName, t => t.T1.LastName)
+                        .Select(t => new { Name = t.Key1, Age = t.Key2 })
+                        .OrderBy(t => new { t.Asc.Age, t.Desc.Name })
+                        .Build();
         }
 
         public void DynamicQuery(IQueryBuilder<Database> queryBuilder)
         {
             queryBuilder.From(t => t.Users)
-                        .Join(t => t.Addresses, p => Expression.Constant(true));
+                        .Join(t => t.Addresses, p => Expression.Constant(true))
+                        ;
         }
     }
 }

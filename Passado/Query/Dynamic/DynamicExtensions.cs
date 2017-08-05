@@ -36,17 +36,14 @@ namespace Passado.Query.Dynamic
             return fromQuery.OuterJoin(selector, MakeLambda<IJoinedRow<TTable1, TTable2>, bool>(dynamicCondition));
         }
 
-        public static IGroupByQuery<TJoinedRow, TKey1> GroupBy<TJoinedRow, TKey1>(this IGroupable<TJoinedRow> groupable, Func<ParameterExpression, Expression> key1Selector)
-            where TKey1 : IEquatable<TKey1>
+        public static IGroupByQuery<IGroupedRow<TJoinedRow, TKey1>> GroupBy<TJoinedRow, TKey1>(this IGroupable<TJoinedRow> groupable, Func<ParameterExpression, Expression> key1Selector)
         {
             return groupable.GroupBy(MakeLambda<TJoinedRow, TKey1>(key1Selector));
         }
 
-        public static IGroupByQuery<TJoinedRow, TKey1, TKey2> GroupBy<TJoinedRow, TKey1, TKey2>(this IGroupable<TJoinedRow> groupable,
+        public static IGroupByQuery<IGroupedRow<TJoinedRow, TKey1, TKey2>> GroupBy<TJoinedRow, TKey1, TKey2>(this IGroupable<TJoinedRow> groupable,
                                                                                                 Func<ParameterExpression, Expression> key1Selector, 
                                                                                                 Func<ParameterExpression, Expression> key2Selector)
-            where TKey1 : IEquatable<TKey1>
-            where TKey2 : IEquatable<TKey2>
         {
             return groupable.GroupBy(MakeLambda<TJoinedRow, TKey1>(key1Selector), MakeLambda<TJoinedRow, TKey2>(key2Selector));
         }

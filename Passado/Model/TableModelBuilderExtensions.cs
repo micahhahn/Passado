@@ -111,7 +111,7 @@ namespace Passado.Model
         }
 
         public static IPrimaryKey<TDatabase, TTable> PrimaryKey<TDatabase, TTable>(this IPrimaryKeyBuilder<TDatabase, TTable> @this,
-                                                                                   Expression<Func<TTable, object>> keyColumns,
+                                                                                   Expression<Func<IOrderFilter<TTable>, object>> keyColumns,
                                                                                    string name = null,
                                                                                    bool clustered = true)
         {
@@ -119,18 +119,37 @@ namespace Passado.Model
 
             if (keyColumns == null)
                 throw ModelBuilderError.PrimaryKeyNullSelector().AsException();
+            
+            var columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
+
+            var primaryKeyName = name ?? BuilderHelper.GenerateKeyName("PK", builder.Schema, builder.Name, columns.Select(c => c.Name));
+
+            builder.PrimaryKey = new PrimaryKeyModel(primaryKeyName,
+                                                     columns.ToImmutableArray(),
+                                                     clustered);
 
             return builder;
         }
 
         public static IIndex<TDatabase, TTable> Index<TDatabase, TTable>(this IIndexBuilder<TDatabase, TTable> @this,
-                                                                         Expression<Func<TTable, object>> keyColumns,
+                                                                         Expression<Func<IOrderFilter<TTable>, object>> keyColumns,
                                                                          bool unique = false,
                                                                          string name = null,
                                                                          bool clustered = false,
                                                                          Expression<Func<TTable, object>> includedColumns = null)
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
+
+            var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
+            var indexIncludedColumns = ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Columns);
+
+            var indexName = name ?? BuilderHelper.GenerateKeyName("IX", builder.Schema, builder.Name, indexKeyColumns.Select(c => c.Name));
+
+            builder.Indexes.Add(new IndexModel(name: indexName,
+                                               keyColumns: indexKeyColumns.ToImmutableArray(),
+                                               isUnique: unique,
+                                               isClustered: clustered,
+                                               includedColumns: indexIncludedColumns.ToImmutableArray()));
 
             return builder;
         }
@@ -145,6 +164,19 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
+            var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
+            var tempReferenceTable = ExpressionHelpers.ParsePropertySelector(referenceColumns);
+            var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns);
+
+            var foreignKeyName = name ?? BuilderHelper.GenerateKeyName("FK", builder.Schema, builder.Name, tempKeyColumns.Select(c => c.Name));
+
+            builder.ForeignKeys.Add(new ForeignKeyModel(name: foreignKeyName,
+                                                        keyColumns: tempKeyColumns.ToImmutableArray(),
+                                                        referenceTable: tempReferenceTable,
+                                                        referenceColumns: tempReferenceColumns.ToImmutableArray(),
+                                                        updateAction: updateAction,
+                                                        deleteAction: deleteAction));
+
             return builder;
         }
 
@@ -155,10 +187,10 @@ namespace Passado.Model
             return new TableModel(name: builder.Name,
                                   schema: builder.Schema,
                                   property: builder.Property,
-                                  columns: builder.Columns.ToImmutableList(),
+                                  columns: builder.Columns.ToImmutableArray(),
                                   primaryKey: builder.PrimaryKey,
-                                  foreignKeys: builder.ForeignKeys.ToImmutableList(),
-                                  indexes: builder.Indexes.ToImmutableList());
+                                  foreignKeys: builder.ForeignKeys.ToImmutableArray(),
+                                  indexes: builder.Indexes.ToImmutableArray());
         }
     }
 }

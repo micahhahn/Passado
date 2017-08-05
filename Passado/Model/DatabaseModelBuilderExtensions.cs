@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
@@ -40,10 +41,14 @@ namespace Passado.Model
             var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             // TODO: Check for object name uniqueness
-            // TODO: Fill out foreign keys
+
+            foreach (var foreignKey in builder.Tables.SelectMany(t => t.ForeignKeys))
+            {
+                foreignKey.FreezeReference(builder.Tables);
+            }
 
             return new DatabaseModel(name: builder.Name,
-                                     tables: builder.Tables.ToImmutableList());
+                                     tables: builder.Tables.ToImmutableArray());
         }
     }
 }
