@@ -8,6 +8,7 @@ namespace Passado.Query.Select
         : ISelectable<IJoinedRow<TTable1>>
         , IWhereable<IJoinedRow<TTable1>>
         , IGroupable<IJoinedRow<TTable1>>
+        , IAsable<IJoinedRow<TTable1>>
     {
         IJoinQuery<TDatabase, TTable1, TTable2> Join<TTable2>(Expression<Func<TDatabase, IEnumerable<TTable2>>> selector);
         IJoinQuery<TDatabase, TTable1, TTable2> Join<TTable2>(Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition);

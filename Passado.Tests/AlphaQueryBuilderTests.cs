@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-using Passado.Query.Dynamic;
 using Passado.Model;
 
 namespace Passado.Tests
@@ -53,18 +52,12 @@ namespace Passado.Tests
 
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)
-                        .Where(t => t.T1.FirstName == "John" && t.T1.LastName == "Doe")
-                        .GroupBy(t => new { t.T1.FirstName })
-                        .Select(t => new { t.Keys.FirstName, Count = t.Count(a => a.T1.FirstName) })
-                        .OrderBy(t => new { t.Asc.FirstName, t.Desc.Count })
+                        .As(t => new { U = t.T1, A = t.T2 })
+                        .Where(t => t.U.FirstName == "John" && t.U.LastName == "Doe")
+                        .GroupBy(t => new { t.A.Line1 } )
+                        .Select(t => new { t.Keys.Line1, Count = t.Count(a => a.U.FirstName) })
+                        .OrderBy(t => new { t.Asc.Line1, t.Desc.Count })
                         .Build();
-        }
-
-        public void DynamicQuery(IQueryBuilder<Database> queryBuilder)
-        {
-            queryBuilder.From(t => t.Users)
-                        .Join(t => t.Addresses, p => Expression.Constant(true))
-                        ;
         }
     }
 }
