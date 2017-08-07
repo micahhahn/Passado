@@ -207,55 +207,48 @@ namespace Passado.Analyzers
 
         public static Optional<List<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
-            (SortOrder, FuzzyProperty, Location) ParseOrderedProperty(ExpressionSyntax expression)
+            if (argument.Expression is SimpleLambdaExpressionSyntax lambdaExpression)
             {
-                var sortOrder = SortOrder.Ascending;
-
-                if (expression is CastExpressionSyntax)
+                (SortOrder, FuzzyProperty, Location)? ParseOrderedProperty(ExpressionSyntax expression)
                 {
-                    var castExpression = expression as CastExpressionSyntax;
+                    if (expression is MemberAccessExpressionSyntax propertyExpression &&
+                        propertyExpression.Expression is MemberAccessExpressionSyntax orderExpression &&
+                        context.SemanticModel.GetSymbolInfo(orderExpression.Expression).Symbol is IParameterSymbol)
+                    {
+                        var sortOrder = orderExpression.Name.Identifier.Text == "Asc" ? SortOrder.Ascending :
+                                        orderExpression.Name.Identifier.Text == "Desc" ? SortOrder.Descending :
+                                        throw new NotImplementedException();
 
-                    var typeName = ((castExpression.Type as IdentifierNameSyntax)?.Identifier)?.Text;
+                        var property = context.SemanticModel.GetSymbolInfo(propertyExpression).Symbol as IPropertySymbol;
 
-                    //if (typeName == nameof(Asc))
-                    //    sortOrder = SortOrder.Ascending;
-                    //else if (typeName == nameof(Desc))
-                    //    sortOrder = SortOrder.Descending;
-                    //else
-                    //    throw new NotImplementedException();
+                        return (sortOrder, new FuzzyProperty() { Name = property.Name, Type = property.Type }, expression.GetLocation());
+                    }
 
-                    expression = castExpression.Expression;
+                    context.ReportDiagnostic(ModelBuilderError.OrderedSelectorInvalid(lambdaExpression.Parameter.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
+                    return null;
                 }
 
-                if (expression is MemberAccessExpressionSyntax)
+                if (lambdaExpression.Body is AnonymousObjectCreationExpressionSyntax anonymousExpression)
                 {
-                    return (sortOrder, ParseMemberAccessProperty(context, expression as MemberAccessExpressionSyntax), expression.GetLocation());
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-            }
+                    var properties = anonymousExpression.Initializers
+                                                        .Select(i => ParseOrderedProperty(i.Expression));
 
-            // Parse null constant
-            if (argument.Expression is SimpleLambdaExpressionSyntax)
-            {
-                var lambdaBody = (argument.Expression as SimpleLambdaExpressionSyntax).Body;
+                    if (properties.Any(p => !p.HasValue))
+                        return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
 
-                if (lambdaBody is AnonymousObjectCreationExpressionSyntax)
-                {
-                    var anonymousObject = lambdaBody as AnonymousObjectCreationExpressionSyntax;
-
-                    return Just(anonymousObject.Initializers
-                                                       .Select(i => ParseOrderedProperty(i.Expression))
-                                                       .ToList());
+                    return Just(properties.Select(p => p.Value).ToList());
                 }
-                else if (lambdaBody is MemberAccessExpressionSyntax)
+                else if (lambdaExpression.Body is MemberAccessExpressionSyntax memberExpression)
                 {
-                    return Just(new List<(SortOrder, FuzzyProperty, Location)>() { ParseOrderedProperty(lambdaBody as ExpressionSyntax) });
+                    var property = ParseOrderedProperty(memberExpression);
+
+                    if (!property.HasValue)
+                        return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
+                    
+                    return Just(new List<(SortOrder, FuzzyProperty, Location)>() { property.Value });
                 }
 
-                context.ReportDiagnostic(ModelBuilderError.OrderedMultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(lambdaBody.GetLocation()));
+                context.ReportDiagnostic(ModelBuilderError.OrderedMultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(lambdaExpression.Body.GetLocation()));
                 return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
             }
 
