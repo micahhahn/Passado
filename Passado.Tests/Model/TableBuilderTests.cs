@@ -21,7 +21,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.TableNullSelector(), selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("table"), selector);
         }
 
         [Theory]
@@ -35,7 +35,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.TableInvalidSelector("Database"), selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("t"), selector);
         }
 
         [Theory]

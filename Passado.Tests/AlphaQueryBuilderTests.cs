@@ -47,14 +47,13 @@ namespace Passado.Tests
         public void Query(IQueryBuilder<Database> queryBuilder)
         {
             queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
-
-            var localParam = 7;
-
+            
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)
                         .As(t => new { U = t.T1, A = t.T2 })
                         .Where(t => t.U.FirstName == "John" && t.U.LastName == "Doe")
                         .GroupBy(t => new { t.A.Line1 } )
+                        .Having(t => t.Max(x => x.U.Age) < 7)
                         .Select(t => new { t.Keys.Line1, Count = t.Count(a => a.U.FirstName) })
                         .OrderBy(t => new { t.Asc.Line1, t.Desc.Count })
                         .Build();

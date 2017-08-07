@@ -23,7 +23,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.NullDatabaseName(), databaseName);
+            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("name"), databaseName);
         }
 
         [Theory]
@@ -44,7 +44,7 @@ namespace Passado.Tests.Model
                                  .Table(" + tableBuilder + @")
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.NullTableBuilder(), tableBuilder);
+            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("tableBuilder"), tableBuilder);
         }
     }
 

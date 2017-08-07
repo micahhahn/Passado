@@ -13,14 +13,11 @@ namespace Passado.Model
         public static IDatabase<TDatabase> Database<TDatabase>(this IDatabaseBuilder<TDatabase> @this,
                                                                string name)
         {
-            var builder = new InternalDatabaseBuilder<TDatabase>();
-
-            if (string.IsNullOrWhiteSpace(name))
-                throw ModelBuilderError.NullDatabaseName().AsException();
-            
-            builder.Name = name;
-
-            return builder;
+            return new InternalDatabaseBuilder<TDatabase>()
+            {
+                Name = name ?? throw ModelBuilderError.ArgumentNull(nameof(name)).AsException(),
+                Tables = new List<TableModel>()
+            };
         }
 
         public static ITable<TDatabase> Table<TDatabase>(this Database.ITableBuilder<TDatabase> @this,
@@ -29,7 +26,7 @@ namespace Passado.Model
             var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             if (table == null)
-                throw ModelBuilderError.NullTableBuilder().AsException();
+                throw ModelBuilderError.ArgumentNull(nameof(table)).AsException();
 
             builder.Tables.Add(table(new Table.TableBuilder<TDatabase>(builder)));
 

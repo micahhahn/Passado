@@ -19,35 +19,28 @@ namespace Passado
         public string ErrorId { get; }
         public string Title { get; }
         public string Message { get; }
-
-        public static ModelBuilderError NullDatabaseName() => new ModelBuilderError("PS1001", "Null Database Name", "A database name cannot be null.");
-        public static ModelBuilderError NullTableBuilder() => new ModelBuilderError("PS1002", "Null Table Builder", "A table builder cannot be null.");
-
+        
         // Table errors
-        public static ModelBuilderError TableNullSelector() => new ModelBuilderError("PS1003", "Null Table Selector", "A table selector cannot be null.");
-        public static ModelBuilderError TableInvalidSelector(string database) => new ModelBuilderError("PS1004", "Invalid Table Selector", $"The table selector must be a property of '{database}'.");
         public static ModelBuilderError TableRepeatedSelector(string database, string property, string otherTable) => new ModelBuilderError("PS1005", "Repeated Table Selector", $"Property '{property}' of type '{database}' has already been used as a table specification for table '{otherTable}'.");
         public static ModelBuilderError TableRepeatedName(string name) => new ModelBuilderError("PS1006", "Repeated Table Name", $"Table name '{name}' has already been used.");
 
         // Column errors
-        public static ModelBuilderError ColumnNullSelector() => new ModelBuilderError("PS1007", "Null Column Selector", "A column selector cannot be null.");
-        public static ModelBuilderError ColumnInvalidSelector(string table) => new ModelBuilderError("PS1008", "Invalid Column Selector", $"The column selector must be a property of '{table}'.");
         public static ModelBuilderError ColumnRepeatedSelector(string table, string property, string otherColumn) => new ModelBuilderError("PS1009", "Repeated Column Selector", $"Property '{property}' of type '{table}' has already been used as a column specification for column '{otherColumn}'.");
         public static ModelBuilderError ColumnRepeatedName(string table, string name) => new ModelBuilderError("PS1010", "Repeated Column Name", $"Column name '{name}' already exists in table '{table}'.");
         public static ModelBuilderError ColumnIdentityNullable() => new ModelBuilderError("PS1011", "Nullable Identity Column", "An identity column cannot be nullable.");
         public static ModelBuilderError ColumnEnumNotStringOrIntegralType() => new ModelBuilderError("PS1012", "Enum Column Not String Or Int", "An enum must be mapped to either SqlType.Int or SqlType.String.");
         public static ModelBuilderError ColumnEnumLongerThanMaxStringSize(string maxEnumValue, int maxLength) => new ModelBuilderError("PS1013", "Enum Longer Than Max String Size", $"The enum value '{maxEnumValue}' would exceed the max length of {maxLength}.");
-
+        
         // PrimaryKey errors
-        public static ModelBuilderError PrimaryKeyNullSelector() => new ModelBuilderError("PS1014", "Null Primary Key Selector", "A primary key selector cannot be null.");
 
-        // Property Selectors
+        public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
+        
+        public static ModelBuilderError SelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Selector", $"A selector must be a simple property access (e.g. {parameterName}.Prop1).");
+        public static ModelBuilderError OrderedSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Ordered Selector", $"An ordered selector must be an ordered property access (e.g. {parameterName}.Asc.Prop1 or {parameterName}.Desc.Prop2).");
 
-        // Multi Column Selectors
+        public static ModelBuilderError MultiSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Multi Selector", $"A multi selector must be either a simple property access (e.g. {parameterName}.Prop1) or an anonymous object of simple property accesses (e.g. new {{ {parameterName}.Prop1, {parameterName}.Prop2 }}).");
+        public static ModelBuilderError OrderedMultiSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Ordered Multi Selector", $"An ordered multi selector must be either an ordered property access (e.g. {parameterName}.Prop1) or an anonymous object of ordered property accesses (e.g. new {{ {parameterName}.Prop1, {parameterName}.Prop2 }}).");
 
-        // Ordered Multi Column Selectors
-        public static ModelBuilderError OrderedMultiColumnSelectorNull() => new ModelBuilderError("PSxxxx", "Null Ordered Multi Column Selector", "");
-        public static ModelBuilderError OrderedMultiColumnSelectorNotMemberOrAnonymousObject() => new ModelBuilderError("PSxxxx", "Ordered Multi Column Selector Not Member Or Anonymous Object", "");
-        public static ModelBuilderError OrderedMultiColumnSelectorMemberAccessNotOnParameter() => new ModelBuilderError("PSxxxx", "", "");
+        public static ModelBuilderError SelectorNotMappedToColumn(string propertyName, string tableName) => new ModelBuilderError("PSxxxx", "Selector Not Mapped To Column", $"The property '{propertyName}' is not mapped as a column of '{tableName}'.");
     }
 }

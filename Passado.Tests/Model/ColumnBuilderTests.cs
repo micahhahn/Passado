@@ -21,7 +21,7 @@ namespace Passado.Tests.Model
                                       .Build())
                          .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ColumnNullSelector(), selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("column"), selector);
         }
 
         [Theory]
@@ -33,7 +33,7 @@ namespace Passado.Tests.Model
                                        .Build();")]
         public async void Column__Error_On_Invalid_Column_Selector(string selector, string mb)
         {
-            await VerifyErrorRaised(mb, ModelBuilderError.ColumnInvalidSelector("User"), selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("column"), selector);
         }
 
         [Fact]

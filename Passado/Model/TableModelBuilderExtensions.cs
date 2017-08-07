@@ -17,25 +17,19 @@ namespace Passado.Model
                                                                          string name = null,
                                                                          string schema = null)
         {
+            var builder = new InternalTableBuilder<TDatabase, TTable>((@this as TableBuilder<TDatabase>).DatabaseBuilder)
+            {
+                Property = ExpressionHelpers.ParsePropertySelector(table ?? throw ModelBuilderError.ArgumentNull(nameof(table)).AsException()),
+                Schema = schema
+            };
 
-            var builder = new InternalTableBuilder<TDatabase, TTable>((@this as TableBuilder<TDatabase>).DatabaseBuilder);
-
-            if (table == null)
-                throw ModelBuilderError.TableNullSelector().AsException();
-
-            builder.Property = BuilderHelper.ParseSelector(table);
-
-            if (builder.Property == null)
-                throw ModelBuilderError.TableInvalidSelector(database: typeof(TDatabase).Name).AsException();
+            builder.Name = name ?? builder.Property.Name;
             
             {
                 var priorTable = builder.DatabaseBuilder.Tables.FirstOrDefault(t => t.Property.Name == builder.Property.Name);
                 if (priorTable != null)
                     throw ModelBuilderError.TableRepeatedSelector(database: typeof(TDatabase).Name, property: builder.Property.Name, otherTable: BuilderHelper.GetTableName(priorTable.Schema, priorTable.Name)).AsException();
             }
-
-            builder.Name = name ?? builder.Property.Name;
-            builder.Schema = schema;
             
             if (builder.DatabaseBuilder.Tables.Any(t => t.Schema == builder.Schema && t.Name == builder.Name))
                 throw ModelBuilderError.TableRepeatedName(BuilderHelper.GetTableName(builder.Schema, builder.Name)).AsException();
@@ -54,15 +48,9 @@ namespace Passado.Model
                                                                                     IDatabaseTypeConverter<TColumn> converter = null)
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
-
-            if (column == null)
-                throw ModelBuilderError.ColumnNullSelector().AsException();
             
-            var property = BuilderHelper.ParseSelector(column);
-
-            if (property == null)
-                throw ModelBuilderError.ColumnInvalidSelector(typeof(TTable).Name).AsException();
-
+            var property = ExpressionHelpers.ParsePropertySelector(column ?? throw ModelBuilderError.ArgumentNull(nameof(column)).AsException());
+            
             {
                 var priorColumn = builder.Columns.FirstOrDefault(c => c.Property.Name == property.Name);
                 if (priorColumn != null)
@@ -116,11 +104,9 @@ namespace Passado.Model
                                                                                    bool clustered = true)
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
-
-            if (keyColumns == null)
-                throw ModelBuilderError.PrimaryKeyNullSelector().AsException();
             
-            var columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
+            var columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns ?? throw ModelBuilderError.ArgumentNull(nameof(keyColumns)).AsException())
+                                           .MatchColumns(builder.Name, builder.Columns);
 
             var primaryKeyName = name ?? BuilderHelper.GenerateKeyName("PK", builder.Schema, builder.Name, columns.Select(c => c.Name));
 
@@ -140,8 +126,8 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
-            var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
-            var indexIncludedColumns = ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Columns);
+            var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Name, builder.Columns);
+            var indexIncludedColumns = ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Name, builder.Columns);
 
             var indexName = name ?? BuilderHelper.GenerateKeyName("IX", builder.Schema, builder.Name, indexKeyColumns.Select(c => c.Name));
 
@@ -164,8 +150,8 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
-            var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns).MatchColumns(builder.Columns);
-            var tempReferenceTable = ExpressionHelpers.ParsePropertySelector(referenceColumns);
+            var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns).MatchColumns(builder.Name, builder.Columns);
+            var tempReferenceTable = ExpressionHelpers.ParseSelector(referenceColumns);
             var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns);
 
             var foreignKeyName = name ?? BuilderHelper.GenerateKeyName("FK", builder.Schema, builder.Name, tempKeyColumns.Select(c => c.Name));

@@ -58,6 +58,18 @@ namespace Passado.Analyzers
             return schema == null ? name : $"{schema}.{name}";
         }
 
+        public static FuzzyTableModel ParseTableChain(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
+        {
+            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
+
+            return innerMethodName == nameof(TableModelBuilderExtensions.Table)      ? ParseTableTable(context, innerInvocation, partialDatabase) :
+                   innerMethodName == nameof(TableModelBuilderExtensions.Column)     ? ParseTableColumn(context, innerInvocation, partialDatabase) :
+                   innerMethodName == nameof(TableModelBuilderExtensions.PrimaryKey) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
+                   innerMethodName == nameof(TableModelBuilderExtensions.Index)      ? ParseTableIndex(context, innerInvocation, partialDatabase) :
+                   innerMethodName == nameof(TableModelBuilderExtensions.ForeignKey) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
+                   throw new NotImplementedException();
+        }
+
         static FuzzyTableModel ParseTableTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
             var arguments = AH.ParseArguments(context, expression);
@@ -66,7 +78,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = AH.ParseSelector(context, tableArg, ModelBuilderError.TableNullSelector(), ModelBuilderError.TableInvalidSelector(ToString(partialDatabase.Name)), false);
+            var property = new Optional<FuzzyProperty>();// AH.ParseSelector(context, tableArg, false);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -115,11 +127,7 @@ namespace Passado.Analyzers
 
         static FuzzyTableModel ParseTableColumn(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
-
-            var innerModel = innerMethodName == nameof(TableModelBuilderExtensions.Column) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
-                             innerMethodName == nameof(TableModelBuilderExtensions.Table) ? ParseTableTable(context, innerInvocation, partialDatabase) :
-                             throw new NotImplementedException();
+            var innerModel = ParseTableChain(context, expression, partialDatabase);
 
             var arguments = AH.ParseArguments(context, expression);
             var columnArg = arguments["column"];
@@ -131,7 +139,10 @@ namespace Passado.Analyzers
             var identityArg = arguments["identity"];
             var converterArg = arguments["converter"];
 
-            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ColumnNullSelector(), ModelBuilderError.ColumnInvalidSelector(ToTypeString(innerModel.Property)), false);
+            if (AH.IsNull(context, columnArg))
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("column").MakeDiagnostic(columnArg.GetLocation()));
+            
+            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ArgumentNull(""), ModelBuilderError.SelectorInvalid(""), false);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -226,10 +237,7 @@ namespace Passado.Analyzers
 
         static FuzzyTableModel ParseTablePrimaryKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
-
-            var innerModel = (innerMethodName == nameof(TableModelBuilderExtensions.Column)) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
-                             throw new NotImplementedException();
+            var innerModel = ParseTableChain(context, expression, partialDatabase);
 
             var arguments = AH.ParseArguments(context, expression);
 
@@ -237,7 +245,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var clusteredArg = arguments["clustered"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ModelBuilderError.PrimaryKeyNullSelector());
+            var columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ModelBuilderError.ArgumentNull(""));
 
             var fuzzyPrimaryKey = new FuzzyPrimaryKeyModel()
             {
@@ -252,21 +260,10 @@ namespace Passado.Analyzers
 
             return innerModel;
         }
-
-        static FuzzyTableModel ParseInnerKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
-        {
-            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
-
-            return (innerMethodName == nameof(TableModelBuilderExtensions.PrimaryKey)) ? ParseTablePrimaryKey(context, innerInvocation, partialDatabase) :
-                   (innerMethodName == nameof(TableModelBuilderExtensions.ForeignKey)) ? ParseTableForeignKey(context, innerInvocation, partialDatabase) :
-                   (innerMethodName == nameof(TableModelBuilderExtensions.Index)) ? ParseTableIndex(context, innerInvocation, partialDatabase) :
-                   (innerMethodName == nameof(TableModelBuilderExtensions.Column)) ? ParseTableColumn(context, innerInvocation, partialDatabase) :
-                   throw new NotImplementedException();
-        }
-
+        
         static FuzzyTableModel ParseTableIndex(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            var innerModel = ParseInnerKey(context, expression, partialDatabase);
+            var innerModel = ParseTableChain(context, expression, partialDatabase);
             
             var arguments = AH.ParseArguments(context, expression);
 
@@ -303,7 +300,7 @@ namespace Passado.Analyzers
 
         static FuzzyTableModel ParseTableForeignKey(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            var innerModel = ParseInnerKey(context, expression, partialDatabase);
+            var innerModel = ParseTableChain(context, expression, partialDatabase);
 
             var arguments = AH.ParseArguments(context, expression);
 
@@ -318,7 +315,7 @@ namespace Passado.Analyzers
             {
                 KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
                 //ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
-                ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg),
+                ReferenceColumnSelectors = AH.ParseMultiPropertySelector(context, referenceColumnsArg),
                 UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 Name = AH.ParseConstantArgument(context, nameArg, () => new Optional<string>())
@@ -331,7 +328,7 @@ namespace Passado.Analyzers
         
         static FuzzyTableModel ParseTableBuild(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression, FuzzyDatabaseModel partialDatabase)
         {
-            var innerModel = ParseInnerKey(context, expression, partialDatabase);
+            var innerModel = ParseTableChain(context, expression, partialDatabase);
 
             return innerModel;
         }
@@ -348,7 +345,7 @@ namespace Passado.Analyzers
             };
 
             if (databaseModel.Name.HasValue && databaseModel.Name.Value == null)
-                context.ReportDiagnostic(ModelBuilderError.NullDatabaseName().MakeDiagnostic(nameArg.GetLocation()));
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("").MakeDiagnostic(nameArg.GetLocation()));
 
             return databaseModel;
         }
@@ -391,7 +388,7 @@ namespace Passado.Analyzers
                 var constant = context.SemanticModel.GetConstantValue(tableArg.Expression);
 
                 if (constant.HasValue && constant.Value == null)
-                    context.ReportDiagnostic(ModelBuilderError.NullTableBuilder().MakeDiagnostic(tableArg.GetLocation()));
+                    context.ReportDiagnostic(ModelBuilderError.ArgumentNull("").MakeDiagnostic(tableArg.GetLocation()));
             }
 
             return innerModel;

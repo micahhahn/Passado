@@ -35,7 +35,7 @@ namespace Passado.Model.Table
             if (ReferenceTable == null)
                 throw new NotImplementedException();
 
-            ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Columns).ToImmutableArray();
+            ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Name, ReferenceTable.Columns).ToImmutableArray();
         }
 
         public string Name { get; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
@@ -20,6 +21,6 @@ namespace Passado.Analyzers.Model
         // Temporary placeholders for ReferenceTable and ReferenceColumns as the referenced table and colums
         // might not be defined at the time we parse the foriegn key.
         public Optional<(FuzzyProperty, Location)> ReferenceTableSelector { get; set; }
-        public Optional<List<(FuzzyProperty, Location)>> ReferenceColumnSelectors { get; set; }
+        public Optional<ImmutableArray<(FuzzyProperty, Location)>> ReferenceColumnSelectors { get; set; }
     }
 }
