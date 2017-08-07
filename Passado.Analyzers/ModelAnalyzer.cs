@@ -78,7 +78,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = new Optional<FuzzyProperty>();// AH.ParseSelector(context, tableArg, false);
+            var property = AH.ParseSelector(context, tableArg, null, null, false);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -245,8 +245,13 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var clusteredArg = arguments["clustered"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ModelBuilderError.ArgumentNull(""));
+            var columns = new Optional<List<(SortOrder, FuzzyColumnModel)>>();
 
+            if (AH.IsNull(context, keyColumnsArg))
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+            else
+                columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ToString(innerModel.Name));
+            
             var fuzzyPrimaryKey = new FuzzyPrimaryKeyModel()
             {
                 Columns = columns,
@@ -273,7 +278,7 @@ namespace Passado.Analyzers
             var clusteredArg = arguments["clustered"];
             var includedColumnsArg = arguments["includedColumns"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, arguments["keyColumns"], innerModel.Columns, null);
+            var columns = AH.ParseOrderedMultiColumn(context, arguments["keyColumns"], innerModel.Columns, ToString(innerModel.Name));
 
             var fuzzyIndex = new FuzzyIndexModel()
             {

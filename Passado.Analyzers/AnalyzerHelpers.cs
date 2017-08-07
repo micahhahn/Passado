@@ -205,7 +205,7 @@ namespace Passado.Analyzers
             }).ToList());
         }
 
-        public static Optional<List<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError nullError)
+        public static Optional<List<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
             (SortOrder, FuzzyProperty, Location) ParseOrderedProperty(ExpressionSyntax expression)
             {
@@ -238,12 +238,7 @@ namespace Passado.Analyzers
             }
 
             // Parse null constant
-            var constant = context.SemanticModel.GetConstantValue(argument.Expression);
-            if (constant.HasValue && constant.Value == null)
-            {
-                context.ReportDiagnostic(nullError.MakeDiagnostic(argument.GetLocation()));
-            }
-            else if (argument.Expression is SimpleLambdaExpressionSyntax)
+            if (argument.Expression is SimpleLambdaExpressionSyntax)
             {
                 var lambdaBody = (argument.Expression as SimpleLambdaExpressionSyntax).Body;
 
@@ -260,15 +255,16 @@ namespace Passado.Analyzers
                     return Just(new List<(SortOrder, FuzzyProperty, Location)>() { ParseOrderedProperty(lambdaBody as ExpressionSyntax) });
                 }
 
-                throw new NotImplementedException();
+                context.ReportDiagnostic(ModelBuilderError.OrderedMultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(lambdaBody.GetLocation()));
+                return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
             }
 
             return new Optional<List<(SortOrder, FuzzyProperty, Location)>>();
         }
 
-        public static Optional<List<(SortOrder, FuzzyColumnModel)>> ParseOrderedMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns, ModelBuilderError nullError)
+        public static Optional<List<(SortOrder, FuzzyColumnModel)>> ParseOrderedMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns, string tableName)
         {
-            var optionalOrderedMultiProperty = ParseOrderedMultiProperty(context, argument, nullError);
+            var optionalOrderedMultiProperty = ParseOrderedMultiProperty(context, argument);
 
             if (!optionalOrderedMultiProperty.HasValue)
                 return new Optional<List<(SortOrder, FuzzyColumnModel)>>();
@@ -281,13 +277,11 @@ namespace Passado.Analyzers
                 {
                     // We can only say that this column is not modeled if there are no indeterminate columns
                     if (columns.All(c => c.Property.HasValue))
-                        throw new NotImplementedException();
+                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToColumn(p.Item2.Name, tableName).MakeDiagnostic(p.Item3));
                 }
 
                 return (p.Item1, column);
             }).ToList());
-
-            throw new NotImplementedException();
         }
     }
 }
