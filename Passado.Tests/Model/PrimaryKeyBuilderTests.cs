@@ -40,6 +40,7 @@ namespace Passado.Tests.Model
 
         [Theory]
         [InlineData("userId", ".PrimaryKey(t => new {{ {0} }})")]
+        [InlineData("userId", ".PrimaryKey((t) => new {{ {0} }})")]
         [InlineData("userId", ".PrimaryKey(t => new {{ {0}, t.Asc.FirstName }})")]
         [InlineData("userId", ".PrimaryKey(t => new {{ t.Asc.FirstName, {0} }})")]
         public async void Error_On_Invalid_PrimaryKey_Selector(string location, string primaryKey)

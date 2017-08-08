@@ -245,12 +245,18 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var clusteredArg = arguments["clustered"];
 
-            var columns = new Optional<List<(SortOrder, FuzzyColumnModel)>>();
+            var columns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
 
             if (AH.IsNull(context, keyColumnsArg))
                 context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
             else
-                columns = AH.ParseOrderedMultiColumn(context, keyColumnsArg, innerModel.Columns, ToString(innerModel.Name));
+            {
+                var props = AH.ParseOrderedMultiProperty(context, keyColumnsArg);
+                if (props.HasValue)
+                {
+                    columns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                }
+            }
             
             var fuzzyPrimaryKey = new FuzzyPrimaryKeyModel()
             {
@@ -278,7 +284,18 @@ namespace Passado.Analyzers
             var clusteredArg = arguments["clustered"];
             var includedColumnsArg = arguments["includedColumns"];
 
-            var columns = AH.ParseOrderedMultiColumn(context, arguments["keyColumns"], innerModel.Columns, ToString(innerModel.Name));
+            var columns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
+
+            if (AH.IsNull(context, keyColumnsArg))
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+            else
+            {
+                var props = AH.ParseOrderedMultiProperty(context, keyColumnsArg);
+                if (props.HasValue)
+                {
+                    columns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                }
+            }
 
             var fuzzyIndex = new FuzzyIndexModel()
             {

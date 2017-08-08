@@ -8,7 +8,13 @@ namespace Passado.Analyzers.Model
 {
     public class FuzzyProperty
     {
-        public string Name { get; set; }
-        public ITypeSymbol Type { get; set; }
+        public FuzzyProperty(IPropertySymbol property)
+        {
+            Name = property.Name;
+            Type = property.Type;
+        }
+
+        public string Name { get; }
+        public ITypeSymbol Type { get; }
     }
 }
