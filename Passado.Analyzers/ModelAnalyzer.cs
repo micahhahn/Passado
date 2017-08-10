@@ -284,7 +284,7 @@ namespace Passado.Analyzers
             var clusteredArg = arguments["clustered"];
             var includedColumnsArg = arguments["includedColumns"];
 
-            var columns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
+            var keyColumns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
 
             if (AH.IsNull(context, keyColumnsArg))
                 context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
@@ -293,19 +293,30 @@ namespace Passado.Analyzers
                 var props = AH.ParseOrderedMultiProperty(context, keyColumnsArg);
                 if (props.HasValue)
                 {
-                    columns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                    keyColumns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
                 }
             }
 
+            var includedColumns = new Optional<ImmutableArray<FuzzyColumnModel>>();
+
+            if (!AH.IsNull(context, includedColumnsArg))
+            {
+                var props = AH.ParseMultiProperty(context, includedColumnsArg);
+                if (props.HasValue)
+                {
+                    includedColumns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                }
+            }
+            
             var fuzzyIndex = new FuzzyIndexModel()
             {
-                Columns = columns,
+                Columns = keyColumns,
                 IsUnique = AH.ParseConstantArgument(context, uniqueArg, () => AH.Just(false)),
                 IsClustered = AH.ParseConstantArgument(context, clusteredArg, () => AH.Just(false)),
-                IncludedColumns = AH.ParseMultiColumn(context, includedColumnsArg, innerModel.Columns),
-                Name = AH.ParseConstantArgument(context, nameArg, () => (!innerModel.Name.HasValue || !innerModel.Schema.HasValue || !columns.HasValue || columns.Value.Any(c => !c.Item2.Name.HasValue)) ?
+                IncludedColumns = includedColumns,
+                Name = AH.ParseConstantArgument(context, nameArg, () => (!innerModel.Name.HasValue || !innerModel.Schema.HasValue || !keyColumns.HasValue || keyColumns.Value.Any(c => !c.Item2.Name.HasValue)) ?
                                                                         new Optional<string>() :
-                                                                        AH.Just(BuildDefaultKeyName("IX", innerModel.Schema.Value, innerModel.Name.Value, columns.Value.Select(c => c.Item2.Name.Value))))
+                                                                        AH.Just(BuildDefaultKeyName("IX", innerModel.Schema.Value, innerModel.Name.Value, keyColumns.Value.Select(c => c.Item2.Name.Value))))
             };
             
             if (fuzzyIndex.IsClustered.HasValue && fuzzyIndex.IsClustered.Value == true)
@@ -335,9 +346,9 @@ namespace Passado.Analyzers
 
             var fuzzyForeignKey = new FuzzyForeignKeyModel()
             {
-                KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
+                //KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
                 //ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
-                ReferenceColumnSelectors = AH.ParseMultiPropertySelector(context, referenceColumnsArg),
+                ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg),
                 UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
                 Name = AH.ParseConstantArgument(context, nameArg, () => new Optional<string>())

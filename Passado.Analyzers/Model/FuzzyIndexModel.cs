@@ -15,6 +15,6 @@ namespace Passado.Analyzers.Model
         public Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>> Columns { get; set; }
         public Optional<bool> IsClustered { get; set; }   
         public Optional<bool> IsUnique { get; set; }
-        public Optional<List<FuzzyColumnModel>> IncludedColumns { get; set; }
+        public Optional<ImmutableArray<FuzzyColumnModel>> IncludedColumns { get; set; }
     }
 }

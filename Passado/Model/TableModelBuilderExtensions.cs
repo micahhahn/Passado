@@ -126,7 +126,7 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
-            var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns).MatchColumns(builder.Name, builder.Columns);
+            var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns ?? throw ModelBuilderError.ArgumentNull(nameof(keyColumns)).AsException()).MatchColumns(builder.Name, builder.Columns);
             var indexIncludedColumns = ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Name, builder.Columns);
 
             var indexName = name ?? BuilderHelper.GenerateKeyName("IX", builder.Schema, builder.Name, indexKeyColumns.Select(c => c.Name));

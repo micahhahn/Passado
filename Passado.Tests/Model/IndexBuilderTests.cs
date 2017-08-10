@@ -17,6 +17,7 @@ namespace Passado.Tests.Model
                        mb.Database(nameof(Database))
                          .Table(d => d.Table(t => t.Users)
                                       .Column(t => t.UserId, SqlType.Int)
+                                      .Column(t => t.UserType, SqlType.Int)
                                       " + string.Format(index, location) + @"
                                       .Build())
                          .Build();";
@@ -24,12 +25,68 @@ namespace Passado.Tests.Model
             await VerifyErrorRaised(mb, error, location);
         }
 
+        #region KeyColumns
+
         [Theory]
-        [InlineData("includedColumns: t => \"asdf\"", ".Index(t => t.Asc.UserId, {0})")]
-        public async void Error_On_Invalid_Included_Columns_Selector(string location, string index)
+        [InlineData("null", ".Index({0})")]
+        public async void Error_On_KeyColumns_Null(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.ArgumentNull("keyColumns"), location, index);
+        }
+
+        [Theory]
+        [InlineData("\"\"", ".Index(t => {0})")]
+        public async void Error_On_KeyColumns_OrderedMultiSelector_Invalid(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.OrderedMultiSelectorInvalid("t"), location, index);
+        }
+
+        [Theory]
+        [InlineData("userId", ".Index(t => new {{ {0} }})")]
+        [InlineData("userId", ".Index((t) => new {{ {0} }})")]
+        [InlineData("userId", ".Index(t => new {{ {0}, t.Asc.UserId }})")]
+        [InlineData("userId", ".Index(t => new {{ t.Asc.UserId, {0} }})")]
+        public async void Error_On_KeyColumn_OrderedSelector_Invalid(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.OrderedSelectorInvalid("t"), location, index);
+        }
+
+        [Theory]
+        [InlineData("t.Asc.FirstName", ".PrimaryKey(t => {0})")]
+        public async void Error_On_KeyColumn_Not_In_Column_List(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
+        }
+
+        #endregion
+
+        #region IncludedColumns
+
+        [Theory]
+        [InlineData("\"\"", ".Index(t => t.Asc.UserId, includedColumns: t => {0})")]
+        public async void Error_On_IncludedColumns_MutliSelector_Invalid(string location, string index)
         {
             await VerifyIndexErrorRaised(ModelBuilderError.MultiSelectorInvalid("t"), location, index);
         }
+
+        [Theory]
+        [InlineData("userId", ".Index(t => t.Asc.UserId, includedColumns: t => new {{ {0} }})")]
+        [InlineData("userId", ".Index(t => t.Asc.UserId, includedColumns: (t) => new {{ {0} }})")]
+        [InlineData("userId", ".Index(t => t.Asc.UserId, includedColumns: t => new {{ {0}, t.UserType }})")]
+        [InlineData("userId", ".Index(t => t.Asc.UserId, includedColumns: t => new {{ t.UserType, {0} }})")]
+        public async void Error_On_IncludedColumn_Selector_Invalid(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, index);
+        }
+
+        [Theory]
+        [InlineData("t.FirstName", ".Index(t => t.Asc.UserId, includedColumns: t => {0})")]
+        public async void Error_On_IncludedColumn_Not_In_Column_List(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
+        }
+
+        #endregion
     }
 
     public class IndexBuilderCoreTests : IndexBuilderTests

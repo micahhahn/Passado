@@ -33,7 +33,7 @@ namespace Passado.Tests.Model
                                        .Build();")]
         public async void Column__Error_On_Invalid_Column_Selector(string selector, string mb)
         {
-            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("column"), selector);
+            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("t"), selector);
         }
 
         [Fact]

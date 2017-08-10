@@ -143,60 +143,46 @@ namespace Passado.Analyzers
             return new FuzzyProperty(propertySymbol);
         }
 
-        public static Optional<ImmutableArray<(FuzzyProperty, Location)>> ParseMultiPropertySelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
+        public static Optional<ImmutableArray<(FuzzyProperty, Location)>> ParseMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
-            (FuzzyProperty, Location) ParsePropertySelector(ExpressionSyntax expression)
+            if (argument.Expression is LambdaExpressionSyntax)
             {
-                if (expression is MemberAccessExpressionSyntax)
+                (var body, var param) = DeconstructLambda(argument);
+
+                (FuzzyProperty, Location)? ParsePropertySelector(ExpressionSyntax expression)
                 {
-                    return (ParseMemberAccessProperty(context, expression as MemberAccessExpressionSyntax), expression.GetLocation());
+                    if (expression is MemberAccessExpressionSyntax)
+                    {
+                        return (ParseMemberAccessProperty(context, expression as MemberAccessExpressionSyntax), expression.GetLocation());
+                    }
+
+                    context.ReportDiagnostic(ModelBuilderError.SelectorInvalid(param.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
+                    return null;
                 }
 
-                context.ReportDiagnostic(ModelBuilderError.SelectorInvalid("a").MakeDiagnostic(expression.GetLocation()));
-                return (null, expression.GetLocation());
-            }
+                var properties = body is AnonymousObjectCreationExpressionSyntax anonymousExpression ? anonymousExpression.Initializers.Select(i => i.Expression).ToList() :
+                                 body is MemberAccessExpressionSyntax memberExpression ? new List<ExpressionSyntax>() { memberExpression } :
+                                 null as List<ExpressionSyntax>;
 
-            if (argument.Expression is SimpleLambdaExpressionSyntax)
-            {
-                var lambdaBody = (argument.Expression as SimpleLambdaExpressionSyntax).Body;
-
-                if (lambdaBody is AnonymousObjectCreationExpressionSyntax)
+                if (properties != null)
                 {
-                    var anonymousObject = lambdaBody as AnonymousObjectCreationExpressionSyntax;
+                    var orderedProperties = properties.Select(p => ParsePropertySelector(p));
 
-                    var properties = anonymousObject.Initializers
-                                                    .Select(i => ParsePropertySelector(i.Expression))
-                                                    .ToImmutableArray();
-
-                    if (properties.Any(p => p.Item1 == null))
+                    if (orderedProperties.Any(p => !p.HasValue))
                         return new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
-                    else
-                        return Just(properties);
-                }
-                else if (lambdaBody is MemberAccessExpressionSyntax)
-                {
-                    var property = ParsePropertySelector(lambdaBody as ExpressionSyntax);
 
-                    if (property.Item1 == null)
-                        return new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
-                    else
-                        return Just(ImmutableArray.Create(property));
+                    return Just(orderedProperties.Select(p => p.Value).ToImmutableArray());
                 }
 
-                context.ReportDiagnostic(ModelBuilderError.MultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(argument.GetLocation()));
+                context.ReportDiagnostic(ModelBuilderError.MultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
             }
 
             return new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
         }
 
-        public static Optional<List<FuzzyColumnModel>> ParseMultiColumn(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, List<FuzzyColumnModel> columns)
+        public static Optional<ImmutableArray<FuzzyColumnModel>> MatchColumns(SyntaxNodeAnalysisContext context, IEnumerable<(FuzzyProperty, Location)> properties, IEnumerable<FuzzyColumnModel> columns, string tableName)
         {
-            var optionalMultiProperty = ParseMultiPropertySelector(context, argument);
-
-            if (!optionalMultiProperty.HasValue)
-                return new Optional<List<FuzzyColumnModel>>();
-            
-            return Just(optionalMultiProperty.Value.Select(p =>
+            return Just(properties.Select(p =>
             {
                 var column = columns.FirstOrDefault(c => c.Property.HasValue && c.Property.Value.Name == p.Item1.Name);
 
@@ -204,11 +190,11 @@ namespace Passado.Analyzers
                 {
                     // We can only say that this column is not modeled if there are no indeterminate columns
                     if (columns.All(c => c.Property.HasValue))
-                        throw new NotImplementedException();
+                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToColumn(p.Item1.Name, tableName).MakeDiagnostic(p.Item2));
                 }
 
                 return column;
-            }).ToList());
+            }).ToImmutableArray());
         }
 
         public static Optional<ImmutableArray<(SortOrder, FuzzyProperty, Location)>> ParseOrderedMultiProperty(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
