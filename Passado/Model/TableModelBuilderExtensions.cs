@@ -127,9 +127,18 @@ namespace Passado.Model
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
             var indexKeyColumns = ExpressionHelpers.ParseOrderedMultiPropertySelector(keyColumns ?? throw ModelBuilderError.ArgumentNull(nameof(keyColumns)).AsException()).MatchColumns(builder.Name, builder.Columns);
-            var indexIncludedColumns = ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Name, builder.Columns);
+            var indexIncludedColumns = includedColumns == null ? new ImmutableArray<ColumnModel>() : ExpressionHelpers.ParseMultiPropertySelector(includedColumns).MatchColumns(builder.Name, builder.Columns);
 
             var indexName = name ?? BuilderHelper.GenerateKeyName("IX", builder.Schema, builder.Name, indexKeyColumns.Select(c => c.Name));
+
+            {
+                var priorClustered = builder.PrimaryKey?.IsClustered == true ? builder.PrimaryKey.Name
+                                                                             : builder.Indexes.FirstOrDefault(i => i.IsClustered)?.Name;
+                if (priorClustered != null)
+                {
+                    throw ModelBuilderError.IndexClusteredAlreadySpecified(priorClustered).AsException();
+                }
+            }
 
             builder.Indexes.Add(new IndexModel(name: indexName,
                                                keyColumns: indexKeyColumns.ToImmutableArray(),

@@ -84,7 +84,7 @@ namespace Passado.Analyzers
             {
                 Property = property,
                 Columns = new List<FuzzyColumnModel>(),
-                Indicies = new List<FuzzyIndexModel>(),
+                Indexes = new List<FuzzyIndexModel>(),
                 ForeignKeys = new List<FuzzyForeignKeyModel>(),
                 Schema = AH.ParseConstantArgument(context, schemaArg, () => AH.Just(null as string)),
                 Name = AH.ParseConstantArgument(context, nameArg, () => property.HasValue ?
@@ -321,12 +321,14 @@ namespace Passado.Analyzers
             
             if (fuzzyIndex.IsClustered.HasValue && fuzzyIndex.IsClustered.Value == true)
             {
-                //if ((innerModel.PrimaryKey.IsClustered.HasValue && innerModel.PrimaryKey.IsClustered.Value == true) ||
-                //    (innerModel.Indicies.Any(i => i.IsClustered.HasValue && i.IsClustered.Value == true)))
-                //    context.ReportDiagnostic(Diagnostic.Create(_descriptors[MultipleClusteredIndicies], clusteredArg.GetLocation()));
+                var priorClustered = (innerModel.PrimaryKey?.IsClustered)?.HasValue == true && innerModel.PrimaryKey.IsClustered.Value ?
+                                        innerModel.PrimaryKey.Name.Value : 
+                                        innerModel.Indexes.FirstOrDefault(i => i.IsClustered.HasValue && i.IsClustered.Value)?.Name.Value;
+                if (priorClustered != null)
+                    context.ReportDiagnostic(ModelBuilderError.IndexClusteredAlreadySpecified(priorClustered).MakeDiagnostic(clusteredArg.Expression.GetLocation()));
             }
 
-            innerModel.Indicies.Add(fuzzyIndex);
+            innerModel.Indexes.Add(fuzzyIndex);
 
             return innerModel;
         }

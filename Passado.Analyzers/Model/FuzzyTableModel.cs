@@ -13,7 +13,7 @@ namespace Passado.Analyzers.Model
         public Optional<FuzzyProperty> Property { get; set; }
         public List<FuzzyColumnModel> Columns { get; set; }
         public FuzzyPrimaryKeyModel PrimaryKey { get; set; }
-        public List<FuzzyIndexModel> Indicies { get; set; }
+        public List<FuzzyIndexModel> Indexes { get; set; }
         public List<FuzzyForeignKeyModel> ForeignKeys { get; set; }
     }
 }

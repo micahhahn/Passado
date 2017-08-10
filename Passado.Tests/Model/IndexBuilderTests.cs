@@ -17,7 +17,7 @@ namespace Passado.Tests.Model
                        mb.Database(nameof(Database))
                          .Table(d => d.Table(t => t.Users)
                                       .Column(t => t.UserId, SqlType.Int)
-                                      .Column(t => t.UserType, SqlType.Int)
+                                      .Column(t => t.UserType, SqlType.Int)                                
                                       " + string.Format(index, location) + @"
                                       .Build())
                          .Build();";
@@ -52,10 +52,24 @@ namespace Passado.Tests.Model
         }
 
         [Theory]
-        [InlineData("t.Asc.FirstName", ".PrimaryKey(t => {0})")]
+        [InlineData("t.Asc.FirstName", ".Index(t => {0})")]
         public async void Error_On_KeyColumn_Not_In_Column_List(string location, string index)
         {
             await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
+        }
+
+        #endregion
+
+        #region Clustered
+
+        [Theory]
+        [InlineData("true", "PK_Users__UserType", @".PrimaryKey(t => t.Asc.UserType)
+                                                    .Index(t => t.Asc.UserId, clustered: {0})")]
+        [InlineData("true", "IX_Users__UserType", @".Index(t => t.Asc.UserType, clustered: true)
+                                                    .Index(t => t.Asc.UserId, clustered: {0})")]
+        public async void Error_On_Clustered_When_Previous_Index_Or_Primary_Key_Clustered(string location, string indexName, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.IndexClusteredAlreadySpecified(indexName), location, index);
         }
 
         #endregion

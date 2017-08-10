@@ -30,8 +30,12 @@ namespace Passado
         public static ModelBuilderError ColumnIdentityNullable() => new ModelBuilderError("PS1011", "Nullable Identity Column", "An identity column cannot be nullable.");
         public static ModelBuilderError ColumnEnumNotStringOrIntegralType() => new ModelBuilderError("PS1012", "Enum Column Not String Or Int", "An enum must be mapped to either SqlType.Int or SqlType.String.");
         public static ModelBuilderError ColumnEnumLongerThanMaxStringSize(string maxEnumValue, int maxLength) => new ModelBuilderError("PS1013", "Enum Longer Than Max String Size", $"The enum value '{maxEnumValue}' would exceed the max length of {maxLength}.");
-        
+
         // PrimaryKey errors
+
+        // Index errors
+        public static ModelBuilderError IndexClusteredAlreadySpecified(string clusteredName) => new ModelBuilderError("PSxxxx", "Clustered Index Already Specified", $"A clustered index on this table already exists: '{clusteredName}'.");
+
 
         public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
         

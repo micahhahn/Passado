@@ -103,6 +103,9 @@ namespace Passado.Analyzers
 
         public static bool IsNull(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
+            if (argument == null)
+                return true;
+
             var constant = context.SemanticModel.GetConstantValue(argument.Expression);
             return constant.HasValue && constant.Value == null;
         }
