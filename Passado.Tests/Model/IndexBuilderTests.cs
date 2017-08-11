@@ -100,6 +100,13 @@ namespace Passado.Tests.Model
             await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
         }
 
+        [Theory]
+        [InlineData("t.UserId", ".Index(t => t.Asc.UserId, includedColumns: t => {0})")]
+        public async void Error_On_IncludedColumn_Already_In_KeyColumns(string location, string index)
+        {
+            await VerifyIndexErrorRaised(ModelBuilderError.IndexIncludedColumnAlreadyInKeyColumns("UserId"), location, index);
+        }
+
         #endregion
     }
 

@@ -305,12 +305,20 @@ namespace Passado.Analyzers
                 if (props.HasValue)
                 {
                     includedColumns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+
+                    if (keyColumns.HasValue)
+                    {
+                        var column = props.Value.Select(v => ((FuzzyProperty, Location)?)v)
+                                                .FirstOrDefault(i => keyColumns.Value.Any(k => k.Item2.Property.HasValue && k.Item2.Property.Value.Name == i.Value.Item1.Name));
+                        if (column != null)
+                            context.ReportDiagnostic(ModelBuilderError.IndexIncludedColumnAlreadyInKeyColumns(column.Value.Item1.Name).MakeDiagnostic(column.Value.Item2));
+                    }
                 }
             }
             
             var fuzzyIndex = new FuzzyIndexModel()
             {
-                Columns = keyColumns,
+                KeyColumns = keyColumns,
                 IsUnique = AH.ParseConstantArgument(context, uniqueArg, () => AH.Just(false)),
                 IsClustered = AH.ParseConstantArgument(context, clusteredArg, () => AH.Just(false)),
                 IncludedColumns = includedColumns,

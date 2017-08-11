@@ -35,7 +35,7 @@ namespace Passado
 
         // Index errors
         public static ModelBuilderError IndexClusteredAlreadySpecified(string clusteredName) => new ModelBuilderError("PSxxxx", "Clustered Index Already Specified", $"A clustered index on this table already exists: '{clusteredName}'.");
-
+        public static ModelBuilderError IndexIncludedColumnAlreadyInKeyColumns(string columnName) => new ModelBuilderError("PSxxxx", "Index Included Column Already In Key Columns", $"The column '{columnName}' is already in the key column list so it cannot be an included column.");
 
         public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
         

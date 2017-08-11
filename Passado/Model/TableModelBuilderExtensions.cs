@@ -140,6 +140,12 @@ namespace Passado.Model
                 }
             }
 
+            {
+                var column = indexIncludedColumns.FirstOrDefault(i => indexKeyColumns.Any(k => k.Property.Name == i.Property.Name));
+                if (column != null)
+                    throw ModelBuilderError.IndexIncludedColumnAlreadyInKeyColumns(column.Name).AsException();
+            }
+
             builder.Indexes.Add(new IndexModel(name: indexName,
                                                keyColumns: indexKeyColumns.ToImmutableArray(),
                                                isUnique: unique,
