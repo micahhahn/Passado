@@ -183,6 +183,7 @@
     <Compile Include="Model\AnalyzerHelpers.cs" />
     <Compile Include="Model\ColumnBuilderAnalyzerTests.cs" />
     <Compile Include="Model\DatabaseBuilderAnalyzerTests.cs" />
+    <Compile Include="Model\ForeignKeyBuilderAnalyzerTests.cs" />
     <Compile Include="Model\IndexBuilderAnalyzerTests.cs" />
     <Compile Include="Model\PrimaryKeyBuilderAnalyzerTests.cs" />
     <Compile Include="Model\TableBuilderAnalyzerTests.cs" />
