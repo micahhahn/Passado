@@ -14,7 +14,7 @@ namespace Passado.Analyzers.Model
         public Optional<string> Name { get; set; }
         public Optional<ImmutableArray<FuzzyColumnModel>> KeyColumns { get; set; }
         public Optional<FuzzyTableModel> ReferenceTable { get; set; }
-        public Optional<List<FuzzyColumnModel>> ReferenceColumns { get; set; }
+        public Optional<ImmutableArray<FuzzyColumnModel>> ReferenceColumns { get; set; }
         public Optional<ForeignKeyAction> UpdateAction { get; set; }
         public Optional<ForeignKeyAction> DeleteAction { get; set; }
 

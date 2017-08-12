@@ -390,7 +390,7 @@ namespace Passado.Analyzers
             }
             else
             {
-                fuzzyForeignKey.ReferenceColumnSelectors = new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
+                fuzzyForeignKey.ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg);
             }
 
             fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));
@@ -482,12 +482,25 @@ namespace Passado.Analyzers
             {
                 foreach (var foreignKey in table.ForeignKeys)
                 {
-                    if (foreignKey.ReferenceTableSelector.HasValue && !innerModel.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == foreignKey.ReferenceTableSelector.Value.Item1.Name))
+                    if (foreignKey.ReferenceTableSelector.HasValue)
                     {
-                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToTable(foreignKey.ReferenceTableSelector.Value.Item1.Name, ToString(innerModel.Name)).MakeDiagnostic(foreignKey.ReferenceTableSelector.Value.Item2));
+                        var referenceTable = innerModel.Tables.FirstOrDefault(t => t.Property.HasValue && t.Property.Value.Name == foreignKey.ReferenceTableSelector.Value.Item1.Name);
+
+                        if (referenceTable == null)
+                        {
+                            context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToTable(foreignKey.ReferenceTableSelector.Value.Item1.Name, ToString(innerModel.Name)).MakeDiagnostic(foreignKey.ReferenceTableSelector.Value.Item2));
+                            foreignKey.ReferenceTable = new Optional<FuzzyTableModel>();
+                            break;
+                        }
+                        else
+                        {
+                            foreignKey.ReferenceTable = new Optional<FuzzyTableModel>(referenceTable);
+                        }
+                        
+                        foreignKey.ReferenceColumns = AH.MatchColumns(context, foreignKey.ReferenceColumnSelectors.Value, referenceTable.Columns, ToString(referenceTable.Name));
                     }
                 }
-            }
+            }  
         }
 
         public override void Initialize(AnalysisContext context)
