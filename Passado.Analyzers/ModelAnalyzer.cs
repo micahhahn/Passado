@@ -358,7 +358,7 @@ namespace Passado.Analyzers
 
             if (AH.IsNull(context, keyColumnsArg))
             {
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.Expression.GetLocation()));
                 fuzzyForeignKey.KeyColumns = new Optional<ImmutableArray<FuzzyColumnModel>>();
             }
             else
@@ -373,7 +373,7 @@ namespace Passado.Analyzers
 
             if (AH.IsNull(context, referenceTableArg))
             {
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceTable").MakeDiagnostic(referenceTableArg.GetLocation()));
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceTable").MakeDiagnostic(referenceTableArg.Expression.GetLocation()));
                 fuzzyForeignKey.ReferenceTableSelector = new Optional<(FuzzyProperty, Location)>();
             }
             else
@@ -381,6 +381,16 @@ namespace Passado.Analyzers
                 var selector = AH.ParseSelector(context, referenceTableArg);
                 fuzzyForeignKey.ReferenceTableSelector = selector.HasValue ? AH.Just((selector.Value, (referenceTableArg.Expression as LambdaExpressionSyntax).Body.GetLocation())) :
                                                                              new Optional<(FuzzyProperty, Location)>();
+            }
+
+            if (AH.IsNull(context, referenceColumnsArg))
+            {
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceColumns").MakeDiagnostic(referenceColumnsArg.Expression.GetLocation()));
+                fuzzyForeignKey.ReferenceColumnSelectors = new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
+            }
+            else
+            {
+                fuzzyForeignKey.ReferenceColumnSelectors = new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
             }
 
             fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));

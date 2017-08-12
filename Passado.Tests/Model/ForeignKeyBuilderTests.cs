@@ -88,6 +88,17 @@ namespace Passado.Tests.Model
         }
 
         #endregion
+
+        #region ReferenceColumns
+
+        [Theory]
+        [InlineData("null", ".ForeignKey(t => t.AddressId, t => t.Addresses, {0})")]
+        public async void Error_On_ReferenceColumns_Null(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceColumns"), location, foreignKey);
+        }
+
+        #endregion
     }
 
     public class ForeignKeyBuilderCoreTests : ForeignKeyBuilderTests

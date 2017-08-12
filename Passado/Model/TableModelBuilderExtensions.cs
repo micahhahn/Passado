@@ -167,7 +167,7 @@ namespace Passado.Model
 
             var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns ?? throw ModelBuilderError.ArgumentNull(nameof(keyColumns)).AsException()).MatchColumns(builder.Name, builder.Columns);
             var tempReferenceTable = ExpressionHelpers.ParseSelector(referenceTable ?? throw ModelBuilderError.ArgumentNull(nameof(referenceTable)).AsException());
-            var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns);
+            var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns ?? throw ModelBuilderError.ArgumentNull(nameof(referenceColumns)).AsException());
 
             var foreignKeyName = name ?? BuilderHelper.GenerateKeyName("FK", builder.Schema, builder.Name, tempKeyColumns.Select(c => c.Name));
 
