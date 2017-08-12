@@ -18,7 +18,7 @@ namespace Passado.Tests.Model
 {
     public static class CoreHelpers
     {
-        public static Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation)
+        public static Task<CompilationError[]> GetErrorsFromCompilation(Compilation compilation)
         {
             using (var memoryStream = new MemoryStream())
             {
@@ -53,15 +53,15 @@ namespace Passado.Tests.Model
                         if (ex.InnerException is ModelBuilderException)
                         {
                             var mbException = ex.InnerException as ModelBuilderException;
-                            
-                            return Task.FromResult(new List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>()
+
+                            return Task.FromResult(new CompilationError[]
                             {
-                                (mbException.ErrorId, mbException.Message, null, null)
+                                new CompilationError() { ErrorId = mbException.ErrorId, ErrorText = mbException.Message }
                             });
                         }
                     }
 
-                    return Task.FromResult(new List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>());
+                    return Task.FromResult(new CompilationError[] { });
                 }
             }
         }

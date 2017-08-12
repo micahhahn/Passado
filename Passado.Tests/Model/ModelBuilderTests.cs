@@ -29,9 +29,9 @@ namespace Passado.Tests.Model
             MetadataReference.CreateFromFile(typeof(IQueryBuilder<>).GetTypeInfo().Assembly.Location),
         };
 
-        public abstract Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation);
+        public abstract Task<CompilationError[]> GetCompilationErrors(Compilation compilation);
 
-        async Task<List<(string ErrorId, string ErrorText, string LocationText, string AdditionalLocationText)>> GetErrorsFromModelBuilder(string mb)
+        async Task<CompilationError[]> GetErrorsFromModelBuilder(string mb)
         {
             var source = @"
                 using System;
@@ -100,34 +100,25 @@ namespace Passado.Tests.Model
             
             project = project.WithCompilationOptions(options);
 
-            var errors = await GetErrorsFromCompilation(await project.GetCompilationAsync());
-
-            string GetLocationText(Location location)
-            {
-                return location == null ? null : source.Substring(location.SourceSpan.Start, location.SourceSpan.Length);
-            }
-
-            return errors.Select(e => (e.ErrorId, e.ErrorText, GetLocationText(e.Location), GetLocationText(e.AdditionalLocation))).ToList();
+            return await GetCompilationErrors(await project.GetCompilationAsync());
         }
 
-        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, string locationText, string additionalLocationText = null)
+        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, params string[] locations)
         {
             var errors = await GetErrorsFromModelBuilder(mb);
 
-            Assert.Equal(1, errors.Count);
+            Assert.Equal(1, errors.Length);
 
             var error = errors.First();
 
             Assert.Equal(modelError.ErrorId, error.ErrorId);
             Assert.Equal(modelError.Message, error.ErrorText);
 
-            if (error.LocationText != null)
+            if (error.Locations != null)
             {
-                Assert.Equal(locationText, error.LocationText);
-
-                if (additionalLocationText != null)
+                foreach (var pair in error.Locations.Zip(locations, (l, r) => (l, r)))
                 {
-                    Assert.Equal(additionalLocationText, error.AdditionalLocationText);
+                    Assert.Equal(pair.Item2, pair.Item1);
                 }
             }
         }

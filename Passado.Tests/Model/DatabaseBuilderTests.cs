@@ -50,6 +50,6 @@ namespace Passado.Tests.Model
 
     public class DatabaseBuilderCoreTests : DatabaseBuilderTests
     {
-        public override Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

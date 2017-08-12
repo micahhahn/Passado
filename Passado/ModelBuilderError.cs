@@ -32,10 +32,13 @@ namespace Passado
         public static ModelBuilderError ColumnEnumLongerThanMaxStringSize(string maxEnumValue, int maxLength) => new ModelBuilderError("PS1013", "Enum Longer Than Max String Size", $"The enum value '{maxEnumValue}' would exceed the max length of {maxLength}.");
 
         // PrimaryKey errors
-
+        
         // Index errors
         public static ModelBuilderError IndexClusteredAlreadySpecified(string clusteredName) => new ModelBuilderError("PSxxxx", "Clustered Index Already Specified", $"A clustered index on this table already exists: '{clusteredName}'.");
         public static ModelBuilderError IndexIncludedColumnAlreadyInKeyColumns(string columnName) => new ModelBuilderError("PSxxxx", "Index Included Column Already In Key Columns", $"The column '{columnName}' is already in the key column list so it cannot be an included column.");
+
+        // Foreign Key errors
+        public static ModelBuilderError ForiegnKeyColumnCountsDontMatch() => new ModelBuilderError("PSxxxx", "Foriegn Key Column Counts Dont Match", "");
 
         public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
         

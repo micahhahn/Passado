@@ -11,7 +11,7 @@ namespace Passado.Tests.Model
 {
     public abstract class ForeignKeyBuilderTests : ModelBuilderTests
     {
-        public async Task VerifyForeignKeyErrorRaised(ModelBuilderError error, string location, string foreignKey)
+        public async Task VerifyForeignKeyErrorRaised(ModelBuilderError error, string foreignKey, params string[] locations)
         {
             var mb = @"var userId = 7;
                        mb.Database(nameof(Database))
@@ -19,14 +19,14 @@ namespace Passado.Tests.Model
                                       .Column(t => t.UserId, SqlType.Int)
                                       .Column(t => t.UserType, SqlType.Int)
                                       .Column(t => t.AddressId, SqlType.Int)
-                                      " + string.Format(foreignKey, location) + @"
+                                      " + string.Format(foreignKey, locations) + @"
                                       .Build())
                          .Table(d => d.Table(t => t.Addresses)
                                       .Column(t => t.AddressId, SqlType.Int)
                                       .Build())
                          .Build();";
 
-            await VerifyErrorRaised(mb, error, location);
+            await VerifyErrorRaised(mb, error, locations);
         }
 
         #region KeyColumns
@@ -116,10 +116,21 @@ namespace Passado.Tests.Model
         }
 
         #endregion
+
+        #region ColumnMatchingTests
+
+        [Theory]
+        [InlineData()]
+        public async void Error_On_Column_Counts_Not_Matching(string location, string foreignKey)
+        {
+
+        }
+
+        #endregion
     }
 
     public class ForeignKeyBuilderCoreTests : ForeignKeyBuilderTests
     {
-        public override Task<List<(string ErrorId, string ErrorText, Location Location, Location AdditionalLocation)>> GetErrorsFromCompilation(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

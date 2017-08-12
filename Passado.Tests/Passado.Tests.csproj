@@ -173,6 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlphaQueryBuilderTests.cs" />
+    <Compile Include="CompilationError.cs" />
     <Compile Include="Model\CoreHelpers.cs" />
     <Compile Include="Model\ForeignKeyBuilderTests.cs" />
     <Compile Include="Model\IndexBuilderTests.cs" />
