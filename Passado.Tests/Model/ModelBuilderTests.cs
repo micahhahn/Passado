@@ -58,10 +58,16 @@ namespace Passado.Tests.Model
                     public int AddressId { get; set; }
                 }
 
+                public class City
+                {
+                    public int CityId { get; set; }
+                }
+
                 public class Database
                 {
                     public IEnumerable<User> Users { get; set; }
                     public IEnumerable<Address> Addresses { get; set; }
+                    public IEnumerable<City> Cities { get; set; }
 
                     public static DatabaseModel ProvideModel(IDatabaseBuilder<Database> mb)
                     {

@@ -17,8 +17,12 @@ namespace Passado.Tests.Model
                        mb.Database(nameof(Database))
                          .Table(d => d.Table(t => t.Users)
                                       .Column(t => t.UserId, SqlType.Int)
-                                      .Column(t => t.UserType, SqlType.Int)                                
+                                      .Column(t => t.UserType, SqlType.Int)
+                                      .Column(t => t.AddressId, SqlType.Int)
                                       " + string.Format(foreignKey, location) + @"
+                                      .Build())
+                         .Table(d => d.Table(t => t.Addresses)
+                                      .Column(t => t.AddressId, SqlType.Int)
                                       .Build())
                          .Build();";
 
@@ -56,6 +60,31 @@ namespace Passado.Tests.Model
         public async void Error_On_KeyColumn_Not_In_Column_List(string location, string foreignKey)
         {
             await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, foreignKey);
+        }
+
+        #endregion
+
+        #region ReferenceTable
+
+        [Theory]
+        [InlineData("null", ".ForeignKey<Database, User, Address>(t => t.AddressId, {0}, t => t.AddressId)")]
+        public async void Error_On_ReferenceTable_Null(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceTable"), location, foreignKey);
+        }
+
+        [Theory]
+        [InlineData("null as IEnumerable<Address>", ".ForeignKey(t => t.AddressId, t => {0}, t => t.AddressId)")]
+        public async void Error_On_ReferenceTable_Selector_Invalid(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+        }
+
+        [Theory]
+        [InlineData("t.Cities", ".ForeignKey(t => t.AddressId, t => {0}, t => t.CityId)")]
+        public async void Error_On_ReferenceTable_Not_In_Table_List(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToTable("Cities", "Database"), location, foreignKey);
         }
 
         #endregion

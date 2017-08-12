@@ -46,5 +46,6 @@ namespace Passado
         public static ModelBuilderError OrderedMultiSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Ordered Multi Selector", $"An ordered multi selector must be either an ordered property access (e.g. {parameterName}.Prop1) or an anonymous object of ordered property accesses (e.g. new {{ {parameterName}.Prop1, {parameterName}.Prop2 }}).");
 
         public static ModelBuilderError SelectorNotMappedToColumn(string propertyName, string tableName) => new ModelBuilderError("PSxxxx", "Selector Not Mapped To Column", $"The property '{propertyName}' is not mapped as a column of '{tableName}'.");
+        public static ModelBuilderError SelectorNotMappedToTable(string propertyName, string databaseName) => new ModelBuilderError("PSxxxx", "Selector Not Mapped To Table", $"The property '{propertyName}' is not mapped as a table of '{databaseName}'.");
     }
 }

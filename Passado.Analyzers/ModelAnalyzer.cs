@@ -371,6 +371,16 @@ namespace Passado.Analyzers
                 }
             }
 
+            if (AH.IsNull(context, referenceTableArg))
+            {
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceTable").MakeDiagnostic(referenceTableArg.GetLocation()));
+                fuzzyForeignKey.ReferenceTableSelector = new Optional<(FuzzyProperty, Location)>();
+            }
+            else
+            {
+                fuzzyForeignKey.ReferenceTableSelector = new Optional<(FuzzyProperty, Location)>();
+            }
+
             fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));
             fuzzyForeignKey.DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade));
             

@@ -33,7 +33,7 @@ namespace Passado.Model.Table
             ReferenceTable = tables.FirstOrDefault(t => t.Property.Name == _referenceTable.Name);
 
             if (ReferenceTable == null)
-                throw new NotImplementedException();
+                throw ModelBuilderError.SelectorNotMappedToTable(_referenceTable.Name, _referenceTable.DeclaringType.Name).AsException();
 
             ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Name, ReferenceTable.Columns).ToImmutableArray();
         }
