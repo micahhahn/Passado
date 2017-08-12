@@ -110,29 +110,21 @@ namespace Passado.Analyzers
             return constant.HasValue && constant.Value == null;
         }
 
-        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument, ModelBuilderError nullError, ModelBuilderError propertyError, bool isOptional)
+        public static Optional<FuzzyProperty> ParseSelector(SyntaxNodeAnalysisContext context, ArgumentSyntax argument)
         {
-            // If the argument is null, this must be an optional property
-            if (argument == null)
-                return new Optional<FuzzyProperty>(null);
+            (var body, var parameter) = DeconstructLambda(argument);
             
-            var lambdaExpression = argument.Expression as SimpleLambdaExpressionSyntax;
-
-            if (lambdaExpression == null)
-                return new Optional<FuzzyProperty>();
-
-            var selector = lambdaExpression.Body as MemberAccessExpressionSyntax;
-            
-            if (selector == null || !(context.SemanticModel.GetSymbolInfo(selector.Expression).Symbol is IParameterSymbol))
+            if (body is MemberAccessExpressionSyntax member &&
+                context.SemanticModel.GetSymbolInfo(member.Expression).Symbol is IParameterSymbol)
             {
-                context.ReportDiagnostic(propertyError.MakeDiagnostic(argument.GetLocation()));
-                return new Optional<FuzzyProperty>(null);
+                var propertySymbol = context.SemanticModel.GetSymbolInfo(body).Symbol as IPropertySymbol;
+
+                return new Optional<FuzzyProperty>(new FuzzyProperty(propertySymbol));
             }
             else
             {
-                var propertySymbol = context.SemanticModel.GetSymbolInfo(selector).Symbol as IPropertySymbol;
-
-                return new Optional<FuzzyProperty>(new FuzzyProperty(propertySymbol));
+                context.ReportDiagnostic(ModelBuilderError.SelectorInvalid(parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
+                return new Optional<FuzzyProperty>();
             }
         }
 

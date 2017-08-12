@@ -78,7 +78,7 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
-            var property = AH.ParseSelector(context, tableArg, null, null, false);
+            var property = AH.ParseSelector(context, tableArg);
 
             var fuzzyTableModel = new FuzzyTableModel()
             {
@@ -142,7 +142,7 @@ namespace Passado.Analyzers
             if (AH.IsNull(context, columnArg))
                 context.ReportDiagnostic(ModelBuilderError.ArgumentNull("column").MakeDiagnostic(columnArg.GetLocation()));
             
-            var property = AH.ParseSelector(context, columnArg, ModelBuilderError.ArgumentNull(""), ModelBuilderError.SelectorInvalid(""), false);
+            var property = AH.ParseSelector(context, columnArg);
 
             var fuzzyColumnModel = new FuzzyColumnModel()
             {
@@ -378,7 +378,9 @@ namespace Passado.Analyzers
             }
             else
             {
-                fuzzyForeignKey.ReferenceTableSelector = new Optional<(FuzzyProperty, Location)>();
+                var selector = AH.ParseSelector(context, referenceTableArg);
+                fuzzyForeignKey.ReferenceTableSelector = selector.HasValue ? AH.Just((selector.Value, (referenceTableArg.Expression as LambdaExpressionSyntax).Body.GetLocation())) :
+                                                                             new Optional<(FuzzyProperty, Location)>();
             }
 
             fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));
@@ -394,6 +396,15 @@ namespace Passado.Analyzers
             var innerModel = ParseTableChain(context, expression, partialDatabase);
 
             return innerModel;
+        }
+
+        public static FuzzyDatabaseModel ParseDatabaseChain(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
+        {
+            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
+
+            return innerMethodName == nameof(DatabaseModelBuilderExtensions.Database) ? ParseDatabase(context, innerInvocation) :
+                   innerMethodName == nameof(DatabaseModelBuilderExtensions.Table) ? ParseTable(context, innerInvocation) :
+                   throw new NotImplementedException();
         }
 
         static FuzzyDatabaseModel ParseDatabase(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
@@ -415,12 +426,8 @@ namespace Passado.Analyzers
 
         static FuzzyDatabaseModel ParseTable(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
         {
-            (var innerInvocation, var innerMethodName) = AH.PeekChain(expression);
-
-            var innerModel = (innerMethodName == nameof(DatabaseModelBuilderExtensions.Table)) ? ParseTable(context, innerInvocation) :
-                             (innerMethodName == nameof(DatabaseModelBuilderExtensions.Database)) ? ParseDatabase(context, innerInvocation) :
-                             throw new NotImplementedException();
-
+            var innerModel = ParseDatabaseChain(context, expression);
+            
             var arguments = AH.ParseArguments(context, expression);
 
             var tableArg = arguments["table"];
@@ -457,6 +464,22 @@ namespace Passado.Analyzers
             return innerModel;
         }
 
+        static void ParseDatabaseBuild(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax expression)
+        {
+            var innerModel = ParseDatabaseChain(context, expression);
+
+            foreach (var table in innerModel.Tables)
+            {
+                foreach (var foreignKey in table.ForeignKeys)
+                {
+                    if (foreignKey.ReferenceTableSelector.HasValue && !innerModel.Tables.Any(t => t.Property.HasValue && t.Property.Value.Name == foreignKey.ReferenceTableSelector.Value.Item1.Name))
+                    {
+                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToTable(foreignKey.ReferenceTableSelector.Value.Item1.Name, ToString(innerModel.Name)).MakeDiagnostic(foreignKey.ReferenceTableSelector.Value.Item2));
+                    }
+                }
+            }
+        }
+
         public override void Initialize(AnalysisContext context)
         {
             context.RegisterSyntaxNodeAction(syntaxContext =>
@@ -472,7 +495,7 @@ namespace Passado.Analyzers
 
                     if (methodSymbol?.ToString()?.StartsWith("Passado.Model.Database.IDatabaseModelBuilder") == true)
                     {
-                        ParseTable(syntaxContext, memberAccessExpression.Expression as InvocationExpressionSyntax);
+                        ParseDatabaseBuild(syntaxContext, invocationExpression);
                     }
                 }
 
