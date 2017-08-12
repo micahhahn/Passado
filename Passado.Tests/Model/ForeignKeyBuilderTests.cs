@@ -98,6 +98,23 @@ namespace Passado.Tests.Model
             await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceColumns"), location, foreignKey);
         }
 
+        [Theory]
+        [InlineData("userId", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => new {{ {0} }})")]
+        [InlineData("userId", ".ForeignKey(t => t.AddressId, t => t.Addresses, (t) => new {{ {0} }})")]
+        [InlineData("userId", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => new {{ {0}, t.AddressId }})")]
+        [InlineData("userId", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => new {{ t.AddressId, {0} }})")]
+        public async void Error_On_ReferenceColumns_MultiSelector_Invalid(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+        }
+
+        [Theory]
+        [InlineData("t.ZipCode", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => {0})")]
+        public async void Error_On_ReferenceColumn_Not_In_Column_List(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("ZipCode", "Addresses"), location, foreignKey);
+        }
+
         #endregion
     }
 

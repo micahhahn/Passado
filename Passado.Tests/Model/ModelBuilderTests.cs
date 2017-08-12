@@ -56,6 +56,7 @@ namespace Passado.Tests.Model
                 public class Address
                 {
                     public int AddressId { get; set; }
+                    public int ZipCode { get; set; }
                 }
 
                 public class City
