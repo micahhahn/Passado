@@ -48,6 +48,7 @@ namespace Passado.Tests.Model
                 public class User
                 {
                     public int UserId { get; set; }
+                    public int AddressId { get; set; }
                     public string FirstName { get; set; }
                     public UserType UserType { get; set; }
                 }

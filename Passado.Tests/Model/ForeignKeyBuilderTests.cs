@@ -25,11 +25,40 @@ namespace Passado.Tests.Model
             await VerifyErrorRaised(mb, error, location);
         }
 
-        [Fact]
-        public void Error_For_Everything()
+        #region KeyColumns
+        
+        [Theory]
+        [InlineData("null", ".ForeignKey({0}, t => t.Addresses, t => t.AddressId)")]
+        public async void Error_On_KeyColumns_Null(string location, string foreignKey)
         {
-            Assert.True(false);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("keyColumns"), location, foreignKey);
         }
+
+        [Theory]
+        [InlineData("\"\"", ".ForeignKey(t => {0}, t => t.Addresses, t => t.AddressId)")]
+        public async void Error_On_KeyColumns_MultiSelector_Invalid(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.MultiSelectorInvalid("t"), location, foreignKey);
+        }
+
+        [Theory]
+        [InlineData("userId", ".ForeignKey(t => new {{ {0} }}, t => t.Addresses, t => t.AddressId)")]
+        [InlineData("userId", ".ForeignKey((t) => new {{ {0} }}, t => t.Addresses, t => t.AddressId)")]
+        [InlineData("userId", ".ForeignKey(t => new {{ {0}, t.UserId }}, t => t.Addresses, t => t.AddressId)")]
+        [InlineData("userId", ".ForeignKey(t => new {{ t.UserId, {0} }}, t => t.Addresses, t => t.AddressId)")]
+        public async void Error_On_KeyColumn_OrderedSelector_Invalid(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+        }
+
+        [Theory]
+        [InlineData("t.FirstName", ".ForeignKey(t => {0}, t => t.Addresses, t => t.AddressId)")]
+        public async void Error_On_KeyColumn_Not_In_Column_List(string location, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, foreignKey);
+        }
+
+        #endregion
     }
 
     public class ForeignKeyBuilderCoreTests : ForeignKeyBuilderTests

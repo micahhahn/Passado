@@ -354,16 +354,26 @@ namespace Passado.Analyzers
             var deleteActionArg = arguments["deleteAction"];
             var nameArg = arguments["name"];
 
-            var fuzzyForeignKey = new FuzzyForeignKeyModel()
-            {
-                //KeyColumns = AH.ParseMultiColumn(context, keyColumnsArg, innerModel.Columns),
-                //ReferenceTableSelector = AH.ParsePropertyLocation(context, referenceTableArg, null),
-                ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg),
-                UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
-                DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade)),
-                Name = AH.ParseConstantArgument(context, nameArg, () => new Optional<string>())
-            };
+            var fuzzyForeignKey = new FuzzyForeignKeyModel();
 
+            if (AH.IsNull(context, keyColumnsArg))
+            {
+                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+                fuzzyForeignKey.KeyColumns = new Optional<ImmutableArray<FuzzyColumnModel>>();
+            }
+            else
+            {
+                var keyColumns = AH.ParseMultiProperty(context, keyColumnsArg);
+
+                if (keyColumns.HasValue)
+                {
+                    fuzzyForeignKey.KeyColumns = AH.MatchColumns(context, keyColumns.Value, innerModel.Columns, ToString(innerModel.Name));
+                }
+            }
+
+            fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));
+            fuzzyForeignKey.DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade));
+            
             innerModel.ForeignKeys.Add(fuzzyForeignKey);
 
             return innerModel;

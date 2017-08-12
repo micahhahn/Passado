@@ -165,7 +165,7 @@ namespace Passado.Model
         {
             var builder = @this as InternalTableBuilder<TDatabase, TTable>;
 
-            var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns).MatchColumns(builder.Name, builder.Columns);
+            var tempKeyColumns = ExpressionHelpers.ParseMultiPropertySelector(keyColumns ?? throw ModelBuilderError.ArgumentNull(nameof(keyColumns)).AsException()).MatchColumns(builder.Name, builder.Columns);
             var tempReferenceTable = ExpressionHelpers.ParseSelector(referenceColumns);
             var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns);
 
