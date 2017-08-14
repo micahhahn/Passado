@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
+using Passado.Model.Table;
 using Passado.Model.Database;
 
 namespace Passado.Model
@@ -38,10 +39,16 @@ namespace Passado.Model
             var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             // TODO: Check for object name uniqueness
-
-            foreach (var foreignKey in builder.Tables.SelectMany(t => t.ForeignKeys))
+            
+            foreach ((var table, var foreignKey) in builder.Tables.SelectMany(t => t.ForeignKeys, (t, f) => (t, f)))
             {
-                foreignKey.FreezeReference(builder.Tables);
+                foreignKey.FreezeReference(table, builder.Tables);
+
+                foreach (var columnPair in foreignKey.KeyColumns.Zip(foreignKey.ReferenceColumns, (l, r) => (l, r)))
+                {
+                    if (columnPair.Item1.SqlType != columnPair.Item2.SqlType)
+                        throw ModelBuilderError.ForeignKeyColumnTypesDontMatch(foreignKey.Name, columnPair.Item1.Name, columnPair.Item1.SqlType.ToString(), columnPair.Item2.Name, columnPair.Item2.SqlType.ToString()).AsException();
+                }
             }
 
             return new DatabaseModel(name: builder.Name,

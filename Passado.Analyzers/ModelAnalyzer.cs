@@ -304,7 +304,8 @@ namespace Passado.Analyzers
                 var props = AH.ParseMultiProperty(context, includedColumnsArg);
                 if (props.HasValue)
                 {
-                    includedColumns = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                    var match = AH.MatchColumns(context, props.Value, innerModel.Columns, ToString(innerModel.Name));
+                    includedColumns = match.HasValue ? AH.Just(match.Value.Select(m => m.Item1).ToImmutableArray()) : new Optional<ImmutableArray<FuzzyColumnModel>>();
 
                     if (keyColumns.HasValue)
                     {
@@ -359,7 +360,7 @@ namespace Passado.Analyzers
             if (AH.IsNull(context, keyColumnsArg))
             {
                 context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.Expression.GetLocation()));
-                fuzzyForeignKey.KeyColumns = new Optional<ImmutableArray<FuzzyColumnModel>>();
+                fuzzyForeignKey.KeyColumns = new Optional<ImmutableArray<(FuzzyColumnModel, Location)>>();
             }
             else
             {
@@ -393,9 +394,16 @@ namespace Passado.Analyzers
                 fuzzyForeignKey.ReferenceColumnSelectors = AH.ParseMultiProperty(context, referenceColumnsArg);
             }
 
+            if (fuzzyForeignKey.KeyColumns.HasValue &&
+                fuzzyForeignKey.ReferenceColumnSelectors.HasValue &&
+                fuzzyForeignKey.KeyColumns.Value.Length != fuzzyForeignKey.ReferenceColumnSelectors.Value.Length)
+            {
+                context.ReportDiagnostic(ModelBuilderError.ForeignKeyColumnCountsDontMatch().MakeDiagnostic(AH.DeconstructLambda(keyColumnsArg).Body.GetLocation(), new List<Location>() { AH.DeconstructLambda(referenceColumnsArg).Body.GetLocation() } ));
+            }
+
             fuzzyForeignKey.UpdateAction = AH.ParseConstantArgument(context, updateActionArg, () => AH.Just(ForeignKeyAction.Cascade));
             fuzzyForeignKey.DeleteAction = AH.ParseConstantArgument(context, deleteActionArg, () => AH.Just(ForeignKeyAction.Cascade));
-            
+
             innerModel.ForeignKeys.Add(fuzzyForeignKey);
 
             return innerModel;
@@ -498,6 +506,37 @@ namespace Passado.Analyzers
                         }
                         
                         foreignKey.ReferenceColumns = AH.MatchColumns(context, foreignKey.ReferenceColumnSelectors.Value, referenceTable.Columns, ToString(referenceTable.Name));
+
+                        if (!foreignKey.Name.HasValue &&
+                            table.Schema.HasValue &&
+                            table.Name.HasValue &&
+                            foreignKey.KeyColumns.HasValue &&
+                            foreignKey.KeyColumns.Value.All(k => k.Model.Name.HasValue) &&
+                            foreignKey.ReferenceTable.HasValue &&
+                            foreignKey.ReferenceTable.Value.Schema.HasValue &&
+                            foreignKey.ReferenceTable.Value.Name.HasValue)
+                        {
+                            foreignKey.Name = BuilderHelper.GenerateForeignKeyName(table.Schema.Value,
+                                                                                   table.Name.Value,
+                                                                                   foreignKey.KeyColumns.Value.Select(k => k.Model.Name.Value),
+                                                                                   foreignKey.ReferenceTable.Value.Schema.Value,
+                                                                                   foreignKey.ReferenceTable.Value.Name.Value);
+                        }
+                        
+                        if (foreignKey.KeyColumns.HasValue)
+                        {
+                            foreach (var columnPair in foreignKey.KeyColumns.Value.Zip(foreignKey.ReferenceColumns.Value, (l, r) => (l, r)))
+                            {
+                                if (columnPair.Item1.Model.Type.HasValue && columnPair.Item2.Model.Type.HasValue && columnPair.Item1.Model.Type.Value != columnPair.Item2.Model.Type.Value)
+                                {
+                                    context.ReportDiagnostic(ModelBuilderError.ForeignKeyColumnTypesDontMatch(foreignKeyName: ToString(foreignKey.Name),
+                                                                                                              keyColumnName: ToString(columnPair.Item1.Model.Name),
+                                                                                                              keyColumnType: columnPair.Item1.Model.Type.Value.ToString(),
+                                                                                                              referenceColumnName: ToString(columnPair.Item2.Model.Name),
+                                                                                                              referenceColumnType: columnPair.Item2.Model.Type.Value.ToString()).MakeDiagnostic(columnPair.Item1.Location, new List<Location>() { columnPair.Item2.Location }));
+                                }
+                            }
+                        }
                     }
                 }
             }  

@@ -77,7 +77,7 @@ namespace Passado.Analyzers
             }
         }
 
-        public static (SyntaxNode body, ParameterSyntax parameter) DeconstructLambda(ArgumentSyntax argument)
+        public static (SyntaxNode Body, ParameterSyntax Parameter) DeconstructLambda(ArgumentSyntax argument)
         {
             if (argument.Expression is SimpleLambdaExpressionSyntax simpleLambda)
             {
@@ -175,7 +175,7 @@ namespace Passado.Analyzers
             return new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
         }
 
-        public static Optional<ImmutableArray<FuzzyColumnModel>> MatchColumns(SyntaxNodeAnalysisContext context, IEnumerable<(FuzzyProperty, Location)> properties, IEnumerable<FuzzyColumnModel> columns, string tableName)
+        public static Optional<ImmutableArray<(FuzzyColumnModel, Location)>> MatchColumns(SyntaxNodeAnalysisContext context, IEnumerable<(FuzzyProperty, Location)> properties, IEnumerable<FuzzyColumnModel> columns, string tableName)
         {
             return Just(properties.Select(p =>
             {
@@ -188,7 +188,7 @@ namespace Passado.Analyzers
                         context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToColumn(p.Item1.Name, tableName).MakeDiagnostic(p.Item2));
                 }
 
-                return column;
+                return (column, p.Item2);
             }).ToImmutableArray());
         }
 

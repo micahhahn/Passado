@@ -15,6 +15,11 @@ namespace Passado.Model
             return $"{prefix}_{(schema != null ? schema + "_" : "")}{tableName}__{string.Join("_", columnNames)}";
         }
 
+        public static string GenerateForeignKeyName(string schema, string tableName, IEnumerable<string> columnNames, string foreignSchema, string foreignTableName)
+        {
+            return $"FK_{(schema != null ? schema + "_" : "")}{tableName}__{string.Join("_", columnNames)}__{(foreignSchema != null ? foreignSchema + "_" : "")}{foreignTableName}";
+        }
+
         public static string GetTableName(string schema, string table)
         {
             if (schema == null)

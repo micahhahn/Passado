@@ -12,9 +12,9 @@ namespace Passado.Analyzers.Model
     public class FuzzyForeignKeyModel
     {
         public Optional<string> Name { get; set; }
-        public Optional<ImmutableArray<FuzzyColumnModel>> KeyColumns { get; set; }
+        public Optional<ImmutableArray<(FuzzyColumnModel Model, Location Location)>> KeyColumns { get; set; }
         public Optional<FuzzyTableModel> ReferenceTable { get; set; }
-        public Optional<ImmutableArray<FuzzyColumnModel>> ReferenceColumns { get; set; }
+        public Optional<ImmutableArray<(FuzzyColumnModel Model, Location Location)>> ReferenceColumns { get; set; }
         public Optional<ForeignKeyAction> UpdateAction { get; set; }
         public Optional<ForeignKeyAction> DeleteAction { get; set; }
 

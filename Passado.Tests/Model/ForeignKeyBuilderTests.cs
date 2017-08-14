@@ -17,7 +17,7 @@ namespace Passado.Tests.Model
                        mb.Database(nameof(Database))
                          .Table(d => d.Table(t => t.Users)
                                       .Column(t => t.UserId, SqlType.Int)
-                                      .Column(t => t.UserType, SqlType.Int)
+                                      .Column(t => t.UserType, SqlType.String)
                                       .Column(t => t.AddressId, SqlType.Int)
                                       " + string.Format(foreignKey, locations) + @"
                                       .Build())
@@ -35,14 +35,14 @@ namespace Passado.Tests.Model
         [InlineData("null", ".ForeignKey({0}, t => t.Addresses, t => t.AddressId)")]
         public async void Error_On_KeyColumns_Null(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("keyColumns"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("keyColumns"), foreignKey, location);
         }
 
         [Theory]
         [InlineData("\"\"", ".ForeignKey(t => {0}, t => t.Addresses, t => t.AddressId)")]
         public async void Error_On_KeyColumns_MultiSelector_Invalid(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.MultiSelectorInvalid("t"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.MultiSelectorInvalid("t"), foreignKey, location);
         }
 
         [Theory]
@@ -52,14 +52,14 @@ namespace Passado.Tests.Model
         [InlineData("userId", ".ForeignKey(t => new {{ t.UserId, {0} }}, t => t.Addresses, t => t.AddressId)")]
         public async void Error_On_KeyColumn_OrderedSelector_Invalid(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), foreignKey, location);
         }
 
         [Theory]
         [InlineData("t.FirstName", ".ForeignKey(t => {0}, t => t.Addresses, t => t.AddressId)")]
         public async void Error_On_KeyColumn_Not_In_Column_List(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), foreignKey, location);
         }
 
         #endregion
@@ -70,21 +70,21 @@ namespace Passado.Tests.Model
         [InlineData("null", ".ForeignKey<Database, User, Address>(t => t.AddressId, {0}, t => t.AddressId)")]
         public async void Error_On_ReferenceTable_Null(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceTable"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceTable"), foreignKey, location);
         }
 
         [Theory]
         [InlineData("null as IEnumerable<Address>", ".ForeignKey(t => t.AddressId, t => {0}, t => t.AddressId)")]
         public async void Error_On_ReferenceTable_Selector_Invalid(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), foreignKey, location);
         }
 
         [Theory]
         [InlineData("t.Cities", ".ForeignKey(t => t.AddressId, t => {0}, t => t.CityId)")]
         public async void Error_On_ReferenceTable_Not_In_Table_List(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToTable("Cities", "Database"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToTable("Cities", "Database"), foreignKey, location);
         }
 
         #endregion
@@ -95,7 +95,7 @@ namespace Passado.Tests.Model
         [InlineData("null", ".ForeignKey(t => t.AddressId, t => t.Addresses, {0})")]
         public async void Error_On_ReferenceColumns_Null(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceColumns"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ArgumentNull("referenceColumns"), foreignKey, location);
         }
 
         [Theory]
@@ -105,14 +105,14 @@ namespace Passado.Tests.Model
         [InlineData("userId", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => new {{ t.AddressId, {0} }})")]
         public async void Error_On_ReferenceColumns_MultiSelector_Invalid(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorInvalid("t"), foreignKey, location);
         }
 
         [Theory]
         [InlineData("t.ZipCode", ".ForeignKey(t => t.AddressId, t => t.Addresses, t => {0})")]
         public async void Error_On_ReferenceColumn_Not_In_Column_List(string location, string foreignKey)
         {
-            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("ZipCode", "Addresses"), location, foreignKey);
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("ZipCode", "Addresses"), foreignKey, location);
         }
 
         #endregion
@@ -120,10 +120,17 @@ namespace Passado.Tests.Model
         #region ColumnMatchingTests
 
         [Theory]
-        [InlineData()]
-        public async void Error_On_Column_Counts_Not_Matching(string location, string foreignKey)
+        [InlineData("new { t.UserId, t.UserType }", "t.AddressId", ".ForeignKey(t => {0}, t => t.Addresses, t => {1})")]
+        public async void Error_On_Column_Counts_Not_Matching(string location1, string location2, string foreignKey)
         {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ForeignKeyColumnCountsDontMatch(), foreignKey, location1, location2);
+        }
 
+        [Theory]
+        [InlineData("t.UserType", "t.AddressId", ".ForeignKey(t => {0}, t => t.Addresses, t => {1})")]
+        public async void Error_On_Column_Types_Not_Matching(string location1, string location2, string foreignKey)
+        {
+            await VerifyForeignKeyErrorRaised(ModelBuilderError.ForeignKeyColumnTypesDontMatch("FK_Users__UserType__Addresses", "UserType", "String", "AddressId", "Int"), foreignKey, location1, location2);
         }
 
         #endregion

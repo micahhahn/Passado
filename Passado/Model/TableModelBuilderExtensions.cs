@@ -169,15 +169,16 @@ namespace Passado.Model
             var tempReferenceTable = ExpressionHelpers.ParseSelector(referenceTable ?? throw ModelBuilderError.ArgumentNull(nameof(referenceTable)).AsException());
             var tempReferenceColumns = ExpressionHelpers.ParseMultiPropertySelector(referenceColumns ?? throw ModelBuilderError.ArgumentNull(nameof(referenceColumns)).AsException());
 
-            var foreignKeyName = name ?? BuilderHelper.GenerateKeyName("FK", builder.Schema, builder.Name, tempKeyColumns.Select(c => c.Name));
+            if (tempKeyColumns.Length != tempReferenceColumns.Length)
+                throw ModelBuilderError.ForeignKeyColumnCountsDontMatch().AsException();
 
-            builder.ForeignKeys.Add(new ForeignKeyModel(name: foreignKeyName,
+            builder.ForeignKeys.Add(new ForeignKeyModel(name: name,
                                                         keyColumns: tempKeyColumns.ToImmutableArray(),
                                                         referenceTable: tempReferenceTable,
                                                         referenceColumns: tempReferenceColumns.ToImmutableArray(),
                                                         updateAction: updateAction,
                                                         deleteAction: deleteAction));
-
+           
             return builder;
         }
 

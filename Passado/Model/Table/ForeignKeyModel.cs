@@ -28,7 +28,7 @@ namespace Passado.Model.Table
             DeleteAction = deleteAction;
         }
 
-        public void FreezeReference(IEnumerable<TableModel> tables)
+        public void FreezeReference(TableModel table, IEnumerable<TableModel> tables)
         {
             ReferenceTable = tables.FirstOrDefault(t => t.Property.Name == _referenceTable.Name);
 
@@ -36,9 +36,13 @@ namespace Passado.Model.Table
                 throw ModelBuilderError.SelectorNotMappedToTable(_referenceTable.Name, _referenceTable.DeclaringType.Name).AsException();
 
             ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Name, ReferenceTable.Columns).ToImmutableArray();
+
+            // If the name was not explicitly set then we generate one based on the table and column names
+            if (Name == null)
+                Name = BuilderHelper.GenerateForeignKeyName(table.Schema, table.Name, KeyColumns.Select(c => c.Name), ReferenceTable.Schema, ReferenceTable.Name);
         }
 
-        public string Name { get; }
+        public string Name { get; private set; }
         public ImmutableArray<ColumnModel> KeyColumns { get; }
         public TableModel ReferenceTable { get; private set; }
         public ImmutableArray<ColumnModel> ReferenceColumns { get; private set; }

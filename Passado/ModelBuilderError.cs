@@ -38,7 +38,8 @@ namespace Passado
         public static ModelBuilderError IndexIncludedColumnAlreadyInKeyColumns(string columnName) => new ModelBuilderError("PSxxxx", "Index Included Column Already In Key Columns", $"The column '{columnName}' is already in the key column list so it cannot be an included column.");
 
         // Foreign Key errors
-        public static ModelBuilderError ForiegnKeyColumnCountsDontMatch() => new ModelBuilderError("PSxxxx", "Foriegn Key Column Counts Dont Match", "");
+        public static ModelBuilderError ForeignKeyColumnCountsDontMatch() => new ModelBuilderError("PSxxxx", "Foreign Key Column Counts Dont Match", $"There must be the same number of key columns and reference columns.");
+        public static ModelBuilderError ForeignKeyColumnTypesDontMatch(string foreignKeyName, string keyColumnName, string keyColumnType, string referenceColumnName, string referenceColumnType) => new ModelBuilderError("PSxxxx", "Foreign Key Column Types Dont Match", $"In foreign key '{foreignKeyName}' the type of key column '{keyColumnName}' ('{keyColumnType}') does not match the type of reference column '{referenceColumnName}' ('{referenceColumnType}').");
 
         public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
         
