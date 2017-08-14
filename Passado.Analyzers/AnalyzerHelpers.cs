@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 using Passado.Analyzers.Model;
+using Passado.Error;
 using Passado.Model;
 
 namespace Passado.Analyzers
@@ -123,7 +124,7 @@ namespace Passado.Analyzers
             }
             else
             {
-                context.ReportDiagnostic(ModelBuilderError.SelectorInvalid(parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
+                context.ReportDiagnostic(BuilderError.SelectorInvalid(parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
                 return new Optional<FuzzyProperty>();
             }
         }
@@ -151,7 +152,7 @@ namespace Passado.Analyzers
                         return (ParseMemberAccessProperty(context, expression as MemberAccessExpressionSyntax), expression.GetLocation());
                     }
 
-                    context.ReportDiagnostic(ModelBuilderError.SelectorInvalid(param.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
+                    context.ReportDiagnostic(BuilderError.SelectorInvalid(param.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
                     return null;
                 }
 
@@ -169,7 +170,7 @@ namespace Passado.Analyzers
                     return Just(orderedProperties.Select(p => p.Value).ToImmutableArray());
                 }
 
-                context.ReportDiagnostic(ModelBuilderError.MultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
+                context.ReportDiagnostic(BuilderError.MultiSelectorInvalid((argument.Expression as SimpleLambdaExpressionSyntax).Parameter.Identifier.Text).MakeDiagnostic(body.GetLocation()));
             }
 
             return new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
@@ -185,7 +186,7 @@ namespace Passado.Analyzers
                 {
                     // We can only say that this column is not modeled if there are no indeterminate columns
                     if (columns.All(c => c.Property.HasValue))
-                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToColumn(p.Item1.Name, tableName).MakeDiagnostic(p.Item2));
+                        context.ReportDiagnostic(BuilderError.SelectorNotMappedToColumn(p.Item1.Name, tableName).MakeDiagnostic(p.Item2));
                 }
 
                 return (column, p.Item2);
@@ -213,7 +214,7 @@ namespace Passado.Analyzers
                         return (sortOrder, new FuzzyProperty(property), expression.GetLocation());
                     }
 
-                    context.ReportDiagnostic(ModelBuilderError.OrderedSelectorInvalid(param.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
+                    context.ReportDiagnostic(BuilderError.OrderedSelectorInvalid(param.Identifier.Text).MakeDiagnostic(expression.GetLocation()));
                     return null;
                 }
 
@@ -231,7 +232,7 @@ namespace Passado.Analyzers
                     return Just(orderedProperties.Select(p => p.Value).ToImmutableArray());
                 }
 
-                context.ReportDiagnostic(ModelBuilderError.OrderedMultiSelectorInvalid(param.Identifier.Text).MakeDiagnostic(body.GetLocation()));
+                context.ReportDiagnostic(BuilderError.OrderedMultiSelectorInvalid(param.Identifier.Text).MakeDiagnostic(body.GetLocation()));
             }
 
             return new Optional<ImmutableArray<(SortOrder, FuzzyProperty, Location)>>();
@@ -247,7 +248,7 @@ namespace Passado.Analyzers
                 {
                     // We can only say that this column is not modeled if there are no indeterminate columns
                     if (columns.All(c => c.Property.HasValue))
-                        context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToColumn(p.Item2.Name, tableName).MakeDiagnostic(p.Item3));
+                        context.ReportDiagnostic(BuilderError.SelectorNotMappedToColumn(p.Item2.Name, tableName).MakeDiagnostic(p.Item3));
                 }
 
                 return (p.Item1, column);

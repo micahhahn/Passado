@@ -2,16 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado
+namespace Passado.Error
 {
-    public class ModelBuilderException : Exception
+    public class BuilderException : Exception
     {
-        private ModelBuilderException()
-        {
-            throw new NotImplementedException();
-        }
-
-        public ModelBuilderException(ModelBuilderError error)
+        public BuilderException(BuilderError error)
             : base(error.Message)
         {
             ErrorId = error.ErrorId;

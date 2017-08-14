@@ -6,16 +6,18 @@ using System.Collections.Immutable;
 using System.Text;
 using System.Reflection;
 
+using Passado.Error;
+
 namespace Passado.Analyzers
 {
     public static class ModelBuilderErrorExtensions
     {
-        public static Diagnostic MakeDiagnostic(this ModelBuilderError error, Location location, IEnumerable<Location> additionalLocations = null)
+        public static Diagnostic MakeDiagnostic(this BuilderError error, Location location, IEnumerable<Location> additionalLocations = null)
         {
             return Diagnostic.Create(error.AsDiagnostic(), location, additionalLocations);
         }
 
-        public static DiagnosticDescriptor AsDiagnostic(this ModelBuilderError error)
+        public static DiagnosticDescriptor AsDiagnostic(this BuilderError error)
         {
             return new DiagnosticDescriptor(error.ErrorId, error.Title, error.Message, "Passado", DiagnosticSeverity.Error, true);
         }

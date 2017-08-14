@@ -2,24 +2,19 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Passado
+namespace Passado.Error
 {
     /// <summary>
     /// Represents an error that arises from invalid input to the model builder.  This is transformed either into a <see cref="ModelBuilderException"/> at runtime or a <see cref="Microsoft.CodeAnalysis.DiagnosticDescriptor"/> at compile time.
     /// </summary>
-    public class ModelBuilderError
+    public class ModelBuilderError : BuilderError
     {
         private ModelBuilderError(string errorId, string title, string message)
+            : base(errorId, title, message)
         {
-            ErrorId = errorId;
-            Title = title;
-            Message = message;
+
         }
 
-        public string ErrorId { get; }
-        public string Title { get; }
-        public string Message { get; }
-        
         // Table errors
         public static ModelBuilderError TableRepeatedSelector(string database, string property, string otherTable) => new ModelBuilderError("PS1005", "Repeated Table Selector", $"Property '{property}' of type '{database}' has already been used as a table specification for table '{otherTable}'.");
         public static ModelBuilderError TableRepeatedName(string name) => new ModelBuilderError("PS1006", "Repeated Table Name", $"Table name '{name}' has already been used.");
@@ -40,16 +35,5 @@ namespace Passado
         // Foreign Key errors
         public static ModelBuilderError ForeignKeyColumnCountsDontMatch() => new ModelBuilderError("PSxxxx", "Foreign Key Column Counts Dont Match", $"There must be the same number of key columns and reference columns.");
         public static ModelBuilderError ForeignKeyColumnTypesDontMatch(string foreignKeyName, string keyColumnName, string keyColumnType, string referenceColumnName, string referenceColumnType) => new ModelBuilderError("PSxxxx", "Foreign Key Column Types Dont Match", $"In foreign key '{foreignKeyName}' the type of key column '{keyColumnName}' ('{keyColumnType}') does not match the type of reference column '{referenceColumnName}' ('{referenceColumnType}').");
-
-        public static ModelBuilderError ArgumentNull(string argumentName) => new ModelBuilderError("PSxxxx", "Argument Null", $"The argument '{argumentName}' cannot be null.");
-        
-        public static ModelBuilderError SelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Selector", $"A selector must be a simple property access (e.g. {parameterName}.Prop1).");
-        public static ModelBuilderError OrderedSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Ordered Selector", $"An ordered selector must be an ordered property access (e.g. {parameterName}.Asc.Prop1 or {parameterName}.Desc.Prop2).");
-
-        public static ModelBuilderError MultiSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Multi Selector", $"A multi selector must be either a simple property access (e.g. {parameterName}.Prop1) or an anonymous object of simple property accesses (e.g. new {{ {parameterName}.Prop1, {parameterName}.Prop2 }}).");
-        public static ModelBuilderError OrderedMultiSelectorInvalid(string parameterName) => new ModelBuilderError("PSxxxx", "Invalid Ordered Multi Selector", $"An ordered multi selector must be either an ordered property access (e.g. {parameterName}.Prop1) or an anonymous object of ordered property accesses (e.g. new {{ {parameterName}.Prop1, {parameterName}.Prop2 }}).");
-
-        public static ModelBuilderError SelectorNotMappedToColumn(string propertyName, string tableName) => new ModelBuilderError("PSxxxx", "Selector Not Mapped To Column", $"The property '{propertyName}' is not mapped as a column of '{tableName}'.");
-        public static ModelBuilderError SelectorNotMappedToTable(string propertyName, string databaseName) => new ModelBuilderError("PSxxxx", "Selector Not Mapped To Table", $"The property '{propertyName}' is not mapped as a table of '{databaseName}'.");
     }
 }

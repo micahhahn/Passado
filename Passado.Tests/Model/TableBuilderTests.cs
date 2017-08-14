@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis;
 
 using Xunit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public abstract class TableBuilderTests : ModelBuilderTests
@@ -21,7 +23,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("table"), selector);
+            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("table"), selector);
         }
 
         [Theory]
@@ -35,7 +37,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("t"), selector);
+            await VerifyErrorRaised(mb, BuilderError.SelectorInvalid("t"), selector);
         }
 
         [Theory]

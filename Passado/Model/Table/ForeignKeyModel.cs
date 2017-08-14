@@ -6,6 +6,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
+using Passado.Error;
+
 namespace Passado.Model.Table
 {
     public class ForeignKeyModel
@@ -33,7 +35,7 @@ namespace Passado.Model.Table
             ReferenceTable = tables.FirstOrDefault(t => t.Property.Name == _referenceTable.Name);
 
             if (ReferenceTable == null)
-                throw ModelBuilderError.SelectorNotMappedToTable(_referenceTable.Name, _referenceTable.DeclaringType.Name).AsException();
+                throw BuilderError.SelectorNotMappedToTable(_referenceTable.Name, _referenceTable.DeclaringType.Name).AsException();
 
             ReferenceColumns = _referenceColumns.MatchColumns(ReferenceTable.Name, ReferenceTable.Columns).ToImmutableArray();
 

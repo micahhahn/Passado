@@ -9,9 +9,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-using Passado.Model;
-
 using Passado.Analyzers.Model;
+using Passado.Error;
+using Passado.Model;
 
 using AH = Passado.Analyzers.AnalyzerHelpers;
 
@@ -140,7 +140,7 @@ namespace Passado.Analyzers
             var converterArg = arguments["converter"];
 
             if (AH.IsNull(context, columnArg))
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("column").MakeDiagnostic(columnArg.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("column").MakeDiagnostic(columnArg.GetLocation()));
             
             var property = AH.ParseSelector(context, columnArg);
 
@@ -248,7 +248,7 @@ namespace Passado.Analyzers
             var columns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
 
             if (AH.IsNull(context, keyColumnsArg))
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
             else
             {
                 var props = AH.ParseOrderedMultiProperty(context, keyColumnsArg);
@@ -287,7 +287,7 @@ namespace Passado.Analyzers
             var keyColumns = new Optional<ImmutableArray<(SortOrder, FuzzyColumnModel)>>();
 
             if (AH.IsNull(context, keyColumnsArg))
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.GetLocation()));
             else
             {
                 var props = AH.ParseOrderedMultiProperty(context, keyColumnsArg);
@@ -359,7 +359,7 @@ namespace Passado.Analyzers
 
             if (AH.IsNull(context, keyColumnsArg))
             {
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.Expression.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("keyColumns").MakeDiagnostic(keyColumnsArg.Expression.GetLocation()));
                 fuzzyForeignKey.KeyColumns = new Optional<ImmutableArray<(FuzzyColumnModel, Location)>>();
             }
             else
@@ -374,7 +374,7 @@ namespace Passado.Analyzers
 
             if (AH.IsNull(context, referenceTableArg))
             {
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceTable").MakeDiagnostic(referenceTableArg.Expression.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("referenceTable").MakeDiagnostic(referenceTableArg.Expression.GetLocation()));
                 fuzzyForeignKey.ReferenceTableSelector = new Optional<(FuzzyProperty, Location)>();
             }
             else
@@ -386,7 +386,7 @@ namespace Passado.Analyzers
 
             if (AH.IsNull(context, referenceColumnsArg))
             {
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("referenceColumns").MakeDiagnostic(referenceColumnsArg.Expression.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("referenceColumns").MakeDiagnostic(referenceColumnsArg.Expression.GetLocation()));
                 fuzzyForeignKey.ReferenceColumnSelectors = new Optional<ImmutableArray<(FuzzyProperty, Location)>>();
             }
             else
@@ -437,7 +437,7 @@ namespace Passado.Analyzers
             };
 
             if (databaseModel.Name.HasValue && databaseModel.Name.Value == null)
-                context.ReportDiagnostic(ModelBuilderError.ArgumentNull("").MakeDiagnostic(nameArg.GetLocation()));
+                context.ReportDiagnostic(BuilderError.ArgumentNull("").MakeDiagnostic(nameArg.GetLocation()));
 
             return databaseModel;
         }
@@ -476,7 +476,7 @@ namespace Passado.Analyzers
                 var constant = context.SemanticModel.GetConstantValue(tableArg.Expression);
 
                 if (constant.HasValue && constant.Value == null)
-                    context.ReportDiagnostic(ModelBuilderError.ArgumentNull("").MakeDiagnostic(tableArg.GetLocation()));
+                    context.ReportDiagnostic(BuilderError.ArgumentNull("").MakeDiagnostic(tableArg.GetLocation()));
             }
 
             return innerModel;
@@ -496,7 +496,7 @@ namespace Passado.Analyzers
 
                         if (referenceTable == null)
                         {
-                            context.ReportDiagnostic(ModelBuilderError.SelectorNotMappedToTable(foreignKey.ReferenceTableSelector.Value.Item1.Name, ToString(innerModel.Name)).MakeDiagnostic(foreignKey.ReferenceTableSelector.Value.Item2));
+                            context.ReportDiagnostic(BuilderError.SelectorNotMappedToTable(foreignKey.ReferenceTableSelector.Value.Item1.Name, ToString(innerModel.Name)).MakeDiagnostic(foreignKey.ReferenceTableSelector.Value.Item2));
                             foreignKey.ReferenceTable = new Optional<FuzzyTableModel>();
                             break;
                         }

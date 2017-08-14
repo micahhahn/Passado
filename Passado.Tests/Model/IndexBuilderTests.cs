@@ -7,11 +7,13 @@ using Microsoft.CodeAnalysis;
 
 using Xunit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public abstract class IndexBuilderTests : ModelBuilderTests
     {
-        public async Task VerifyIndexErrorRaised(ModelBuilderError error, string location, string index)
+        public async Task VerifyIndexErrorRaised(BuilderError error, string location, string index)
         {
             var mb = @"var userId = 7;
                        mb.Database(nameof(Database))
@@ -31,14 +33,14 @@ namespace Passado.Tests.Model
         [InlineData("null", ".Index({0})")]
         public async void Error_On_KeyColumns_Null(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.ArgumentNull("keyColumns"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.ArgumentNull("keyColumns"), location, index);
         }
 
         [Theory]
         [InlineData("\"\"", ".Index(t => {0})")]
         public async void Error_On_KeyColumns_OrderedMultiSelector_Invalid(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.OrderedMultiSelectorInvalid("t"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.OrderedMultiSelectorInvalid("t"), location, index);
         }
 
         [Theory]
@@ -48,14 +50,14 @@ namespace Passado.Tests.Model
         [InlineData("userId", ".Index(t => new {{ t.Asc.UserId, {0} }})")]
         public async void Error_On_KeyColumn_OrderedSelector_Invalid(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.OrderedSelectorInvalid("t"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.OrderedSelectorInvalid("t"), location, index);
         }
 
         [Theory]
         [InlineData("t.Asc.FirstName", ".Index(t => {0})")]
         public async void Error_On_KeyColumn_Not_In_Column_List(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
         }
 
         #endregion
@@ -80,7 +82,7 @@ namespace Passado.Tests.Model
         [InlineData("\"\"", ".Index(t => t.Asc.UserId, includedColumns: t => {0})")]
         public async void Error_On_IncludedColumns_MutliSelector_Invalid(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.MultiSelectorInvalid("t"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.MultiSelectorInvalid("t"), location, index);
         }
 
         [Theory]
@@ -90,14 +92,14 @@ namespace Passado.Tests.Model
         [InlineData("userId", ".Index(t => t.Asc.UserId, includedColumns: t => new {{ t.UserType, {0} }})")]
         public async void Error_On_IncludedColumn_Selector_Invalid(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.SelectorInvalid("t"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.SelectorInvalid("t"), location, index);
         }
 
         [Theory]
         [InlineData("t.FirstName", ".Index(t => t.Asc.UserId, includedColumns: t => {0})")]
         public async void Error_On_IncludedColumn_Not_In_Column_List(string location, string index)
         {
-            await VerifyIndexErrorRaised(ModelBuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
+            await VerifyIndexErrorRaised(BuilderError.SelectorNotMappedToColumn("FirstName", "Users"), location, index);
         }
 
         [Theory]

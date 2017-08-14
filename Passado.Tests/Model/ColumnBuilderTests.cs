@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis;
 
 using Xunit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public abstract class ColumnBuilderTests : ModelBuilderTests
@@ -21,7 +23,7 @@ namespace Passado.Tests.Model
                                       .Build())
                          .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("column"), selector);
+            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("column"), selector);
         }
 
         [Theory]
@@ -33,7 +35,7 @@ namespace Passado.Tests.Model
                                        .Build();")]
         public async void Column__Error_On_Invalid_Column_Selector(string selector, string mb)
         {
-            await VerifyErrorRaised(mb, ModelBuilderError.SelectorInvalid("t"), selector);
+            await VerifyErrorRaised(mb, BuilderError.SelectorInvalid("t"), selector);
         }
 
         [Fact]

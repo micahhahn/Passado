@@ -7,6 +7,8 @@ using Microsoft.CodeAnalysis;
 
 using Xunit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public abstract class DatabaseBuilderTests : ModelBuilderTests
@@ -23,7 +25,7 @@ namespace Passado.Tests.Model
                                               .Build())
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("name"), databaseName);
+            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("name"), databaseName);
         }
 
         [Theory]
@@ -44,7 +46,7 @@ namespace Passado.Tests.Model
                                  .Table(" + tableBuilder + @")
                                  .Build();";
 
-            await VerifyErrorRaised(mb, ModelBuilderError.ArgumentNull("tableBuilder"), tableBuilder);
+            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("tableBuilder"), tableBuilder);
         }
     }
 

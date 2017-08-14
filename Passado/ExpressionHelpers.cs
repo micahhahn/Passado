@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 
+using Passado.Error;
 using Passado.Model;
 using Passado.Model.Table;
 
@@ -19,7 +20,7 @@ namespace Passado
                 memberExpression.Expression.NodeType == ExpressionType.Parameter)
                 return property;
 
-            throw ModelBuilderError.SelectorInvalid(expression.Parameters[0].Name).AsException();
+            throw BuilderError.SelectorInvalid(expression.Parameters[0].Name).AsException();
         }
 
         public static PropertyModel ParsePropertySelector(LambdaExpression expression)
@@ -37,7 +38,7 @@ namespace Passado
                     propertyMemberExpression.Expression.NodeType == ExpressionType.Parameter)
                     return property;
 
-                throw ModelBuilderError.SelectorInvalid(properties.Parameters[0].Name).AsException();
+                throw BuilderError.SelectorInvalid(properties.Parameters[0].Name).AsException();
             }
 
             if (properties.Body is MemberExpression)
@@ -56,7 +57,7 @@ namespace Passado
                                     .ToImmutableArray();
             }
 
-            throw ModelBuilderError.MultiSelectorInvalid(properties.Parameters[0].Name).AsException();
+            throw BuilderError.MultiSelectorInvalid(properties.Parameters[0].Name).AsException();
         }
 
         public static ImmutableArray<ColumnModel> MatchColumns(this IEnumerable<PropertyInfo> properties, string tableName, IEnumerable<ColumnModel> columns)
@@ -66,7 +67,7 @@ namespace Passado
                 var column = columns.FirstOrDefault(c => c.Property.Name == p.Name);
 
                 if (column == null)
-                    throw ModelBuilderError.SelectorNotMappedToColumn(p.Name, tableName).AsException();
+                    throw BuilderError.SelectorNotMappedToColumn(p.Name, tableName).AsException();
 
                 return column;
             }).ToImmutableArray();
@@ -90,7 +91,7 @@ namespace Passado
                     }
                 }
                 
-                throw ModelBuilderError.OrderedSelectorInvalid(parameterName: properties.Parameters[0].Name).AsException();
+                throw BuilderError.OrderedSelectorInvalid(parameterName: properties.Parameters[0].Name).AsException();
             }
             
             if (properties.Body is MemberExpression)
@@ -109,7 +110,7 @@ namespace Passado
                                     .ToImmutableArray();
             }
             
-            throw ModelBuilderError.OrderedMultiSelectorInvalid(parameterName: properties.Parameters[0].Name).AsException();
+            throw BuilderError.OrderedMultiSelectorInvalid(parameterName: properties.Parameters[0].Name).AsException();
         }
 
         public static ImmutableArray<SortedColumnModel> MatchColumns(this IEnumerable<(PropertyInfo Property, SortOrder Order)> orderedProperties, string tableName, IEnumerable<ColumnModel> columns)
@@ -119,7 +120,7 @@ namespace Passado
                 var column = columns.FirstOrDefault(c => c.Property.Name == p.Property.Name);
 
                 if (column == null)
-                    throw ModelBuilderError.SelectorNotMappedToColumn(p.Property.Name, tableName).AsException();
+                    throw BuilderError.SelectorNotMappedToColumn(p.Property.Name, tableName).AsException();
                 
                 return new SortedColumnModel(column, p.Order);
             }).ToImmutableArray();

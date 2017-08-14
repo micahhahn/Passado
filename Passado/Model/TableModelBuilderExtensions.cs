@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
 
+using Passado.Error;
 using Passado.Model.Table;
 
 namespace Passado.Model

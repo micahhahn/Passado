@@ -14,6 +14,8 @@ using Microsoft.CodeAnalysis.Text;
 
 using Xunit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public abstract class ModelBuilderTests
@@ -103,7 +105,7 @@ namespace Passado.Tests.Model
             return await GetCompilationErrors(await project.GetCompilationAsync());
         }
 
-        public async Task VerifyErrorRaised(string mb, ModelBuilderError modelError, params string[] locations)
+        public async Task VerifyErrorRaised(string mb, BuilderError modelError, params string[] locations)
         {
             var errors = await GetErrorsFromModelBuilder(mb);
 

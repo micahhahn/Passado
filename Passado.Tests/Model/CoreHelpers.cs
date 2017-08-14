@@ -14,6 +14,8 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Emit;
 
+using Passado.Error;
+
 namespace Passado.Tests.Model
 {
     public static class CoreHelpers
@@ -50,9 +52,9 @@ namespace Passado.Tests.Model
                     }
                     catch (TargetInvocationException ex)
                     {
-                        if (ex.InnerException is ModelBuilderException)
+                        if (ex.InnerException is BuilderException)
                         {
-                            var mbException = ex.InnerException as ModelBuilderException;
+                            var mbException = ex.InnerException as BuilderException;
 
                             return Task.FromResult(new CompilationError[]
                             {

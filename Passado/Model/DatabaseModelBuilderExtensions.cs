@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
+using Passado.Error;
 using Passado.Model.Table;
 using Passado.Model.Database;
 
@@ -16,7 +17,7 @@ namespace Passado.Model
         {
             return new InternalDatabaseBuilder<TDatabase>()
             {
-                Name = name ?? throw ModelBuilderError.ArgumentNull(nameof(name)).AsException(),
+                Name = name ?? throw BuilderError.ArgumentNull(nameof(name)).AsException(),
                 Tables = new List<TableModel>()
             };
         }
@@ -27,7 +28,7 @@ namespace Passado.Model
             var builder = @this as InternalDatabaseBuilder<TDatabase>;
 
             if (table == null)
-                throw ModelBuilderError.ArgumentNull(nameof(table)).AsException();
+                throw BuilderError.ArgumentNull(nameof(table)).AsException();
 
             builder.Tables.Add(table(new Table.TableBuilder<TDatabase>(builder)));
 
