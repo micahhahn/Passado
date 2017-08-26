@@ -7,6 +7,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.IO;
 
+using Microsoft.Build;
+using Microsoft.Build.Tasks;
+using Microsoft.Build.Execution;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -22,19 +26,36 @@ namespace Passado.Tests.Model
     {
         static readonly string frameworkPath = new FileInfo(typeof(object).GetTypeInfo().Assembly.Location).Directory.FullName;
 
-        static readonly MetadataReference[] _references =
-        {
-            MetadataReference.CreateFromFile(Path.Combine(frameworkPath, "mscorlib.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(frameworkPath, "System.Runtime.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(frameworkPath, "System.Linq.Expressions.dll")),
-            MetadataReference.CreateFromFile(Path.Combine(frameworkPath, "System.Core.dll")),
-            MetadataReference.CreateFromFile(typeof(IQueryBuilder<>).GetTypeInfo().Assembly.Location),
-        };
+        static readonly MetadataReference[] _references;
 
+        static ModelBuilderTests()
+        {
+            // The unit tests can have multiple targets (.NET Core, Desktop, etc.) so we need to build against the appropiate assemblies.
+            // The easiest way to do that is to use the assemblies of the currently executing Passado dll.
+
+            var passadoAssembly = typeof(IQueryBuilder<>).GetTypeInfo().Assembly;
+
+            var assemblyLocations = new List<string>()
+            {
+                passadoAssembly.Location,
+                typeof(Assembly).Assembly.Location
+            };
+            
+            assemblyLocations.AddRange(passadoAssembly.GetReferencedAssemblies()
+                                                      .Select(n => Assembly.Load(n).Location));
+
+            _references = assemblyLocations.Select(l => MetadataReference.CreateFromFile(l)).ToArray();
+        }
+        
         public abstract Task<CompilationError[]> GetCompilationErrors(Compilation compilation);
 
         async Task<CompilationError[]> GetErrorsFromModelBuilder(string mb)
         {
+            var passadoAssembly = typeof(IQueryBuilder<>).GetTypeInfo().Assembly;
+            var referencedAsemblies = passadoAssembly.GetReferencedAssemblies();
+
+            var _ = Assembly.Load(referencedAsemblies.Single(r => r.Name == "System.Runtime"));
+
             var source = @"
                 using System;
                 using System.Collections.Generic;
@@ -97,7 +118,6 @@ namespace Passado.Tests.Model
             var project = solution.GetProject(projectId);
 
             var options = project.CompilationOptions
-                                 .WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default)
                                  .WithOutputKind(OutputKind.DynamicallyLinkedLibrary) as CSharpCompilationOptions;
             
             project = project.WithCompilationOptions(options);
