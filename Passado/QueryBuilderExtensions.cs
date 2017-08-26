@@ -8,12 +8,21 @@ using Passado.Query.Insert;
 using Passado.Query.Update;
 using Passado.Query.Delete;
 
+using Passado.Error;
+
 namespace Passado
 {
     public static class QueryBuilderExtensions
     {
         public static IFromQuery<TDatabase, TTable1> From<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
+            if (selector == null)
+                throw BuilderError.ArgumentNull(nameof(selector)).AsException();
+
+            var tableProperty = ExpressionHelpers.ParseSelector(selector);
+            
+
+
             throw new NotImplementedException();
         }
 

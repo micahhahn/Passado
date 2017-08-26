@@ -78,6 +78,9 @@ namespace Passado.Analyzers
             var nameArg = arguments["name"];
             var schemaArg = arguments["schema"];
 
+            if (AH.IsNull(context, tableArg))
+                context.ReportDiagnostic(BuilderError.ArgumentNull("table").MakeDiagnostic(tableArg.Expression.GetLocation()));
+
             var property = AH.ParseSelector(context, tableArg);
 
             var fuzzyTableModel = new FuzzyTableModel()
@@ -429,16 +432,16 @@ namespace Passado.Analyzers
         {
             var arguments = AH.ParseArguments(context, expression);
             var nameArg = arguments["name"];
-            
+
+            if (AH.IsNull(context, nameArg))
+                context.ReportDiagnostic(BuilderError.ArgumentNull("name").MakeDiagnostic(nameArg.GetLocation()));
+
             var databaseModel = new FuzzyDatabaseModel()
             {
                Name = AH.ParseConstantArgument<string>(context, nameArg, null),
                Tables = new List<FuzzyTableModel>()
             };
-
-            if (databaseModel.Name.HasValue && databaseModel.Name.Value == null)
-                context.ReportDiagnostic(BuilderError.ArgumentNull("").MakeDiagnostic(nameArg.GetLocation()));
-
+            
             return databaseModel;
         }
 
@@ -450,7 +453,11 @@ namespace Passado.Analyzers
 
             var tableArg = arguments["table"];
             
-            if (tableArg.Expression is MemberAccessExpressionSyntax)
+            if (AH.IsNull(context, tableArg))
+            {
+                context.ReportDiagnostic(BuilderError.ArgumentNull("table").MakeDiagnostic(tableArg.GetLocation()));
+            }
+            else if (tableArg.Expression is MemberAccessExpressionSyntax)
             {
                 var _ = context.SemanticModel.GetSymbolInfo(tableArg.Expression);
                 
@@ -470,13 +477,6 @@ namespace Passado.Analyzers
                 var table = ParseTableBuild(context, lambdaExpression.Body as InvocationExpressionSyntax, innerModel);
 
                 innerModel.Tables.Add(table);
-            }
-            else
-            {
-                var constant = context.SemanticModel.GetConstantValue(tableArg.Expression);
-
-                if (constant.HasValue && constant.Value == null)
-                    context.ReportDiagnostic(BuilderError.ArgumentNull("").MakeDiagnostic(tableArg.GetLocation()));
             }
 
             return innerModel;

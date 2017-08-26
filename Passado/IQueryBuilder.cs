@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
+using Passado.Model;
 using Passado.Query.Select;
 using Passado.Query.Insert;
 using Passado.Query.Update;
@@ -16,6 +17,7 @@ namespace Passado
     /// <typeparam name="TDatabase"></typeparam>
     public interface IQueryBuilder<TDatabase>
     {
+        DatabaseModel Model { get; set; }
         //IFromQuery<TDatabase, TTable1> From<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);
         //IInsertQuery<TDatabase, TTable1> Insert<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector, Expression<Func<TTable1, object>> columns);
         //IUpdateQuery<TDatabase, TTable1> Update<TTable1>(Expression<Func<TDatabase, IEnumerable<TTable1>>> selector);

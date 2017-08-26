@@ -30,7 +30,7 @@ namespace Passado.Model
             if (table == null)
                 throw BuilderError.ArgumentNull(nameof(table)).AsException();
 
-            builder.Tables.Add(table(new Table.TableBuilder<TDatabase>(builder)));
+            builder.Tables.Add(table(new TableBuilder<TDatabase>(builder)));
 
             return builder;
         }

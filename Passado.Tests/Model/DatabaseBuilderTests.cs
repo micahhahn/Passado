@@ -46,7 +46,7 @@ namespace Passado.Tests.Model
                                  .Table(" + tableBuilder + @")
                                  .Build();";
 
-            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("tableBuilder"), tableBuilder);
+            await VerifyErrorRaised(mb, BuilderError.ArgumentNull("table"), tableBuilder);
         }
     }
 

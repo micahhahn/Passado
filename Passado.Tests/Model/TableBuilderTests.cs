@@ -27,12 +27,12 @@ namespace Passado.Tests.Model
         }
 
         [Theory]
-        [InlineData("t => users")]
+        [InlineData("users")]
         public async void Table__Error_On_Table_Selector_Not_Property(string selector)
         {
             var mb = @"var users = new List<User>();
                        var _ = mb.Database(nameof(Database))
-                                 .Table(d => d.Table(" + selector + @")
+                                 .Table(d => d.Table(t => " + selector + @")
                                               .Column(t => t.UserId, SqlType.Int)
                                               .Build())
                                  .Build();";

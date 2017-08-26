@@ -27,12 +27,12 @@ namespace Passado.Tests.Model
         }
 
         [Theory]
-        [InlineData("t => userId", @"var userId = 0;
-                                     mb.Database(nameof(Database))
-                                       .Table(d => d.Table(t => t.Users)
-                                                    .Column(t => userId, SqlType.Int)
-                                                    .Build())
-                                       .Build();")]
+        [InlineData("userId", @"var userId = 0;
+                                mb.Database(nameof(Database))
+                                  .Table(d => d.Table(t => t.Users)
+                                               .Column(t => userId, SqlType.Int)
+                                               .Build())
+                                  .Build();")]
         public async void Column__Error_On_Invalid_Column_Selector(string selector, string mb)
         {
             await VerifyErrorRaised(mb, BuilderError.SelectorInvalid("t"), selector);
