@@ -4,7 +4,8 @@ using System.Text;
 
 namespace Passado.Query.Select
 {
-    public interface IHavingQuery<TGroupedRow> : ISelectable<TGroupedRow>
+    public interface IHavingQuery<TGroupedRow>
+        : ISelectable<TGroupedRow>
     {
 
     }

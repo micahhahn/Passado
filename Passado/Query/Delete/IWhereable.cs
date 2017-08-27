@@ -5,6 +5,6 @@ namespace Passado.Query.Delete
 {
     public interface IWhereable<TTable>
     {
-        IWhereQuery<TTable> Where(Expression<Func<TTable, bool>> condition);
+        //IWhereQuery<TTable> Where(Expression<Func<TTable, bool>> condition);
     }
 }

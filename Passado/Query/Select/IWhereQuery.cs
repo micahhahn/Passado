@@ -1,7 +1,9 @@
 ﻿
 namespace Passado.Query.Select
 {
-    public interface IWhereQuery<TJoinedRow> : ISelectable<TJoinedRow>, IGroupable<TJoinedRow>
+    public interface IWhereQuery<TJoinedRow>
+        : IGroupable<TJoinedRow>
+        , ISelectable<TJoinedRow>
     {
 
     }

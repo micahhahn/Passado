@@ -2,8 +2,9 @@
 
 namespace Passado.Query.Select
 {
-    public interface IGroupByQuery<TGroupedRow> : ISelectable<TGroupedRow>,
-                                                  IHavingable<TGroupedRow>
+    public interface IGroupByQuery<TGroupedRow>
+        : IHavingable<TGroupedRow>
+        , ISelectable<TGroupedRow>                                  
     {
 
     }

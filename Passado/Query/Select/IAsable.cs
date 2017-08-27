@@ -7,6 +7,6 @@ namespace Passado.Query.Select
 {
     public interface IAsable<TJoinedRow>
     {
-        IAsQuery<TNamedRow> As<TNamedRow>(Expression<Func<TJoinedRow, TNamedRow>> name);
+        //IAsQuery<TNamedRow> As<TNamedRow>(Expression<Func<TJoinedRow, TNamedRow>> name);
     }
 }

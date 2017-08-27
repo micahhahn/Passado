@@ -4,9 +4,10 @@ using System.Text;
 
 namespace Passado.Query.Select
 {
-    public interface IAsQuery<TJoinedRow> : ISelectable<TJoinedRow>
-                                          , IWhereable<TJoinedRow>
-                                          , IGroupable<TJoinedRow>
+    public interface IAsQuery<TJoinedRow>
+        : IWhereable<TJoinedRow>
+        , IGroupable<TJoinedRow>
+        , ISelectable<TJoinedRow>   
     {
     }
 }

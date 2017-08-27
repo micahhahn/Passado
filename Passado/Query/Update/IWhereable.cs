@@ -3,8 +3,8 @@ using System.Linq.Expressions;
 
 namespace Passado.Query.Update
 {
-    public interface IWhereable<TTable1, TJoinedTable>
+    public interface IWhereable<TJoinedTable, TTable1>
     {
-        IWhereQuery<TTable1, TJoinedTable> Where(Expression<Func<TJoinedTable, bool>> condition);
+        //IWhereQuery<TTable1, TJoinedTable> Where(Expression<Func<TJoinedTable, bool>> condition);
     }
 }

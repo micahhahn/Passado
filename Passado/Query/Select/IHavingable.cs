@@ -7,6 +7,6 @@ namespace Passado.Query.Select
 {
     public interface IHavingable<TGroupedRow>
     {
-        IHavingQuery<TGroupedRow> Having(Expression<Func<TGroupedRow, bool>> condition);
+        //IHavingQuery<TGroupedRow> Having(Expression<Func<TGroupedRow, bool>> condition);
     }
 }

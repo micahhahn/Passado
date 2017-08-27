@@ -3,9 +3,9 @@ using System.Linq.Expressions;
 
 namespace Passado.Query.Update
 {
-    public interface ISetable<TUpdateTable, TJoinedTable>
+    public interface ISetable<TJoinedTable, TTable1>
     {
-        ISetQuery<TUpdateTable, TJoinedTable> Set<TProperty>(Expression<Func<TUpdateTable, TProperty>> property, TProperty value);
-        ISetQuery<TUpdateTable, TJoinedTable> Set<TProperty>(Expression<Func<TUpdateTable, TProperty>> property, Expression<Func<TJoinedTable, TProperty>> value);
+        //ISetQuery<TUpdateTable, TJoinedTable> Set<TProperty>(Expression<Func<TUpdateTable, TProperty>> property, TProperty value);
+        //ISetQuery<TJoinedTable, TTable1> Set<TProperty>(Expression<Func<TTable1, TProperty>> property, Expression<Func<TJoinedTable, TProperty>> value);
     }
 }

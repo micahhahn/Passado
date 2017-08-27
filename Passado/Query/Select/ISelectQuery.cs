@@ -4,8 +4,9 @@ using System.Text;
 
 namespace Passado.Query.Select
 {
-    public interface ISelectQuery<TResult> : IOrderable<TResult>,
-                                             ITerminalQuery<TResult>
+    public interface ISelectQuery<TResult>
+        : IOrderable<TResult>
+        , ITerminalQuery<TResult>
     {
 
     }
