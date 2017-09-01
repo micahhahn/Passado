@@ -132,6 +132,7 @@ namespace Passado.Model
 
             var indexName = name ?? BuilderHelper.GenerateKeyName("IX", builder.Schema, builder.Name, indexKeyColumns.Select(c => c.Name));
 
+            if (clustered)
             {
                 var priorClustered = builder.PrimaryKey?.IsClustered == true ? builder.PrimaryKey.Name
                                                                              : builder.Indexes.FirstOrDefault(i => i.IsClustered)?.Name;

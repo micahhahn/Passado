@@ -5,6 +5,8 @@ using System.Text;
 
 using Passado.Model;
 
+using Xunit;
+
 namespace Passado.Tests
 {
     public class User
@@ -42,11 +44,19 @@ namespace Passado.Tests
         }
     }
 
+    class QueryBuilder<TDatabase> : IQueryBuilder<TDatabase>
+    {
+        public DatabaseModel DatabaseModel { get => Database.Model(new Passado.Model.Database.DatabaseBuilder<Database>()); }
+    }
+
     public class AlphaQueryBuilderTests
     {
-        public void Query(IQueryBuilder<Database> queryBuilder)
+        [Fact]
+        public void Query()
         {
-            queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
+            //queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
+
+            var queryBuilder = new QueryBuilder<Database>();
             
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)

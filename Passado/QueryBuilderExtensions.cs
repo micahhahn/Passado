@@ -139,6 +139,10 @@ namespace Passado
 
         public static Query.Select.IAsQuery<TNamedRow> As<TJoinedRow, TNamedRow>(this Query.Select.IAsable<TJoinedRow> asable, Expression<Func<TJoinedRow, TNamedRow>> name)
         {
+            var _ = asable as JoinedQueryBuilder;
+
+            var __ = ExpressionHelpers.ParseMultiPropertySelector(name);
+
             throw new NotImplementedException();
         }
 
