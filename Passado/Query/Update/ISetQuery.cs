@@ -1,7 +1,9 @@
 ﻿
 namespace Passado.Query.Update
 {
-    public interface ISetQuery<TUpdateTable, TJoinedTable> : ITerminalQuery, ISetable<TUpdateTable, TJoinedTable>
+    public interface ISetQuery<TRow, TTable1>
+        : ISetable<TRow, TTable1>
+        , ITerminalQuery
     {
 
     }

@@ -8,162 +8,138 @@ using System.Text;
 
 using Passado.Model;
 using Passado.Query;
+using Passado.Query.Internal;
 using Passado.Error;
 
 namespace Passado
 {
     public static class QueryBuilderExtensions
     {
-        public static (DatabaseModel DatabaseModel, ImmutableArray<JoinedTable> JoinedTables) ParseImplicitJoin(JoinedQueryBuilder joinedQueryBuilder, JoinType joinType, LambdaExpression selector)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static (DatabaseModel DatabaseModel, ImmutableArray<JoinedTable> JoinedTables) ParseExplicitJoin(JoinedQueryBuilder joinedQueryBuilder, JoinType joinType, LambdaExpression selector, LambdaExpression condition)
-        {
-            if (selector == null)
-                throw BuilderError.ArgumentNull(nameof(selector)).AsException();
-
-            var tableProperty = ExpressionHelpers.ParseSelector(selector);
-
-            var tableModel = joinedQueryBuilder.DatabaseModel.Tables.FirstOrDefault(t => t.Property.Name == tableProperty.Name);
-
-            if (tableModel == null)
-                throw BuilderError.SelectorNotMappedToTable(tableProperty.Name, joinedQueryBuilder.DatabaseModel.Name).AsException();
-
-            var joinedTables = joinedQueryBuilder.JoinedTables.Add(new JoinedTable()
-            {
-                Model = tableModel,
-                JoinType = joinType
-            });
-
-            return (joinedQueryBuilder.DatabaseModel, joinedTables);
-        }
-
         #region Select
 
         public static Query.Select.IFromQuery<TDatabase, TTable1> From<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1>(ParseExplicitJoin(new JoinedQueryBuilder<TDatabase>((qb.DatabaseModel, ImmutableArray.Create<JoinedTable>())), JoinType.Inner, selector, null));
+            return new FromQuery<TDatabase, TTable1>(qb as QueryBuilderBase, selector);
         }
-        
+
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> RightJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Right, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Right, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> RightJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Right, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Right, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> OuterJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Outer, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Outer, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> OuterJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Outer, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Outer, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2> CrossJoin<TDatabase, TTable1, TTable2>(this Query.Select.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Cross, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Cross, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> RightJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Right, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Right, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> RightJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Right, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Right, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> OuterJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Outer, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Outer, selector);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> OuterJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Outer, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Outer, selector, condition);
         }
 
         public static Query.Select.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> CrossJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Select.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Cross, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Cross, selector);
         }
 
         public static Query.Select.IAsQuery<TNamedRow> As<TJoinedRow, TNamedRow>(this Query.Select.IAsable<TJoinedRow> asable, Expression<Func<TJoinedRow, TNamedRow>> name)
         {
-            var _ = asable as JoinedQueryBuilder;
-
-            var __ = ExpressionHelpers.ParseMultiPropertySelector(name);
-
-            throw new NotImplementedException();
+            return new AsQuery<TNamedRow, object>(asable as QueryBase, name);
         }
 
         public static Query.Select.IWhereQuery<TJoinedRow> Where<TJoinedRow>(this Query.Select.IWhereable<TJoinedRow> whereable, Expression<Func<TJoinedRow, bool>> condition)
         {
-            throw new NotImplementedException();
+            return new WhereQuery<TJoinedRow, object>(whereable as QueryBase, condition);
         }
 
         public static Query.Select.IGroupByQuery<IGroupedRow<TJoinedRow, TKeys>> GroupBy<TJoinedRow, TKeys>(this Query.Select.IGroupable<TJoinedRow> groupable, Expression<Func<TJoinedRow, TKeys>> keys)
         {
-            throw new NotImplementedException();
+            return new GroupByQuery<IGroupedRow<TJoinedRow, TKeys>>(groupable as QueryBase, keys);
         }
 
         public static Query.Select.IHavingQuery<TGroupedRow> Having<TGroupedRow>(this Query.Select.IHavingable<TGroupedRow> havingable, Expression<Func<TGroupedRow, bool>> condition)
         {
-            throw new NotImplementedException();
+            return new HavingQuery<TGroupedRow>(havingable as QueryBase, condition);
         }
-
+        
         public static Query.Select.ISelectQuery<TResult> Select<TJoinedRow, TResult>(this Query.Select.ISelectable<TJoinedRow> selectable, Expression<Func<TJoinedRow, TResult>> selector)
         {
-            throw new NotImplementedException();
+            return new SelectQuery<TResult>(selectable as QueryBase, selector);
+        }
+
+        public static Query.Select.IOrderByQuery<TResult> OrderBy<TResult>(this Query.Select.IOrderable<TResult> orderable, Expression<Func<IOrderFilter<TResult>, object>> selector)
+        {
+            return new OrderByQuery<TResult>(orderable as QueryBase, selector);
         }
 
         #endregion
@@ -177,62 +153,62 @@ namespace Passado
 
         public static Query.Update.IUpdateQuery<TDatabase, TTable1> Update<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1>(ParseExplicitJoin(new JoinedQueryBuilder<TDatabase>((qb.DatabaseModel, ImmutableArray.Create<JoinedTable>())), JoinType.Inner, selector, null));
+            return new FromQuery<TDatabase, TTable1>(qb as QueryBuilderBase, selector);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Update.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Update.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Update.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Update.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Update.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Update.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Update.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Update.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Update.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Update.IAsQuery<TNamedRow, TUpdateTable> As<TJoinedRow, TUpdateTable, TNamedRow>(this Query.Update.IAsable<TJoinedRow, TNamedRow> asable, Expression<Func<TJoinedRow, TNamedRow>> name)
         {
-            throw new NotImplementedException();
+            return new AsQuery<TNamedRow, TUpdateTable>(asable as QueryBase, name);
         }
 
         public static Query.Update.IWhereQuery<TJoinedRow, TTable1> Where<TJoinedRow, TTable1>(this Query.Update.IWhereable<TJoinedRow, TTable1> whereable, Expression<Func<TJoinedRow, bool>> condition)
         {
-            throw new NotImplementedException();
+            return new WhereQuery<TJoinedRow, TTable1>(whereable as QueryBase, condition);
         }
 
-        public static Query.Update.ISetable<TJoinedRow, TTable1> Set<TJoinedRow, TTable1, TProperty>(this Query.Update.ISetable<TJoinedRow, TTable1> setable, Expression<Func<TTable1, TProperty>> property, Expression<Func<TJoinedRow, TProperty>> value)
+        public static Query.Update.ISetable<TJoinedRow, TTable1> Set<TJoinedRow, TTable1, TProperty>(this Query.Update.ISetable<TJoinedRow, TTable1> setable, Expression<Func<TTable1, TProperty>> column, Expression<Func<TJoinedRow, TProperty>> value)
         {
-            throw new NotImplementedException();
+            return new SetQuery<TJoinedRow, TTable1>(setable as QueryBase, column, value);
         }
 
         #endregion Update
@@ -241,89 +217,101 @@ namespace Passado
 
         public static Query.Delete.IDeleteQuery<TDatabase, TTable1> Delete<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1>(ParseExplicitJoin(new JoinedQueryBuilder<TDatabase>((qb.DatabaseModel, ImmutableArray.Create<JoinedTable>())), JoinType.Inner, selector, null));
+            return new FromQuery<TDatabase, TTable1>(qb as QueryBuilderBase, selector);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Delete.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2> Join<TDatabase, TTable1, TTable2>(this Query.Delete.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Delete.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2> LeftJoin<TDatabase, TTable1, TTable2>(this Query.Delete.IJoinable<TDatabase, TTable1> joinable, Expression<Func<TDatabase, IEnumerable<TTable2>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Delete.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> Join<TDatabase, TTable1, TTable2, TTable3>(this Query.Delete.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Inner, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Inner, selector, condition);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Delete.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseImplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector);
         }
 
         public static Query.Delete.IJoinQuery<TDatabase, TTable1, TTable2, TTable3> LeftJoin<TDatabase, TTable1, TTable2, TTable3>(this Query.Delete.IJoinable<TDatabase, TTable1, TTable2> joinable, Expression<Func<TDatabase, IEnumerable<TTable3>>> selector, Expression<Func<IJoinedRow<TTable1, TTable2, TTable3>, bool>> condition)
         {
-            return new JoinedQueryBuilder<TDatabase, TTable1, TTable2, TTable3>(ParseExplicitJoin(joinable as JoinedQueryBuilder, JoinType.Left, selector, condition));
+            return new JoinQuery<TDatabase, TTable1, TTable2, TTable3>(joinable as QueryBase, JoinType.Left, selector, condition);
         }
 
         public static Query.Delete.IAsQuery<TNamedRow> As<TJoinedRow, TNamedRow>(this Query.Delete.IAsable<TJoinedRow> asable, Expression<Func<TJoinedRow, TNamedRow>> name)
         {
-            throw new NotImplementedException();
+            return new AsQuery<TNamedRow, object>(asable as QueryBase, name);
         }
 
         public static Query.Delete.IWhereQuery<TJoinedRow> Where<TJoinedRow>(this Query.Delete.IWhereable<TJoinedRow> whereable, Expression<Func<TJoinedRow, bool>> condition)
         {
-            throw new NotImplementedException();
+            return new WhereQuery<TJoinedRow, object>(whereable as QueryBase, condition);
         }
 
         #endregion
 
+        static QueryBuilderBase GetQueryBuilderBase(QueryBase query)
+        {
+            if (query is FromQueryBase fromQuery)
+            {
+                return fromQuery.QueryBuilderBase;
+            }
+            else
+            {
+                return GetQueryBuilderBase(query.InnerQuery);
+            }
+        }
+
         public static IQuery Build(this ITerminalQuery terminalQuery)
         {
-            throw new NotImplementedException();
+            return GetQueryBuilderBase(terminalQuery as QueryBase).Build(terminalQuery as QueryBase);
         }
 
         public static int Execute(this ITerminalQuery terminalQuery)
         {
-            throw new NotImplementedException();
+            return Build(terminalQuery).Execute();
         }
 
-        public static Task<int> ExecuteAsync(this ITerminalQuery terminal)
+        public static Task<int> ExecuteAsync(this ITerminalQuery terminalQuery)
         {
-            throw new NotImplementedException();
+            return Build(terminalQuery).ExecuteAsync();
         }
 
         public static IQuery<TTable> Build<TTable>(this ITerminalQuery<TTable> terminalQuery)
         {
-            throw new NotImplementedException();
+            return GetQueryBuilderBase(terminalQuery as QueryBase).Build<TTable>(terminalQuery as QueryBase);
         }
 
         public static IEnumerable<TTable> Execute<TTable>(this ITerminalQuery<TTable> terminalQuery)
         {
-            throw new NotImplementedException();
+            return Build(terminalQuery).Execute();
         }
 
-        public static Task<IEnumerable<TTable>> ExecuteAsync<TTable>(this ITerminalQuery<TTable> terminal)
+        public static Task<IEnumerable<TTable>> ExecuteAsync<TTable>(this ITerminalQuery<TTable> terminalQuery)
         {
-            throw new NotImplementedException();
+            return Build(terminalQuery).ExecuteAsync();
         }
     }
 }

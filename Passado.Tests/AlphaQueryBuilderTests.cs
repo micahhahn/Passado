@@ -4,6 +4,8 @@ using System.Linq.Expressions;
 using System.Text;
 
 using Passado.Model;
+using Passado.Model.Database;
+using Passado.Internal.Memory;
 
 using Xunit;
 
@@ -32,22 +34,28 @@ namespace Passado.Tests
         public IEnumerable<User> Users { get; set; }
         public IEnumerable<Address> Addresses { get; set; }
 
-        public static DatabaseModel Model(IDatabaseBuilder<Database> db)
+        [DatabaseModelProvider]
+        public static DatabaseModel Model(DatabaseBuilder<Database> db)
         {
             return db.Database(nameof(Database))
                      .Table(d => d.Table(t => t.Users)
                                   .Column(t => t.UserId, SqlType.Int)
+                                  .Column(t => t.AddressId, SqlType.Int)
                                   .PrimaryKey(t => t.Asc.UserId)
+                                  .ForeignKey(t => t.AddressId, t => t.Addresses, t => t.AddressId)
                                   .Index(t => t.Desc.UserId)
+                                  .Build())
+                     .Table(d => d.Table(t => t.Addresses)
+                                  .Column(t => t.AddressId, SqlType.Int)
                                   .Build())
                      .Build();
         }
     }
 
-    class QueryBuilder<TDatabase> : IQueryBuilder<TDatabase>
-    {
-        public DatabaseModel DatabaseModel { get => Database.Model(new Passado.Model.Database.DatabaseBuilder<Database>()); }
-    }
+    //class QueryBuilder<TDatabase> : IQueryBuilder<TDatabase>
+    //{
+    //    public DatabaseModel DatabaseModel { get => Database.Model(new Passado.Model.Database.DatabaseBuilder<Database>()); }
+    //}
 
     public class AlphaQueryBuilderTests
     {
@@ -56,7 +64,7 @@ namespace Passado.Tests
         {
             //queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
 
-            var queryBuilder = new QueryBuilder<Database>();
+            var queryBuilder = new MemoryQueryBuilder<Database>();
             
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)
