@@ -70,7 +70,7 @@ namespace Passado.Tests.Query
         }
     }
 
-    public class GroupByBuilderCoreTests : GroupByBuilerTests
+    public class GroupByQueryBuilderCoreTests : GroupByBuilerTests
     {
         protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => QueryCoreHelpers.GetErrorsFromCompilation(compilation);
     }

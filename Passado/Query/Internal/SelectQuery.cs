@@ -8,6 +8,7 @@ using System.Reflection;
 
 using Passado.Model;
 using Passado.Model.Table;
+using Passado.Error;
 
 namespace Passado.Query.Internal
 {
@@ -62,7 +63,7 @@ namespace Passado.Query.Internal
 
                 if (groupByNames.Count > 0)
                 {
-                    throw new Exception();
+                    throw QueryBuilderError.SelectGroupByKeyNotPresentInSelect().AsException();
                 }
             }
         }

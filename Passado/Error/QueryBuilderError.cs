@@ -24,5 +24,8 @@ namespace Passado.Error
 
         // GroupBy Errors
         public static QueryBuilderError GroupByNotNewExpression() => new QueryBuilderError("PSxxxx", "Group By Not New Expression", "A group by clause must be a new expression so that the keys are named (e.g. new { Key1 = t.T1.Column1 }).");
+
+        // Select Errors
+        public static QueryBuilderError SelectGroupByKeyNotPresentInSelect() => new QueryBuilderError("PSxxxx", "", "");
     }
 }
