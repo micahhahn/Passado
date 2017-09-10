@@ -29,6 +29,56 @@ namespace Passado
             return new PropertyModel(selector.Name, selector.PropertyType);
         }
 
+        static ImmutableArray<TSelector> ParseMultiSelector<TSelector>(LambdaExpression properties, Func<Expression, TSelector> parseSelector)
+        {
+            // Types of selectors:
+            // 1. t.Prop1
+            // 2. t.Asc.Prop1
+            // 3. t.Table1.Prop1
+
+            if (properties.Body is MemberExpression)
+            {
+                return ImmutableArray.Create(parseSelector(properties.Body));
+            }
+            else if (properties.Body is UnaryExpression convertExpression && convertExpression.NodeType == ExpressionType.Convert)
+            {
+                // Struct types will undergo an implicit boxing conversion so the top level expression will be a conversion
+                // TODO: Do we need to check the type...? can an arbitrary (and undesirable) case slip in here?
+                return ImmutableArray.Create(parseSelector(convertExpression.Operand));
+            }
+            else if (properties.Body is NewExpression newExpression)
+            {
+                return newExpression.Arguments
+                                    .Select(a => parseSelector(a))
+                                    .ToImmutableArray();
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public static ImmutableArray<(PropertyInfo InnerProperty, PropertyInfo OutProperty)> ParseNestedMultiPropertySelector(LambdaExpression properties)
+        {
+            return ParseMultiSelector(properties, expression =>
+            {
+                if (expression is MemberExpression outerMemberExpression &&
+                    outerMemberExpression.Member is PropertyInfo outerProperty &&
+                    outerMemberExpression.Expression is MemberExpression innerMemberExpression &&
+                    innerMemberExpression.Member is PropertyInfo innerProperty &&
+                    innerMemberExpression.Expression.NodeType == ExpressionType.Parameter)
+                    return (innerProperty, outerProperty);
+
+                throw new NotImplementedException();
+            });
+        }
+
+        //public static ImmutableArray<(PropertyInfo Property, SortOrder Order)> ParseOrderedMultiPropertySelector(LambdaExpression properties)
+        //{
+        //    return ParseMultiSelector(properties, expression =>
+        //    {
+
+        //    });
+        //}
+
         public static ImmutableArray<PropertyInfo> ParseMultiPropertySelector(LambdaExpression properties)
         {
             PropertyInfo ParsePropertySelector(Expression expression)

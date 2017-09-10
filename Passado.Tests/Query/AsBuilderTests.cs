@@ -6,7 +6,7 @@ using Xunit;
 
 namespace Passado.Tests.Query
 {
-    public class AsBuilderTests : QueryBuilderTests
+    public class AsBuilderTests //: QueryBuilderErrorTests
     {
         [Theory]
         [InlineData("(int?)null")]

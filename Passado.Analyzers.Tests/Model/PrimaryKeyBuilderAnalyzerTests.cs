@@ -12,6 +12,6 @@ namespace Passado.Analyzers.Tests.Model
 {
     public class PrimaryKeyBuilderAnalyzerTests : PrimaryKeyBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => AnalyzerHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => AnalyzerHelpers.GetErrorsFromCompilation(compilation);
     }
 }

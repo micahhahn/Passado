@@ -11,7 +11,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public abstract class ColumnBuilderTests : ModelBuilderTests
+    public abstract class ColumnBuilderTests : ModelBuilderErrorTests
     {
         [Theory]
         [InlineData("(Expression<Func<User, int>>)null")]
@@ -137,6 +137,6 @@ namespace Passado.Tests.Model
 
     public class ColumnBuilderCoreTests : ColumnBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => ModelCoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

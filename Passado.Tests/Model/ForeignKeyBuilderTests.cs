@@ -11,7 +11,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public abstract class ForeignKeyBuilderTests : ModelBuilderTests
+    public abstract class ForeignKeyBuilderTests : ModelBuilderErrorTests
     {
         public async Task VerifyForeignKeyErrorRaised(BuilderError error, string foreignKey, params string[] locations)
         {
@@ -140,6 +140,6 @@ namespace Passado.Tests.Model
 
     public class ForeignKeyBuilderCoreTests : ForeignKeyBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => ModelCoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

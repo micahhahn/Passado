@@ -18,7 +18,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public static class CoreHelpers
+    public static class ModelCoreHelpers
     {
         public static Task<CompilationError[]> GetErrorsFromCompilation(Compilation compilation)
         {

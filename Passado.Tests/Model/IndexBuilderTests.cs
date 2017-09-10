@@ -11,7 +11,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public abstract class IndexBuilderTests : ModelBuilderTests
+    public abstract class IndexBuilderTests : ModelBuilderErrorTests
     {
         public async Task VerifyIndexErrorRaised(BuilderError error, string location, string index)
         {
@@ -114,6 +114,6 @@ namespace Passado.Tests.Model
 
     public class IndexBuilderCoreTests : IndexBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => ModelCoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

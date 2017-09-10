@@ -11,7 +11,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public abstract class PrimaryKeyBuilderTests : ModelBuilderTests
+    public abstract class PrimaryKeyBuilderTests : ModelBuilderErrorTests
     {
         public async Task VerifyPrimaryKeyErrorRaised(BuilderError error, string location, string primaryKey)
         {
@@ -70,6 +70,6 @@ namespace Passado.Tests.Model
 
     public class PrimaryKeyBuilderCoreTests : PrimaryKeyBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => ModelCoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

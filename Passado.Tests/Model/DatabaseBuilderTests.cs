@@ -11,7 +11,7 @@ using Passado.Error;
 
 namespace Passado.Tests.Model
 {
-    public abstract class DatabaseBuilderTests : ModelBuilderTests
+    public abstract class DatabaseBuilderTests : ModelBuilderErrorTests
     {
         [Theory]
         [InlineData("null")]
@@ -52,6 +52,6 @@ namespace Passado.Tests.Model
 
     public class DatabaseBuilderCoreTests : DatabaseBuilderTests
     {
-        public override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => CoreHelpers.GetErrorsFromCompilation(compilation);
+        protected override Task<CompilationError[]> GetCompilationErrors(Compilation compilation) => ModelCoreHelpers.GetErrorsFromCompilation(compilation);
     }
 }

@@ -21,5 +21,8 @@ namespace Passado.Error
         // Join Errors
         public static QueryBuilderError JoinNoForeignKeysForImplicitCondition(string tableName, IEnumerable<string> joinedTableNames) => new QueryBuilderError("PSxxxx", "No Foreign Keys Found for Implicit Join Condition", $"There must be at least one foreign key reference between '{tableName}' and {(joinedTableNames.Count() == 1 ? $"'{joinedTableNames.First()}'" : $"one of '{string.Join("', '", joinedTableNames)}'")} in order to infer an implicit join condition.");
         public static QueryBuilderError JoinMultipleForeignKeysForImplicitCondition(IEnumerable<string> foreignKeyNames) => new QueryBuilderError("PSxxxx", "Multiple Foreign Keys Found for Implicit Join Condition", $"Cannot infer which of ['{string.Join("', '", foreignKeyNames)}'] should be used for implicit join condition.");
+
+        // GroupBy Errors
+        public static QueryBuilderError GroupByNotNewExpression() => new QueryBuilderError("PSxxxx", "Group By Not New Expression", "");
     }
 }

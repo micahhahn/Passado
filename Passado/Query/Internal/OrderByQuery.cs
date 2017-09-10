@@ -3,14 +3,16 @@ using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
+using System.Reflection;
 
 using Passado.Model.Table;
+using Passado.Model;
 
 namespace Passado.Query.Internal
 {
     public abstract class OrderByQueryBase : QueryBase
     {
-        public ImmutableArray<SortedColumnModel> Columns { get; protected set; }
+        public ImmutableArray<(PropertyInfo Property, SortOrder Order)> Columns { get; protected set; }
     }
 
     public class OrderByQuery<TResult>
@@ -20,7 +22,7 @@ namespace Passado.Query.Internal
         public OrderByQuery(QueryBase innerBuilder, LambdaExpression selector)
         {
             InnerQuery = innerBuilder;
-            Columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(selector).MatchColumns("asdf", (innerBuilder as SelectQueryBase).Columns);
+            Columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(selector);
         }
     }
 }
