@@ -20,6 +20,7 @@ namespace Passado.Tests.Query
                 using Passado;
                 using Passado.Model;
                 using Passado.Model.Database;
+                using Passado.Query;
                 using System.Linq.Expressions;
 
                 public class User
@@ -54,7 +55,15 @@ namespace Passado.Tests.Query
         }
 
         [Theory]
+        [InlineData(".GroupBy({0})", "(Expression<Func<IJoinedRow<User>, int?>>)null")]
+        public async void Error_On_Null_Keys_Expression(string groupBy, string location)
+        {
+            await VerifyGroupByErrorRaised(BuilderError.ArgumentNull("keys"), groupBy, location);
+        }
+
+        [Theory]
         [InlineData(".GroupBy(t => {0})", "7")]
+        [InlineData(".GroupBy(t => {0})", "t.T1.UserId")]
         public async void Error_On_Keys_Not_New_Expression(string groupBy, string location)
         {
             await VerifyGroupByErrorRaised(QueryBuilderError.GroupByNotNewExpression(), groupBy, location);

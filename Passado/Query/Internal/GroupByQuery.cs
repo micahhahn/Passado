@@ -25,6 +25,9 @@ namespace Passado.Query.Internal
         {
             InnerQuery = innerQuery;
 
+            if (keys == null)
+                throw BuilderError.ArgumentNull(nameof(keys)).AsException();
+
             // Keys must be named 
             if (keys.Body is NewExpression newExpression)
             {

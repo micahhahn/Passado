@@ -23,6 +23,6 @@ namespace Passado.Error
         public static QueryBuilderError JoinMultipleForeignKeysForImplicitCondition(IEnumerable<string> foreignKeyNames) => new QueryBuilderError("PSxxxx", "Multiple Foreign Keys Found for Implicit Join Condition", $"Cannot infer which of ['{string.Join("', '", foreignKeyNames)}'] should be used for implicit join condition.");
 
         // GroupBy Errors
-        public static QueryBuilderError GroupByNotNewExpression() => new QueryBuilderError("PSxxxx", "Group By Not New Expression", "");
+        public static QueryBuilderError GroupByNotNewExpression() => new QueryBuilderError("PSxxxx", "Group By Not New Expression", "A group by clause must be a new expression so that the keys are named (e.g. new { Key1 = t.T1.Column1 }).");
     }
 }
