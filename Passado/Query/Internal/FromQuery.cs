@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Text;
@@ -9,11 +10,14 @@ namespace Passado.Query.Internal
 {
     public abstract class FromQueryBase : QueryBase
     {
-        public FromQueryBase(QueryBuilderBase queryBuilderBase, Expression table)
+        public FromQueryBase(QueryBuilderBase queryBuilderBase, LambdaExpression table)
         {
             InnerQuery = null;
             QueryBuilderBase = queryBuilderBase;
             Name = "T1";
+            
+            var property = ExpressionHelpers.ParseSelector(table);
+            Model = queryBuilderBase.DatabaseModel.Tables.First(t => t.Property.Name == property.Name);
         }
 
         public QueryBuilderBase QueryBuilderBase { get; }
@@ -27,7 +31,7 @@ namespace Passado.Query.Internal
             , Update.IUpdateQuery<TDatabase, TTable1>
             , Delete.IDeleteQuery<TDatabase, TTable1>
     {
-        public FromQuery(QueryBuilderBase queryBuilderBase, Expression table)
+        public FromQuery(QueryBuilderBase queryBuilderBase, LambdaExpression table)
             : base(queryBuilderBase, table)
         { }
     }

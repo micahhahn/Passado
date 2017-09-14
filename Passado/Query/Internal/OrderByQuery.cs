@@ -12,17 +12,21 @@ namespace Passado.Query.Internal
 {
     public abstract class OrderByQueryBase : QueryBase
     {
-        public ImmutableArray<(PropertyInfo Property, SortOrder Order)> Columns { get; protected set; }
+        public OrderByQueryBase(QueryBase innerQuery, LambdaExpression selector)
+        {
+            InnerQuery = innerQuery;
+            Columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(selector);
+        }
+
+        public ImmutableArray<(PropertyInfo Property, SortOrder Order)> Columns { get; }
     }
 
     public class OrderByQuery<TResult>
     : OrderByQueryBase
     , Select.IOrderByQuery<TResult>
     {
-        public OrderByQuery(QueryBase innerBuilder, LambdaExpression selector)
-        {
-            InnerQuery = innerBuilder;
-            Columns = ExpressionHelpers.ParseOrderedMultiPropertySelector(selector);
-        }
+        public OrderByQuery(QueryBase innerQuery, LambdaExpression selector)
+            : base(innerQuery, selector)
+        { }
     }
 }

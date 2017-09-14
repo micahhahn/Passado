@@ -54,11 +54,16 @@ namespace Passado.Tests.Query
         }
 
         [Theory]
-        [InlineData(@".From(d => d.Users)
-                      .GroupBy(t => new {{ t.T1.UserId }})
-                      .Select(t => {0})",
-                     "new { A = 7 }")]
-        public async void Error_On_All_GroupBy_Keys_Not_Present_In_Select_Statement(string query, string location)
+        [InlineData("new { A = 7 }", @".From(d => d.Users)
+                                       .GroupBy(t => new {{ t.T1.UserId }})
+                                       .Select(t => {0})")]
+        [InlineData("new { t.Keys.UserId }", @".From(d => d.Users)
+                                               .GroupBy(t => new {{ t.T1.UserId, t.T1.AddressId }})
+                                               .Select(t => {0})")]
+        [InlineData("new { t.Keys.AddressId }", @".From(d => d.Users)
+                                                  .GroupBy(t => new {{ t.T1.UserId, t.T1.AddressId }})
+                                                  .Select(t => {0})")]
+        public async void Error_On_All_GroupBy_Keys_Not_Present_In_Select_Statement(string location, string query)
         {
             await VerifySelectErrorRaised(QueryBuilderError.SelectGroupByKeyNotPresentInSelect(), query, location);
         }

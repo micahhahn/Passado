@@ -13,36 +13,51 @@ namespace Passado.Query.Internal
 {
     public abstract class JoinQueryBase : QueryBase
     {
-        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, Expression table)
+        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, LambdaExpression table, string defaultName)
         {
             InnerQuery = innerQuery;
             JoinType = joinType;
-            Model = null;
-            Condition = null;
+            DefaultName = defaultName;
+
+            var property = ExpressionHelpers.ParseSelector(table);
+            Model = GetQueryBuilderBase(innerQuery).DatabaseModel.Tables.First(t => t.Property.Name == property.Name);
+
+            Condition = MakeImplicitJoinCondition(GetJoinedTables(innerQuery), Model);
         }
 
-        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, Expression table, Expression condition)
+        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, LambdaExpression table, string defaultName, Expression condition)
         {
             InnerQuery = innerQuery;
             JoinType = joinType;
-            Model = null;
             Condition = condition;
+            DefaultName = defaultName;
+
+            var property = ExpressionHelpers.ParseSelector(table);
+            Model = GetQueryBuilderBase(innerQuery).DatabaseModel.Tables.First(t => t.Property.Name == property.Name);
         }
 
-        public string Name { get; }
+        public string DefaultName { get; }
         public JoinType JoinType { get; }
         public TableModel Model { get; }
         public Expression Condition { get; }
         
-        static ImmutableArray<TableModel> GetJoinedTables(QueryBase query)
+        static QueryBuilderBase GetQueryBuilderBase(QueryBase query)
+        {
+            if (query is FromQueryBase fromQuery)
+                return fromQuery.QueryBuilderBase;
+            else
+                return GetQueryBuilderBase(query.InnerQuery);
+        }
+
+        static ImmutableArray<(string DefaultName, TableModel Model)> GetJoinedTables(QueryBase query)
         {
             if (query is FromQueryBase fromQuery)
             {
-                return ImmutableArray.Create(fromQuery.Model);
+                return ImmutableArray.Create((fromQuery.Name, fromQuery.Model));
             }
             else if (query is JoinQueryBase joinQuery)
             {
-                return GetJoinedTables(joinQuery.InnerQuery).Add(joinQuery.Model);
+                return GetJoinedTables(joinQuery.InnerQuery).Add((joinQuery.DefaultName, joinQuery.Model));
             }
             else
             {
@@ -62,7 +77,7 @@ namespace Passado.Query.Internal
             return openType.MakeGenericType(tableTypes.ToArray());
         }
 
-        static LambdaExpression MakeImplicitJoinCondition(ImmutableArray<JoinQueryBase> preJoinedTables, TableModel newTable)
+        static LambdaExpression MakeImplicitJoinCondition(ImmutableArray<(string DefaultName, TableModel Model)> preJoinedTables, TableModel newTable)
         {
             var newTableName = $"T{preJoinedTables.Length + 1}";
 
@@ -73,7 +88,7 @@ namespace Passado.Query.Internal
                                                                  .Select(f => new
                                                                  {
                                                                      Name = f.Name,
-                                                                     FromTable = (Name: t.Name, Model: t.Model),
+                                                                     FromTable = (Name: t.DefaultName, Model: t.Model),
                                                                      FromColumns = f.KeyColumns,
                                                                      ToTable = (Name: newTableName, Model: newTable),
                                                                      ToColumns = f.ReferenceColumns
@@ -84,7 +99,8 @@ namespace Passado.Query.Internal
                                           .Select(f => new
                                           {
                                               ForeignKey = f,
-                                              JoinQuery = preJoinedTables.FirstOrDefault(t => t.Model.Property.Name == newTable.Property.Name)
+                                              JoinQuery = preJoinedTables.Select(p => p as (string DefaultName, TableModel Model)?)
+                                                                         .FirstOrDefault(t => t?.Model.Property.Name == newTable.Property.Name)
                                           })
                                           .Where(f => f.JoinQuery != null)
                                           .Select(f => new
@@ -92,14 +108,14 @@ namespace Passado.Query.Internal
                                               Name = f.ForeignKey.Name,
                                               FromTable = (Name: newTableName, Model: newTable),
                                               FromColumns = f.ForeignKey.KeyColumns,
-                                              ToTable = (Name: f.JoinQuery.Name, Mode: f.JoinQuery.Model),
+                                              ToTable = (Name: f.JoinQuery?.DefaultName, Mode: f.JoinQuery?.Model),
                                               ToColumns = f.ForeignKey.ReferenceColumns
                                           });
 
             var allForeignKeys = foreignKeysTo.Union(foreignKeysFrom).ToList();
 
             if (allForeignKeys.Count == 0)
-                throw QueryBuilderError.JoinNoForeignKeysForImplicitCondition(newTable.Name, preJoinedTables.Select(j => j.Name)).AsException();
+                throw QueryBuilderError.JoinNoForeignKeysForImplicitCondition(newTable.Name, preJoinedTables.Select(j => j.DefaultName)).AsException();
 
             if (allForeignKeys.Count > 1)
                 throw QueryBuilderError.JoinMultipleForeignKeysForImplicitCondition(allForeignKeys.Select(f => f.Name)).AsException();
@@ -131,12 +147,12 @@ namespace Passado.Query.Internal
         , Update.IJoinQuery<TDatabase, TTable1, TTable2>
         , Delete.IJoinQuery<TDatabase, TTable1, TTable2>
     {
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, Expression table)
-            : base(innerQuery, joinType, table)
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table)
+            : base(innerQuery, joinType, table, "T2")
         { }
 
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, Expression table, Expression condition)
-            : base(innerQuery, joinType, table, condition)
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, Expression condition)
+            : base(innerQuery, joinType, table, "T2")
         { }
     }
 
@@ -146,12 +162,12 @@ namespace Passado.Query.Internal
         , Update.IJoinQuery<TDatabase, TTable1, TTable2, TTable3>
         , Delete.IJoinQuery<TDatabase, TTable1, TTable2, TTable3>
     {
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, Expression table)
-            : base(innerQuery, joinType, table)
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table)
+            : base(innerQuery, joinType, table, "T3")
         { }
 
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, Expression table, Expression condition)
-            : base(innerQuery, joinType, table, condition)
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, Expression condition)
+            : base(innerQuery, joinType, table, "T3", condition)
         { }
     }
 }

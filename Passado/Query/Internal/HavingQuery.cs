@@ -7,17 +7,21 @@ namespace Passado.Query.Internal
 {
     public abstract class HavingQueryBase : QueryBase
     {
-        public Expression HavingCondition { get; protected set; }
+        public HavingQueryBase(QueryBase innerQuery, LambdaExpression condition)
+        {
+            InnerQuery = innerQuery;
+            Condition = condition;
+        }
+
+        public Expression Condition { get; }
     }
 
     public class HavingQuery<TGroupedRow>
         : HavingQueryBase
         , Select.IHavingQuery<TGroupedRow>
     {
-        public HavingQuery(QueryBase innerQuery, Expression condition)
-        {
-            InnerQuery = innerQuery;
-            HavingCondition = condition;
-        }
+        public HavingQuery(QueryBase innerQuery, LambdaExpression condition)
+            : base(innerQuery, condition)
+        { }
     }
 }

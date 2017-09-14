@@ -5,18 +5,25 @@ using System.Text;
 
 namespace Passado.Query.Internal
 {
+    public abstract class WhereQueryBase : QueryBase
+    {
+        public WhereQueryBase(QueryBase innerQuery, LambdaExpression condition)
+        {
+            InnerQuery = innerQuery;
+            Condition = condition;
+        }
+
+        public LambdaExpression Condition { get; }
+    }
+
     public class WhereQuery<TRow, TTable1>
-        : QueryBase
+        : WhereQueryBase
         , Select.IWhereQuery<TRow>
         , Update.IWhereQuery<TRow, TTable1>
         , Delete.IWhereQuery<TRow>
     {
-        public WhereQuery(QueryBase innerQuery, Expression expression)
-        {
-            InnerQuery = innerQuery;
-            Condition = expression;
-        }
-
-        public Expression Condition { get; }
+        public WhereQuery(QueryBase innerQuery, LambdaExpression expression)
+            : base(innerQuery, expression)
+        { }
     }
 }

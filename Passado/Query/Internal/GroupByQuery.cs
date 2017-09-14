@@ -13,15 +13,7 @@ namespace Passado.Query.Internal
 {
     public abstract class GroupByQueryBase : QueryBase
     {
-        public ImmutableArray<(PropertyInfo Property, Expression expression)> KeyColumns { get; protected set; }
-    }
-
-    internal class GroupByQuery<TGroupedRow>
-        : GroupByQueryBase
-        , Select.IGroupByQuery<TGroupedRow>
-    {
-        // Technically keys can be any expression.  And they must be named.
-        internal GroupByQuery(QueryBase innerQuery, LambdaExpression keys)
+        public GroupByQueryBase(QueryBase innerQuery, LambdaExpression keys)
         {
             InnerQuery = innerQuery;
 
@@ -40,5 +32,17 @@ namespace Passado.Query.Internal
                 throw QueryBuilderError.GroupByNotNewExpression().AsException();
             }
         }
+        
+        public ImmutableArray<(PropertyInfo Property, Expression Expression)> KeyColumns { get; }
+    }
+
+    internal class GroupByQuery<TGroupedRow>
+        : GroupByQueryBase
+        , Select.IGroupByQuery<TGroupedRow>
+    {
+        // Technically keys can be any expression.  And they must be named.
+        internal GroupByQuery(QueryBase innerQuery, LambdaExpression keys)
+            : base(innerQuery, keys)
+        { }
     }
 }

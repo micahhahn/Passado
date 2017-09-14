@@ -5,7 +5,7 @@ using System.Text;
 
 using Passado.Model;
 using Passado.Model.Database;
-using Passado.Internal.Memory;
+using Passado.Internal.SqlServer;
 
 using Xunit;
 
@@ -64,7 +64,7 @@ namespace Passado.Tests
         {
             //queryBuilder.Insert(t => t.Users, t => new { t.UserId, t.AddressId, t.FirstName, t.LastName, t.Age });
 
-            var queryBuilder = new MemoryQueryBuilder<Database>();
+            var queryBuilder = new SqlServerQueryBuilder<Database>();
             
             queryBuilder.From(t => t.Users)
                         .Join(t => t.Addresses)
