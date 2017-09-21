@@ -25,7 +25,7 @@ namespace Passado.Query.Internal
             Condition = MakeImplicitJoinCondition(GetJoinedTables(innerQuery), Model);
         }
 
-        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, LambdaExpression table, string defaultName, Expression condition)
+        public JoinQueryBase(QueryBase innerQuery, JoinType joinType, LambdaExpression table, string defaultName, LambdaExpression condition)
         {
             InnerQuery = innerQuery;
             JoinType = joinType;
@@ -35,11 +35,11 @@ namespace Passado.Query.Internal
             var property = ExpressionHelpers.ParseSelector(table);
             Model = GetQueryBuilderBase(innerQuery).DatabaseModel.Tables.First(t => t.Property.Name == property.Name);
         }
-
+        
         public string DefaultName { get; }
         public JoinType JoinType { get; }
         public TableModel Model { get; }
-        public Expression Condition { get; }
+        public LambdaExpression Condition { get; }
         
         static QueryBuilderBase GetQueryBuilderBase(QueryBase query)
         {
@@ -151,8 +151,8 @@ namespace Passado.Query.Internal
             : base(innerQuery, joinType, table, "T2")
         { }
 
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, Expression condition)
-            : base(innerQuery, joinType, table, "T2")
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, LambdaExpression condition)
+            : base(innerQuery, joinType, table, "T2", condition)
         { }
     }
 
@@ -166,7 +166,7 @@ namespace Passado.Query.Internal
             : base(innerQuery, joinType, table, "T3")
         { }
 
-        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, Expression condition)
+        public JoinQuery(QueryBase innerQuery, JoinType joinType, LambdaExpression table, LambdaExpression condition)
             : base(innerQuery, joinType, table, "T3", condition)
         { }
     }

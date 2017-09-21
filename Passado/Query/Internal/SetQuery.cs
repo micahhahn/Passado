@@ -10,15 +10,7 @@ namespace Passado.Query.Internal
 {
     public abstract class SetQueryBase : QueryBase
     {
-        public ColumnModel Column { get; protected set; }
-        public Expression Value { get; protected set; }
-    }
-
-    public class SetQuery<TRow, TTable1>
-        : SetQueryBase
-        , Update.ISetQuery<TRow, TTable1>
-    {
-        public SetQuery(QueryBase innerBuilder, Expression column, Expression value)
+        public SetQueryBase(QueryBase innerBuilder, Expression column, Expression value)
         {
             if (column == null)
                 throw BuilderError.ArgumentNull(nameof(column)).AsException();
@@ -31,6 +23,20 @@ namespace Passado.Query.Internal
             InnerQuery = innerBuilder;
             //Column = column;
             Value = value;
+        }
+
+        public ColumnModel Column { get; }
+        public Expression Value { get; }
+    }
+
+    public class SetQuery<TRow, TTable1>
+        : SetQueryBase
+        , Update.ISetQuery<TRow, TTable1>
+    {
+        public SetQuery(QueryBase innerBuilder, Expression column, Expression value)
+            : base(innerBuilder, column, value)
+        {
+            
         }
     }
 }

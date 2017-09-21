@@ -13,7 +13,7 @@ namespace Passado.Query.Internal
             Condition = condition;
         }
 
-        public Expression Condition { get; }
+        public LambdaExpression Condition { get; }
     }
 
     public class HavingQuery<TGroupedRow>

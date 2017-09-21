@@ -16,7 +16,7 @@ namespace Passado
     public static class QueryBuilderExtensions
     {
         #region Select
-
+        
         public static Query.Select.IFromQuery<TDatabase, TTable1> From<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
             return new FromQuery<TDatabase, TTable1>(qb as QueryBuilderBase, selector);
@@ -144,9 +144,14 @@ namespace Passado
 
         #endregion
 
-        public static Query.Insert.IInsertQuery<TDatabase, TTable1> Insert<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector, Expression<Func<TTable1, object>> columns)
+        public static Query.Insert.IInsertQuery<TDatabase, TIntoTable> Insert<TDatabase, TIntoTable>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TIntoTable>>> table, Expression<Func<TIntoTable, object>> columns)
         {
-            throw new NotImplementedException();
+            return new InsertQuery<TDatabase, TIntoTable>(qb as QueryBuilderBase, table, columns);
+        }
+
+        public static Query.Insert.IValueQuery<TIntoTable> Value<TIntoTable>(this Query.Insert.IValuable<TIntoTable> valuable, Expression<Func<TIntoTable>> value)
+        {
+            return new ValueQuery<TIntoTable>(valuable as QueryBase, value);
         }
 
         #region Update
