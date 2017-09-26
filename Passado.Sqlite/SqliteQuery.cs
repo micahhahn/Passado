@@ -1,68 +1,108 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Data;
 
 using Microsoft.Data.Sqlite;
 
 namespace Passado.Sqlite
 {
-    public class SqliteQuery : IQuery
+    public abstract class SqliteQueryBase
     {
         private readonly string _queryText;
         private readonly SqliteConnection _connection;
+        private readonly ImmutableArray<(string VariableName, Func<object> ValueGetter)> _variableGetters;
 
-        public SqliteQuery(SqliteConnection connection, string queryText)
-        {
-            _queryText = queryText;
-            _connection = connection;
-        }
-
-        public int Execute()
-        {
-            var command = _connection.CreateCommand();
-            command.CommandText = _queryText;
-            return command.ExecuteNonQuery();
-        }
-
-        public Task<int> ExecuteAsync()
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class SqliteQuery<TResult> : IQuery<TResult>
-    {
-        private readonly string _queryText;
-        private readonly SqliteConnection _connection;
-
-        public SqliteQuery(SqliteConnection connection, string queryText)
+        protected SqliteQueryBase(SqliteConnection connection, string queryText, ImmutableArray<(string, Func<object>)> variableGetters)
         {
             _queryText = queryText;
             _connection = connection;
             _connection.Open();
+            _variableGetters = variableGetters;
+        }
+
+        protected SqliteCommand CreateCommand()
+        {
+            var command = _connection.CreateCommand();
+            command.CommandText = _queryText;
+
+            foreach (var pair in _variableGetters)
+            {
+                command.Parameters.AddWithValue(pair.VariableName, pair.ValueGetter());
+            }
+
+            return command;
+        }
+    }
+
+    public class SqliteQuery : SqliteQueryBase, IQuery
+    {
+        private readonly string _queryText;
+        private readonly SqliteConnection _connection;
+        private readonly ImmutableArray<(string VariableName, Func<object> ValueGetter)> _variableGetters;
+
+        public SqliteQuery(SqliteConnection connection, string queryText, ImmutableArray<(string, Func<object>)> variableGetters)
+            : base(connection, queryText, variableGetters)
+        { }
+
+        public int Execute()
+        {
+            var command = CreateCommand();
+
+            return command.ExecuteNonQuery();
+        }
+
+        public async Task<int> ExecuteAsync()
+        {
+            var command = CreateCommand();
+
+            return await command.ExecuteNonQueryAsync();
+        }
+    }
+
+    public class SqliteQuery<TResult> : SqliteQueryBase, IQuery<TResult>
+    {
+        private readonly Func<IDataRecord, TResult> _selector;
+
+        public SqliteQuery(SqliteConnection connection, string queryText, Func<IDataRecord, TResult> selector, ImmutableArray<(string, Func<object>)> variableGetters)
+            : base(connection, queryText, variableGetters)
+        {
+            _selector = selector;
         }
 
         public IEnumerable<TResult> Execute()
         {
-            var command = _connection.CreateCommand();
-            command.CommandText = _queryText;
-            var x = 0;
+            var command = CreateCommand();
 
             using (var reader = command.ExecuteReader())
             {
                 while (reader.Read())
                 {
-                    //reader.
+                    yield return _selector(reader);
                 }
             }
-
-            throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<TResult>> ExecuteAsync()
+        public async Task<IEnumerable<TResult>> ExecuteAsync()
         {
-            throw new NotImplementedException();
+            var command = CreateCommand();
+
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                IEnumerable<TResult> Enumerator()
+                {
+                    while (reader.Read())
+                    {
+                        yield return _selector(reader);
+                    }
+                }
+
+                return Enumerator();
+            }
         }
     }
 }

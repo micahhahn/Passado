@@ -283,6 +283,10 @@ namespace Passado
             {
                 return fromQuery.QueryBuilderBase;
             }
+            else if (query is InsertQueryBase insertQuery)
+            {
+                return insertQuery.QueryBuilderBase;
+            }
             else
             {
                 return GetQueryBuilderBase(query.InnerQuery);
