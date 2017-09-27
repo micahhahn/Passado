@@ -32,19 +32,21 @@ namespace Passado.Sqlite
             return new SqliteQuery(_connection, parsedQuery.QueryText, parsedQuery.Variables.Values.ToImmutableArray());
         }
 
-        static SelectQueryBase GetSelectQuery(QueryBase query)
+        static LambdaExpression GetSelector(QueryBase query)
         {
             if (query is SelectQueryBase selectQuery)
-                return selectQuery;
+                return selectQuery.Selector;
+            else if (query is ScalarSelectQueryBase scalarSelectQuery)
+                return scalarSelectQuery.Selector;
             else
-                return GetSelectQuery(query.InnerQuery);
+                return GetSelector(query.InnerQuery);
         }
 
         static Func<IDataRecord, TResult> BuildSelector<TResult>(QueryBase query)
         {
-            var selectQuery = GetSelectQuery(query);
+            var selector = GetSelector(query);
 
-            if (selectQuery.Selector.Body is NewExpression newExpression)
+            if (selector.Body is NewExpression newExpression)
             {
                 var parameter = Expression.Parameter(typeof(IDataRecord));
                 var selectors = newExpression.Constructor

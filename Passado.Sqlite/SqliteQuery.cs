@@ -41,10 +41,6 @@ namespace Passado.Sqlite
 
     public class SqliteQuery : SqliteQueryBase, IQuery
     {
-        private readonly string _queryText;
-        private readonly SqliteConnection _connection;
-        private readonly ImmutableArray<(string VariableName, Func<object> ValueGetter)> _variableGetters;
-
         public SqliteQuery(SqliteConnection connection, string queryText, ImmutableArray<(string, Func<object>)> variableGetters)
             : base(connection, queryText, variableGetters)
         { }

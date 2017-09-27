@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 using Passado.Tests;
-using Passado.Tests.Model;
+using Passado.Tests.ModelBuilder;
 
 namespace Passado.Analyzers.Tests.Model
 {

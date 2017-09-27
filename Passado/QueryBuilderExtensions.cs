@@ -17,6 +17,11 @@ namespace Passado
     {
         #region Select
         
+        public static Query.Select.ISelectQuery<TResult> Select<TDatabase, TResult>(this IQueryBuilder<TDatabase> qb, Expression<Func<IJoinedRow, TResult>> selector)
+        {
+            return new ScalarSelectQuery<TResult>(qb as QueryBuilderBase, selector);
+        }
+
         public static Query.Select.IFromQuery<TDatabase, TTable1> From<TDatabase, TTable1>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TTable1>>> selector)
         {
             return new FromQuery<TDatabase, TTable1>(qb as QueryBuilderBase, selector);
@@ -286,6 +291,10 @@ namespace Passado
             else if (query is InsertQueryBase insertQuery)
             {
                 return insertQuery.QueryBuilderBase;
+            }
+            else if (query is ScalarSelectQueryBase scalarSelectQuery)
+            {
+                return scalarSelectQuery.QueryBuilderBase;
             }
             else
             {

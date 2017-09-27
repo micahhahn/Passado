@@ -4,23 +4,18 @@ using System.Text;
 
 using Microsoft.Data.Sqlite;
 
-using Passado.Tests;
+using Passado.Tests.Query;
 
-namespace Passado.Sqlite.Tests
+namespace Passado.Sqlite.Tests.Query
 {
-    public class SqliteQueryTests : QueryTests
+    public class SqliteSelectQueryTests : SelectQueryTests
     {
         private readonly SqliteConnection _connection;
 
-        public SqliteQueryTests()
+        public SqliteSelectQueryTests()
         {
             _connection = new SqliteConnection(@"Data Source=:memory:");
             _connection.Open();
-        }
-
-        ~SqliteQueryTests()
-        {
-            _connection.Close();
         }
 
         public override IQueryBuilder<TDatabase> GetQueryBuilder<TDatabase>()
@@ -29,11 +24,15 @@ namespace Passado.Sqlite.Tests
 
             var createDatabase = Migration.Migration.CreateDatabase(queryBuilder.DatabaseModel);
 
-            var command = _connection.CreateCommand();
+            // Allow for the database creation query to be empty for empty databases
+            if (!string.IsNullOrEmpty(createDatabase))
+            {
+                var command = _connection.CreateCommand();
 
-            command.CommandText = createDatabase;
-            command.ExecuteNonQuery();
-
+                command.CommandText = createDatabase;
+                command.ExecuteNonQuery();
+            }
+            
             return queryBuilder;
         }
     }

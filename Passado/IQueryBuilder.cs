@@ -13,7 +13,7 @@ namespace Passado
     /// Provides an interface for constructing SQL queries against a data store.
     /// </summary>
     /// <typeparam name="TDatabase"></typeparam>
-    public interface IQueryBuilder<TDatabase> : ISelectable<IJoinedRow>
+    public interface IQueryBuilder<TDatabase>
     {
         DatabaseModel DatabaseModel { get; }
     }

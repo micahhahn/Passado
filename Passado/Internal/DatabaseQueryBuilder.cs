@@ -54,11 +54,13 @@ namespace Passado.Internal
                 var parsedHavingQuery = ParseExpression(havingQuery.Condition.Body, query, innerQuery.Variables);
                 return new SqlQuery($"{innerQuery.QueryText}\nHAVING {parsedHavingQuery.QueryText}", parsedHavingQuery.Variables);
             }
-            else if (query is SelectQueryBase selectQuery)
+            else if (query is SelectQueryBase || query is ScalarSelectQueryBase)
             {
-                if (selectQuery.Selector.Body is NewExpression newExpression)
+                var selector = (query as SelectQueryBase)?.Selector ?? (query as ScalarSelectQueryBase).Selector;
+
+                if (selector.Body is NewExpression newExpression)
                 {
-                    var innerQuery = ParseQuery(query.InnerQuery);
+                    var innerQuery = query.InnerQuery == null ? new SqlQuery(null, VariableDictionary.Empty) : ParseQuery(query.InnerQuery);
 
                     var args = newExpression.Arguments.Zip(newExpression.Members, (a, m) => (Argument: a, Member: m));
                     var separator = ",\n       ";
@@ -69,7 +71,7 @@ namespace Passado.Internal
                         return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Member.Name}", selectExpression.Variables);
                     });
 
-                    return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}\n{innerQuery.QueryText}", selectQueries.Variables);
+                    return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Variables);
                 }
 
                 throw new NotImplementedException();

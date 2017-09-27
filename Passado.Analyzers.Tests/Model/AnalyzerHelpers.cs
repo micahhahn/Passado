@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
 
 using Passado.Tests;
-using Passado.Tests.Model;
+using Passado.Tests.ModelBuilder;
 
 namespace Passado.Analyzers.Tests.Model
 {
