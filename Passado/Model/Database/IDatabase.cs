@@ -5,6 +5,7 @@ using System.Text;
 namespace Passado.Model.Database
 {
     public interface IDatabase<TDatabase> : ITableBuilder<TDatabase>
+                                          , IDatabaseModelBuilder<TDatabase>
     {
 
     }
