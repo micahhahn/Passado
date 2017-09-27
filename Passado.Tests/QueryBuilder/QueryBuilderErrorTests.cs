@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Passado.Error;
 
-namespace Passado.Tests.Query
+namespace Passado.Tests.QueryBuilder
 {
     public abstract class QueryBuilderErrorTests : BuilderErrorTestsBase
     {

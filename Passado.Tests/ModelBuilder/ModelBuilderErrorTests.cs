@@ -20,7 +20,7 @@ using Xunit;
 
 using Passado.Error;
 
-namespace Passado.Tests.Model
+namespace Passado.Tests.ModelBuilder
 {
     public abstract class ModelBuilderErrorTests : BuilderErrorTestsBase
     {

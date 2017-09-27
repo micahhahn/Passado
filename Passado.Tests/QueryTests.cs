@@ -49,6 +49,9 @@ namespace Passado.Tests
               .Value(() => new User() { UserId = closureName, AddressId = closureName })
               .Execute();
 
+            qb.Select(t => new { X = 7, Y = 8 })
+              .Execute();
+
             var query = qb.From(d => d.Users)
                           .Select(t => new { t.T1.UserId, t.T1.Age })
                           .Build();

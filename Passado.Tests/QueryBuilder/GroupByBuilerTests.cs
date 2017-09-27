@@ -8,7 +8,7 @@ using Xunit;
 
 using Passado.Error;
 
-namespace Passado.Tests.Query
+namespace Passado.Tests.QueryBuilder
 {
     public abstract class GroupByBuilerTests : BuilderErrorTestsBase
     {

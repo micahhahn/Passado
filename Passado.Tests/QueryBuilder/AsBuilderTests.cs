@@ -4,7 +4,7 @@ using System.Text;
 
 using Xunit;
 
-namespace Passado.Tests.Query
+namespace Passado.Tests.QueryBuilder
 {
     public class AsBuilderTests //: QueryBuilderErrorTests
     {

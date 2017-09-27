@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -10,15 +8,15 @@ using System.IO;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis.Emit;
+using Passado.Model;
+using Passado.Query;
+using Passado.Query.Internal;
 
 using Passado.Error;
 
-namespace Passado.Tests.Model
+namespace Passado.Tests.QueryBuilder
 {
-    public static class ModelCoreHelpers
+    public static class QueryCoreHelpers
     {
         public static Task<CompilationError[]> GetErrorsFromCompilation(Compilation compilation)
         {
@@ -35,20 +33,20 @@ namespace Passado.Tests.Model
                     memoryStream.Seek(0, SeekOrigin.Begin);
 
                     var testAssembly = Assembly.Load(memoryStream.ToArray());
-                    
+
                     var passadoAssembly = typeof(IQueryBuilder<>).GetTypeInfo().Assembly;
 
                     var databaseType = testAssembly.GetType("Database");
 
-                    var databaseBuilderType = passadoAssembly.GetType("Passado.Model.Database.DatabaseBuilder`1").MakeGenericType(databaseType);
+                    var memoryQueryBuilderType = passadoAssembly.GetType("Passado.Internal.Memory.MemoryQueryBuilder`1").MakeGenericType(databaseType);
+                    
+                    var memoryQueryBuilder = Activator.CreateInstance(memoryQueryBuilderType);
 
-                    var databaseBuilder = Activator.CreateInstance(databaseBuilderType);
-
-                    var method = databaseType.GetMethod("ProvideModel");
+                    var method = databaseType.GetMethod("RunQuery");
 
                     try
                     {
-                        method.Invoke(null, new object[] { databaseBuilder });
+                        method.Invoke(null, new object[] { memoryQueryBuilder });
                     }
                     catch (TargetInvocationException ex)
                     {

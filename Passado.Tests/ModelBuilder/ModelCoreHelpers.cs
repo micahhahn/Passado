@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
@@ -8,15 +10,15 @@ using System.IO;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Passado.Model;
-using Passado.Query;
-using Passado.Query.Internal;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis.Emit;
 
 using Passado.Error;
 
-namespace Passado.Tests.Query
+namespace Passado.Tests.ModelBuilder
 {
-    public static class QueryCoreHelpers
+    public static class ModelCoreHelpers
     {
         public static Task<CompilationError[]> GetErrorsFromCompilation(Compilation compilation)
         {
@@ -33,20 +35,20 @@ namespace Passado.Tests.Query
                     memoryStream.Seek(0, SeekOrigin.Begin);
 
                     var testAssembly = Assembly.Load(memoryStream.ToArray());
-
+                    
                     var passadoAssembly = typeof(IQueryBuilder<>).GetTypeInfo().Assembly;
 
                     var databaseType = testAssembly.GetType("Database");
 
-                    var memoryQueryBuilderType = passadoAssembly.GetType("Passado.Internal.Memory.MemoryQueryBuilder`1").MakeGenericType(databaseType);
-                    
-                    var memoryQueryBuilder = Activator.CreateInstance(memoryQueryBuilderType);
+                    var databaseBuilderType = passadoAssembly.GetType("Passado.Model.Database.DatabaseBuilder`1").MakeGenericType(databaseType);
 
-                    var method = databaseType.GetMethod("RunQuery");
+                    var databaseBuilder = Activator.CreateInstance(databaseBuilderType);
+
+                    var method = databaseType.GetMethod("ProvideModel");
 
                     try
                     {
-                        method.Invoke(null, new object[] { memoryQueryBuilder });
+                        method.Invoke(null, new object[] { databaseBuilder });
                     }
                     catch (TargetInvocationException ex)
                     {
