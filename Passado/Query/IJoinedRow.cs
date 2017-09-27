@@ -1,5 +1,10 @@
 ﻿namespace Passado.Query
 {
+    public interface IJoinedRow
+    {
+
+    }
+
     public interface IJoinedRow<TTable1>
     {
         TTable1 T1 { get; }
