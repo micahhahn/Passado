@@ -9,7 +9,7 @@ namespace Passado
     public interface IQuery
     {
         /// <summary>
-        /// Executes the query returing the number of rows affected.
+        /// Executes the query returning the number of rows affected.
         /// </summary>
         /// <returns>The number of rows affected.</returns>
         int Execute();
