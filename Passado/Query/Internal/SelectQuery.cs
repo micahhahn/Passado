@@ -59,9 +59,20 @@ namespace Passado.Query.Internal
 
         public static ImmutableArray<PropertyModel> GetColumns(LambdaExpression selector)
         {
-            return (selector.Body as NewExpression).Members
-                                                   .Select(m => new PropertyModel(m.Name, (m as PropertyInfo).PropertyType))
-                                                   .ToImmutableArray();
+            if (selector.Body is NewExpression newExpression)
+            {
+                return newExpression.Members
+                                    .Select(m => new PropertyModel(m.Name, (m as PropertyInfo).PropertyType))
+                                    .ToImmutableArray();
+            }
+            else if (selector.Body is MemberInitExpression memberInitExpression)
+            {
+                return memberInitExpression.Bindings
+                                           .Select(b => new PropertyModel(b.Member.Name, (b as MemberAssignment).Expression.Type))
+                                           .ToImmutableArray();
+            }
+
+            throw new NotImplementedException();
         }
 
         public ImmutableArray<PropertyModel> Columns { get; }

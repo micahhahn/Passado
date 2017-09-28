@@ -44,41 +44,62 @@ namespace Passado.Sqlite
 
         static Func<IDataRecord, TResult> BuildSelector<TResult>(QueryBase query)
         {
+            var parameter = Expression.Parameter(typeof(IDataRecord));
+
+            Expression ReadType(Type type, int index)
+            {
+                if (type == typeof(int))
+                    return Expression.Call(parameter, typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetInt32)), Expression.Constant(index));
+
+                throw new NotImplementedException();
+            }
+
+            Expression LiftColumn(Type type, int index)
+            {
+                // By this point, we should have verified that any column that might be null is a nullable type.
+                // So our expression should look like either:
+                // (IDataRecord d) => d.GetInt32(0)
+                // (IDataRecord d) => d.IsDBNull(0) ? (int?)null : (int?)d.GetInt32(0)
+
+                if (type.Name == "Nullable`1")
+                {
+                    var isNullExpression = Expression.Call(parameter, typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull)), Expression.Constant(index));
+                    var ifNullExpression = Expression.Constant(null, type);
+                    var ifNotNullExpression = Expression.Convert(ReadType(type.GenericTypeArguments[0], index), type);
+                    return Expression.Condition(isNullExpression, ifNullExpression, ifNotNullExpression);
+                }
+                else
+                {
+                    return ReadType(type, index);
+                }
+            }
+
             var selector = GetSelector(query);
 
             if (selector.Body is NewExpression newExpression)
             {
-                var parameter = Expression.Parameter(typeof(IDataRecord));
                 var selectors = newExpression.Constructor
                                      .GetParameters()
                                      .Select((p, i) =>
                                      {
-                                         // By this point, we should have verified that any column that might be null is a nullable type.
-                                         // So our expression should look like either:
-                                         // (IDataRecord d) => d.GetInt32(0)
-                                         // (IDataRecord d) => d.IsDBNull(0) ? (int?)null : (int?)d.GetInt32(0)
-                                         Expression ConvertType(Type type)
-                                         {
-                                             if (type == typeof(int))
-                                                 return Expression.Call(parameter, typeof(IDataRecord).GetMethod(nameof(IDataRecord.GetInt32)), Expression.Constant(i));
-
-                                             throw new NotImplementedException();
-                                         }
-                                         
-                                         if (p.ParameterType.Name == "Nullable`1")
-                                         {
-                                             var isNullExpression = Expression.Call(parameter, typeof(IDataRecord).GetMethod(nameof(IDataRecord.IsDBNull)), Expression.Constant(i));
-                                             var ifNullExpression = Expression.Constant(null, p.ParameterType);
-                                             var ifNotNullExpression = Expression.Convert(ConvertType(p.ParameterType.GenericTypeArguments[0]), p.ParameterType);
-                                             return Expression.Condition(isNullExpression, ifNullExpression, ifNotNullExpression);
-                                         }
-                                         else
-                                         {
-                                             return ConvertType(p.ParameterType);
-                                         }
+                                         return LiftColumn(p.ParameterType, i);
                                      });
 
                 return (Func<IDataRecord, TResult>)Expression.Lambda(Expression.New(newExpression.Constructor, selectors), parameter).Compile();
+            }
+            else if (selector.Body is MemberInitExpression memberInitExpression)
+            {
+                var bindings = memberInitExpression.Bindings
+                                                   .Select((b, i) =>
+                                                   {
+                                                       var expression = LiftColumn((b as MemberAssignment).Expression.Type, i);
+                                                       return Expression.Bind(b.Member, expression);
+                                                   });
+
+                memberInitExpression.Bindings
+                                    .Select(b => (b as MemberAssignment).Expression);
+
+                return (Func<IDataRecord, TResult>)Expression.Lambda(Expression.MemberInit(memberInitExpression.NewExpression, bindings), parameter).Compile();
             }
 
             throw new NotImplementedException();

@@ -58,23 +58,20 @@ namespace Passado.Internal
             {
                 var selector = (query as SelectQueryBase)?.Selector ?? (query as ScalarSelectQueryBase).Selector;
 
-                if (selector.Body is NewExpression newExpression)
+                var args = (selector.Body is NewExpression newExpression) ? newExpression.Arguments.Zip(newExpression.Members, (a, m) => (Name: m.Name, Expression: a)) :
+                           (selector.Body is MemberInitExpression memberInitExpression) ? memberInitExpression.Bindings.Select(b => (Name: b.Member.Name, Expression: (b as MemberAssignment).Expression)) : 
+                           throw new NotImplementedException();
+
+                var innerQuery = query.InnerQuery == null ? new SqlQuery(null, VariableDictionary.Empty) : ParseQuery(query.InnerQuery);
+                var separator = ",\n       ";
+
+                var selectQueries = args.Aggregate(new SqlQuery("", innerQuery.Variables), (q, s) =>
                 {
-                    var innerQuery = query.InnerQuery == null ? new SqlQuery(null, VariableDictionary.Empty) : ParseQuery(query.InnerQuery);
+                    var selectExpression = ParseExpression(s.Expression, query, q.Variables);
+                    return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Name}", selectExpression.Variables);
+                });
 
-                    var args = newExpression.Arguments.Zip(newExpression.Members, (a, m) => (Argument: a, Member: m));
-                    var separator = ",\n       ";
-
-                    var selectQueries = args.Aggregate(new SqlQuery("", innerQuery.Variables), (q, s) =>
-                    {
-                        var selectExpression = ParseExpression(s.Argument, query, q.Variables);
-                        return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Member.Name}", selectExpression.Variables);
-                    });
-
-                    return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Variables);
-                }
-
-                throw new NotImplementedException();
+                return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Variables);
             }
             else if (query is OrderByQueryBase orderByQuery)
             {

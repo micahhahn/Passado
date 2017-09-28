@@ -61,5 +61,24 @@ namespace Passado.Tests.Query
             Assert.Equal(i, rows.Single().I1);
             Assert.Equal(i, rows.Single().I2);
         }
+
+        class SelectObject
+        {
+            public int X { get; set; }
+        }
+
+        [Fact]
+        public void Select_Should_Work_With_Object_Initializers()
+        {
+            var qb = GetQueryBuilder<EmptyDatabase>();
+
+            var query = qb.Select(t => new SelectObject() { X = 1 })
+                          .Build();
+
+            var rows = query.Execute();
+
+            Assert.Equal(1, rows.Count());
+            Assert.Equal(1, rows.Single().X);
+        }
     }
 }
