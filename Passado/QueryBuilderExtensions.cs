@@ -147,6 +147,16 @@ namespace Passado
             return new OrderByQuery<TResult>(orderable as QueryBase, selector);
         }
 
+        public static Query.Select.IOffsetQuery<TResult> Offset<TResult>(this Query.Select.IOffsetable<TResult> offsetable, long offset)
+        {
+            return new OffsetQuery<TResult>(offsetable as QueryBase, offset);
+        }
+
+        public static Query.Select.ILimitQuery<TResult> Limit<TResult>(this Query.Select.ILimitable<TResult> limitable, long limit)
+        {
+            return new LimitQuery<TResult>(limitable as QueryBase, limit);
+        }
+
         #endregion
 
         public static Query.Insert.IInsertQuery<TDatabase, TIntoTable> Insert<TDatabase, TIntoTable>(this IQueryBuilder<TDatabase> qb, Expression<Func<TDatabase, IEnumerable<TIntoTable>>> table, Expression<Func<TIntoTable, object>> columns)

@@ -4,11 +4,9 @@ using System.Text;
 
 namespace Passado.Query.Select
 {
-    public interface IOrderByQuery<TResult>
-        : IOffsetable<TResult>
-        , ILimitable<TResult>
+    public interface IOffsetQuery<TResult>
+        : ILimitable<TResult>
         , ITerminalQuery<TResult>
     {
-
     }
 }
