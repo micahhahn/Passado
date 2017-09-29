@@ -62,7 +62,7 @@ namespace Passado.Tests.Query
             Assert.Equal(i, rows.Single().I2);
         }
         
-        public class SelectObject
+        class SelectObject
         {
             public SelectObject()
             { }
@@ -153,6 +153,32 @@ namespace Passado.Tests.Query
             var qb = GetQueryBuilder<EmptyDatabase>();
 
             var query = qb.Select(t => new { X = 1, Y = 2 })
+                          .Build();
+
+            var rows = query.Execute();
+
+            Assert.Equal(1, rows.Count());
+            Assert.Equal(1, rows.Single().X);
+            Assert.Equal(2, rows.Single().Y);
+        }
+
+        class SelectObjectBadName
+        {
+            public SelectObjectBadName(int X)
+            {
+                Y = X;
+            }
+
+            public int X { get; set; }
+            public int Y { get; set; }
+        }
+
+        [Fact]
+        public void Select_Should_Work_If_Constructor_And_Init_Share_Name()
+        {
+            var qb = GetQueryBuilder<EmptyDatabase>();
+
+            var query = qb.Select(t => new SelectObjectBadName(2) { X = 1 })
                           .Build();
 
             var rows = query.Execute();
