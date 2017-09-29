@@ -97,6 +97,16 @@ namespace Passado.Internal
                 var innerQuery = ParseQuery(query.InnerQuery);
                 return new SqlQuery($"{innerQuery.QueryText}\nORDER BY {string.Join(", ", orderByQuery.Columns.Select(c => $"{c.Property.Name} {(c.Order == Model.SortOrder.Ascending ? "ASC" : "DESC")}"))}", innerQuery.Variables);
             }
+            else if (query is OffsetQueryBase offsetQuery)
+            {
+                var innerQuery = ParseQuery(query.InnerQuery);
+                return new SqlQuery($"{innerQuery.QueryText}\nOFFSET {offsetQuery.Offset}", innerQuery.Variables);
+            }
+            else if (query is LimitQueryBase limitQuery)
+            {
+                var innerQuery = ParseQuery(query.InnerQuery);
+                return new SqlQuery($"{innerQuery.QueryText}\nLIMIT {limitQuery.Limit}", innerQuery.Variables);
+            }
             else if (query is InsertQueryBase insertQuery)
             {
                 return new SqlQuery($"INSERT INTO {insertQuery.Model.Name} ({string.Join(", ", insertQuery.IntoColumns.Select(c => c.Name))})", VariableDictionary.Empty);
