@@ -61,14 +61,26 @@ namespace Passado.Query.Internal
         {
             if (selector.Body is NewExpression newExpression)
             {
-                return newExpression.Members
-                                    .Select(m => new PropertyModel(m.Name, (m as PropertyInfo).PropertyType))
+                return newExpression.Constructor
+                                    .GetParameters()
+                                    .Select(p => new PropertyModel(p.Name, p.ParameterType))
                                     .ToImmutableArray();
             }
             else if (selector.Body is MemberInitExpression memberInitExpression)
             {
-                return memberInitExpression.Bindings
-                                           .Select(b => new PropertyModel(b.Member.Name, (b as MemberAssignment).Expression.Type))
+                return memberInitExpression.NewExpression
+                                           .Constructor
+                                           .GetParameters()
+                                           .Select(p => new PropertyModel(p.Name, p.ParameterType))
+                                           .Concat(memberInitExpression.Bindings
+                                                                       .Select(b => new PropertyModel(b.Member.Name, (b as MemberAssignment).Expression.Type)))
+                                           .ToImmutableArray();
+            }
+            else if (selector.Body is MethodCallExpression methodCallExpression)
+            {
+                return methodCallExpression.Method
+                                           .GetParameters()
+                                           .Select(p => new PropertyModel(p.Name, p.ParameterType))
                                            .ToImmutableArray();
             }
 

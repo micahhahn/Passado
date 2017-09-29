@@ -58,10 +58,29 @@ namespace Passado.Internal
             {
                 var selector = (query as SelectQueryBase)?.Selector ?? (query as ScalarSelectQueryBase).Selector;
 
-                var args = (selector.Body is NewExpression newExpression) ? newExpression.Arguments.Zip(newExpression.Members, (a, m) => (Name: m.Name, Expression: a)) :
-                           (selector.Body is MemberInitExpression memberInitExpression) ? memberInitExpression.Bindings.Select(b => (Name: b.Member.Name, Expression: (b as MemberAssignment).Expression)) : 
-                           throw new NotImplementedException();
-
+                IEnumerable<(string Name, Expression Expression)> args = null;
+                if (selector.Body is NewExpression newExpression)
+                {
+                    args = newExpression.Constructor
+                                        .GetParameters()
+                                        .Zip(newExpression.Arguments, (p, e) => (p.Name, e));
+                }
+                else if (selector.Body is MemberInitExpression memberInitExpression)
+                {
+                    args = memberInitExpression.NewExpression
+                                               .Constructor
+                                               .GetParameters()
+                                               .Zip(memberInitExpression.NewExpression.Arguments, (p, e) => (p.Name, e))
+                                               .Concat(memberInitExpression.Bindings
+                                                                           .Select(b => (b.Member.Name, (b as MemberAssignment).Expression)));
+                }
+                else if (selector.Body is MethodCallExpression methodCallExpression)
+                {
+                    args = methodCallExpression.Method
+                                               .GetParameters()
+                                               .Zip(methodCallExpression.Arguments, (p, e) => (p.Name, e));
+                }
+                
                 var innerQuery = query.InnerQuery == null ? new SqlQuery(null, VariableDictionary.Empty) : ParseQuery(query.InnerQuery);
                 var separator = ",\n       ";
 

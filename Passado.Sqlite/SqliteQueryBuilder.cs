@@ -76,33 +76,47 @@ namespace Passado.Sqlite
 
             var selector = GetSelector(query);
 
+            Expression body = null;
             if (selector.Body is NewExpression newExpression)
             {
-                var selectors = newExpression.Constructor
-                                     .GetParameters()
-                                     .Select((p, i) =>
-                                     {
-                                         return LiftColumn(p.ParameterType, i);
-                                     });
+                // Constructors
+                // Anonymous Expressions
+                var constructorArgs = newExpression.Constructor
+                                                   .GetParameters()
+                                                   .Select((p, i) => LiftColumn(p.ParameterType, i));
 
-                return (Func<IDataRecord, TResult>)Expression.Lambda(Expression.New(newExpression.Constructor, selectors), parameter).Compile();
+                body = Expression.New(newExpression.Constructor, constructorArgs);
             }
             else if (selector.Body is MemberInitExpression memberInitExpression)
             {
+                // Constructors + Initializers
+                var constructorArgs = memberInitExpression.NewExpression
+                                                          .Constructor
+                                                          .GetParameters()
+                                                          .Select((p, i) => LiftColumn(p.ParameterType, i));
+
+                var constructorArgCount = constructorArgs.Count();
+
                 var bindings = memberInitExpression.Bindings
                                                    .Select((b, i) =>
                                                    {
-                                                       var expression = LiftColumn((b as MemberAssignment).Expression.Type, i);
+                                                       var expression = LiftColumn((b as MemberAssignment).Expression.Type, i + constructorArgCount);
                                                        return Expression.Bind(b.Member, expression);
                                                    });
+                
+                body = Expression.MemberInit(Expression.New(memberInitExpression.NewExpression.Constructor, constructorArgs), bindings);
+            }
+            else if (selector.Body is MethodCallExpression methodCallExpression && methodCallExpression.Object == null)
+            {
+                // Static constructor methods
+                var methodArgs = methodCallExpression.Method
+                                                     .GetParameters()
+                                                     .Select((p, i) => LiftColumn(p.ParameterType, i));
 
-                memberInitExpression.Bindings
-                                    .Select(b => (b as MemberAssignment).Expression);
-
-                return (Func<IDataRecord, TResult>)Expression.Lambda(Expression.MemberInit(memberInitExpression.NewExpression, bindings), parameter).Compile();
+                body = Expression.Call(null, methodCallExpression.Method, methodArgs);
             }
 
-            throw new NotImplementedException();
+            return (Func<IDataRecord, TResult>)Expression.Lambda(body, parameter).Compile();
         }
 
         public override IQuery<TResult> Build<TResult>(QueryBase query)
