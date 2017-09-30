@@ -8,7 +8,7 @@ using System.Text;
 using Passado.Query;
 using Passado.Query.Internal;
 
-namespace Passado.Internal
+namespace Passado.Database
 {
     using VariableDictionary = ImmutableDictionary<(Type ClosureType, string MemberName), (string VariableName, Func<object> ValueGetter)>;
 
@@ -19,7 +19,6 @@ namespace Passado.Internal
         { }
 
         public abstract string EscapeName(string name);
-        
         
         public SqlQuery ParseQuery(QueryBase query)
         {

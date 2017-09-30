@@ -11,7 +11,7 @@ using Microsoft.Data.Sqlite;
 
 using Passado.Internal;
 using Passado.Query.Internal;
-
+using Passado.Database;
 
 namespace Passado.Sqlite
 {

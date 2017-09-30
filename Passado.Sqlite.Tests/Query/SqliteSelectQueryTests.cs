@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Data.Sqlite;
 
 using Passado.Tests.Query;
+using Passado.Database;
 
 namespace Passado.Sqlite.Tests.Query
 {
