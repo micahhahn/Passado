@@ -36,7 +36,7 @@ namespace Passado.Sqlite
         {
             var parsedQuery = ParseQuery(query);
 
-            var selector = BuildSelector<TResult>(query);
+            var selector = AdoHelpers.BuildSelector<TResult>(query);
             
             return new SqliteQuery<TResult>(_connection, parsedQuery.QueryText, selector, parsedQuery.Variables.Values.ToImmutableArray());
         }
