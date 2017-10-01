@@ -20,13 +20,13 @@ namespace Passado.Database
         {
             var parameters = new Dictionary<(Type ClosureType, string FieldName), (string Name, Func<object> Getter)>();
             var takenNames = new HashSet<string>();
-            var ret = new List<(string Name, Func<object> Getter)>();
+            var parameterNames = new List<string>();
 
             foreach (var memberExpression in query.Parameters)
             {
                 if (parameters.TryGetValue((memberExpression.Expression.Type, memberExpression.Member.Name), out var value))
                 {
-                    ret.Add(value);
+                    parameterNames.Add($"@{value.Name}");
                     takenNames.Add(value.Name);
                 }
                 else
@@ -39,10 +39,11 @@ namespace Passado.Database
                     var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
                     parameters.Add((memberExpression.Expression.Type, memberExpression.Member.Name), (newVariableName, func));
                     takenNames.Add(newVariableName);
+                    parameterNames.Add($"@{newVariableName}");
                 }
             }
             
-            return (string.Format(query.QueryText, ret.Select(r => r.Name)), parameters.Values.ToImmutableArray());
+            return (string.Format(query.QueryText, parameterNames.ToArray()), parameters.Values.ToImmutableArray());
         }
 
         static LambdaExpression GetSelector(QueryBase query)
