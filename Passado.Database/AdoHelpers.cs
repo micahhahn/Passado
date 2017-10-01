@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Data;
+using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,6 +16,35 @@ namespace Passado.Database
     /// </summary>
     public static class AdoHelpers
     {
+        public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(SqlQuery query)
+        {
+            var parameters = new Dictionary<(Type ClosureType, string FieldName), (string Name, Func<object> Getter)>();
+            var takenNames = new HashSet<string>();
+            var ret = new List<(string Name, Func<object> Getter)>();
+
+            foreach (var memberExpression in query.Parameters)
+            {
+                if (parameters.TryGetValue((memberExpression.Expression.Type, memberExpression.Member.Name), out var value))
+                {
+                    ret.Add(value);
+                    takenNames.Add(value.Name);
+                }
+                else
+                {
+                    var newVariableName = memberExpression.Member.Name;
+                    var index = 1;
+                    while (takenNames.Contains(newVariableName))
+                        newVariableName = $"{memberExpression.Member.Name}{++index}";
+
+                    var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
+                    parameters.Add((memberExpression.Expression.Type, memberExpression.Member.Name), (newVariableName, func));
+                    takenNames.Add(newVariableName);
+                }
+            }
+            
+            return (string.Format(query.QueryText, ret.Select(r => r.Name)), parameters.Values.ToImmutableArray());
+        }
+
         static LambdaExpression GetSelector(QueryBase query)
         {
             if (query is SelectQueryBase selectQuery)

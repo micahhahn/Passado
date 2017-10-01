@@ -27,18 +27,18 @@ namespace Passado.Sqlite
 
         public override IQuery Build(QueryBase query)
         {
-            var parsedQuery = ParseQuery(query);
-            
-            return new SqliteQuery(_connection, parsedQuery.QueryText, parsedQuery.Variables.Values.ToImmutableArray());
+            (var queryText, var parameters) = AdoHelpers.CreateNamedParameters(ParseQuery(query));
+
+            return new SqliteQuery(_connection, queryText, parameters);
         }
         
         public override IQuery<TResult> Build<TResult>(QueryBase query)
         {
-            var parsedQuery = ParseQuery(query);
+            (var queryText, var parameters) = AdoHelpers.CreateNamedParameters(ParseQuery(query));
 
             var selector = AdoHelpers.BuildSelector<TResult>(query);
             
-            return new SqliteQuery<TResult>(_connection, parsedQuery.QueryText, selector, parsedQuery.Variables.Values.ToImmutableArray());
+            return new SqliteQuery<TResult>(_connection, queryText, selector, parameters);
         }
     }
 }

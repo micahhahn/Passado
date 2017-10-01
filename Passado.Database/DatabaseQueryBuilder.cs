@@ -48,25 +48,25 @@ namespace Passado.Database
             else if (query is WhereQueryBase whereQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                var parsedWhereQuery = ParseExpression(whereQuery.Condition.Body, query, innerQuery.Variables);
-                return new SqlQuery($"{innerQuery.QueryText}\nWHERE {parsedWhereQuery.QueryText}", parsedWhereQuery.Variables);
+                var parsedWhereQuery = ParseExpression(whereQuery.Condition.Body, query, innerQuery.Parameters);
+                return new SqlQuery($"{innerQuery.QueryText}\nWHERE {parsedWhereQuery.QueryText}", parsedWhereQuery.Parameters);
             }
             else if (query is GroupByQueryBase groupByQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                var keysQuery = groupByQuery.KeyColumns.Aggregate(new SqlQuery("", innerQuery.Variables), (q, c) =>
+                var keysQuery = groupByQuery.KeyColumns.Aggregate(new SqlQuery("", innerQuery.Parameters), (q, c) =>
                 {
-                    var columnExpression = ParseExpression(c.Expression, query, q.Variables);
-                    return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Variables);
+                    var columnExpression = ParseExpression(c.Expression, query, q.Parameters);
+                    return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Parameters);
                 });
 
-                return new SqlQuery($"{innerQuery.QueryText}\nGROUP BY {keysQuery.QueryText.Substring(2)}", keysQuery.Variables);
+                return new SqlQuery($"{innerQuery.QueryText}\nGROUP BY {keysQuery.QueryText.Substring(2)}", keysQuery.Parameters);
             }
             else if (query is HavingQueryBase havingQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                var parsedHavingQuery = ParseExpression(havingQuery.Condition.Body, query, innerQuery.Variables);
-                return new SqlQuery($"{innerQuery.QueryText}\nHAVING {parsedHavingQuery.QueryText}", parsedHavingQuery.Variables);
+                var parsedHavingQuery = ParseExpression(havingQuery.Condition.Body, query, innerQuery.Parameters);
+                return new SqlQuery($"{innerQuery.QueryText}\nHAVING {parsedHavingQuery.QueryText}", parsedHavingQuery.Parameters);
             }
             else if (query is SelectQueryBase || query is ScalarSelectQueryBase)
             {
@@ -95,46 +95,46 @@ namespace Passado.Database
                                                .Zip(methodCallExpression.Arguments, (p, e) => (p.Name, e));
                 }
                 
-                var innerQuery = query.InnerQuery == null ? new SqlQuery(null, VariableDictionary.Empty) : ParseQuery(query.InnerQuery);
+                var innerQuery = query.InnerQuery == null ? new SqlQuery(null, ImmutableArray.Create<MemberExpression>()) : ParseQuery(query.InnerQuery);
                 var separator = ",\n       ";
 
-                var selectQueries = args.Aggregate(new SqlQuery("", innerQuery.Variables), (q, s) =>
+                var selectQueries = args.Aggregate(new SqlQuery("", innerQuery.Parameters), (q, s) =>
                 {
-                    var selectExpression = ParseExpression(s.Expression, query, q.Variables);
-                    return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Name}", selectExpression.Variables);
+                    var selectExpression = ParseExpression(s.Expression, query, q.Parameters);
+                    return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Name}", selectExpression.Parameters);
                 });
 
-                return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Variables);
+                return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Parameters);
             }
             else if (query is OrderByQueryBase orderByQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nORDER BY {string.Join(", ", orderByQuery.Columns.Select(c => $"{c.Property.Name} {(c.Order == Model.SortOrder.Ascending ? "ASC" : "DESC")}"))}", innerQuery.Variables);
+                return new SqlQuery($"{innerQuery.QueryText}\nORDER BY {string.Join(", ", orderByQuery.Columns.Select(c => $"{c.Property.Name} {(c.Order == Model.SortOrder.Ascending ? "ASC" : "DESC")}"))}", innerQuery.Parameters);
             }
             else if (query is OffsetQueryBase offsetQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nOFFSET {offsetQuery.Offset}", innerQuery.Variables);
+                return new SqlQuery($"{innerQuery.QueryText}\nOFFSET {offsetQuery.Offset}", innerQuery.Parameters);
             }
             else if (query is LimitQueryBase limitQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nLIMIT {limitQuery.Limit}", innerQuery.Variables);
+                return new SqlQuery($"{innerQuery.QueryText}\nLIMIT {limitQuery.Limit}", innerQuery.Parameters);
             }
             else if (query is InsertQueryBase insertQuery)
             {
-                return new SqlQuery($"INSERT INTO {insertQuery.Model.Name} ({string.Join(", ", insertQuery.IntoColumns.Select(c => c.Name))})", VariableDictionary.Empty);
+                return new SqlQuery($"INSERT INTO {insertQuery.Model.Name} ({string.Join(", ", insertQuery.IntoColumns.Select(c => c.Name))})", ImmutableArray.Create<MemberExpression>());
             }
             else if (query is ValueQueryBase valueQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                var valuesQuery = valueQuery.Values.Aggregate(new SqlQuery("", innerQuery.Variables), (q, c) =>
+                var valuesQuery = valueQuery.Values.Aggregate(new SqlQuery("", innerQuery.Parameters), (q, c) =>
                 {
-                    var columnExpression = ParseExpression(c, query, q.Variables);
-                    return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Variables);
+                    var columnExpression = ParseExpression(c, query, q.Parameters);
+                    return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Parameters);
                 });
                 
-                return new SqlQuery($"{innerQuery.QueryText}\nVALUES ({valuesQuery.QueryText.Substring(2)})", valuesQuery.Variables);
+                return new SqlQuery($"{innerQuery.QueryText}\nVALUES ({valuesQuery.QueryText.Substring(2)})", valuesQuery.Parameters);
             }
             else
             {
@@ -162,12 +162,12 @@ namespace Passado.Database
                                throw new NotImplementedException();
 
                 var innerQuery = ParseFromOrJoinQuery(query.InnerQuery, names);
-                var onExpression = ParseExpression(joinQuery.Condition.Body, query, innerQuery.Variables);
-                return new SqlQuery($"{innerQuery.QueryText}\n{joinName} {joinQuery.Model.Name} AS {GetName(joinQuery.DefaultName)} ON {onExpression.QueryText}", onExpression.Variables);
+                var onExpression = ParseExpression(joinQuery.Condition.Body, query, innerQuery.Parameters);
+                return new SqlQuery($"{innerQuery.QueryText}\n{joinName} {joinQuery.Model.Name} AS {GetName(joinQuery.DefaultName)} ON {onExpression.QueryText}", onExpression.Parameters);
             }
             else if (query is FromQueryBase fromQuery)
             {
-                return new SqlQuery($"FROM {fromQuery.Model.Name} AS {GetName(fromQuery.Name)}", VariableDictionary.Empty);
+                return new SqlQuery($"FROM {fromQuery.Model.Name} AS {GetName(fromQuery.Name)}", ImmutableArray.Create<MemberExpression>());
             }
 
             throw new NotImplementedException();
@@ -181,7 +181,7 @@ namespace Passado.Database
                 return GetGroupByQuery(query.InnerQuery);
         }
 
-        SqlQuery ParseExpression(Expression expression, QueryBase context, VariableDictionary variables)
+        SqlQuery ParseExpression(Expression expression, QueryBase context, ImmutableArray<MemberExpression> parameters)
         {
             switch (expression)
             {
@@ -197,14 +197,14 @@ namespace Passado.Database
                              binaryExpression.NodeType == ExpressionType.Add ? "+" :
                              throw new NotImplementedException();
 
-                    var leftQuery = ParseExpression(binaryExpression.Left, context, variables);
-                    var rightQuery = ParseExpression(binaryExpression.Right, context, leftQuery.Variables);
-                    return new SqlQuery($"({leftQuery.QueryText}) {op} ({rightQuery.QueryText})", rightQuery.Variables);
+                    var leftQuery = ParseExpression(binaryExpression.Left, context, parameters);
+                    var rightQuery = ParseExpression(binaryExpression.Right, context, leftQuery.Parameters);
+                    return new SqlQuery($"({leftQuery.QueryText}) {op} ({rightQuery.QueryText})", rightQuery.Parameters);
                 case ConstantExpression constantExpression:
                     if (constantExpression.Type == typeof(string))
-                        return new SqlQuery($"'{constantExpression.Value}'", variables);
+                        return new SqlQuery($"'{constantExpression.Value}'", parameters);
                     else if (constantExpression.Type == typeof(int))
-                        return new SqlQuery($"{constantExpression.Value}", variables);
+                        return new SqlQuery($"{constantExpression.Value}", parameters);
                     else
                         break;
                 case MemberExpression memberExpression:
@@ -217,34 +217,18 @@ namespace Passado.Database
                         {
                             var groupByQuery = GetGroupByQuery(context);
                             
-                            return ParseExpression(groupByQuery.KeyColumns.First(k => k.Property.Name == memberExpression.Member.Name).Expression, groupByQuery, variables);
+                            return ParseExpression(groupByQuery.KeyColumns.First(k => k.Property.Name == memberExpression.Member.Name).Expression, groupByQuery, parameters);
                         }
                         else
                         {
-                            return new SqlQuery($"{innerMemberExpression.Member.Name}.{memberExpression.Member.Name}", variables);
+                            return new SqlQuery($"{innerMemberExpression.Member.Name}.{memberExpression.Member.Name}", parameters);
                         }
                     }
                     else if (memberExpression.NodeType == ExpressionType.MemberAccess &&
                              memberExpression.Expression is ConstantExpression constantExpression)
                     {
                         // Closures
-                        
-                        if (variables.ContainsKey((memberExpression.Expression.Type, memberExpression.Member.Name)))
-                        {
-                            var value = variables[(memberExpression.Expression.Type, memberExpression.Member.Name)];
-                            return new SqlQuery($"@{value.VariableName}", variables);
-                        }
-                        else
-                        {
-                            var newVariableName = memberExpression.Member.Name;
-                            var index = 1;
-                            while (variables.Any(p => p.Value.VariableName == newVariableName))
-                                newVariableName = $"{memberExpression.Member.Name}{++index}";
-
-                            var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
-                            var newVariables = variables.Add((memberExpression.Expression.Type, memberExpression.Member.Name), (newVariableName, func));
-                            return new SqlQuery($"@{newVariableName}", newVariables);
-                        }
+                        return new SqlQuery($"{{{parameters.Length}}}", parameters.Add(memberExpression));
                     }
                     break;
                 case MethodCallExpression methodCallExpression:
@@ -253,7 +237,7 @@ namespace Passado.Database
                         var name = methodCallExpression.Method.Name;
 
                         if (name == nameof(IAggregatable<object>.Count) && methodCallExpression.Arguments.Count == 0)
-                            return new SqlQuery("COUNT(*)", variables);
+                            return new SqlQuery("COUNT(*)", parameters);
                         else
                         {
                             var function = name == nameof(IAggregatable<object>.Count) ? "COUNT(" :
@@ -262,8 +246,8 @@ namespace Passado.Database
                                            name == nameof(IAggregatable<object>.Max) ? "MAX(" :
                                            throw new NotImplementedException();
 
-                            var functionQuery = ParseExpression((methodCallExpression.Arguments[0] as LambdaExpression).Body, context, variables);
-                            return new SqlQuery($"{function}{functionQuery.QueryText})", functionQuery.Variables);
+                            var functionQuery = ParseExpression((methodCallExpression.Arguments[0] as LambdaExpression).Body, context, parameters);
+                            return new SqlQuery($"{function}{functionQuery.QueryText})", functionQuery.Parameters);
                         }
                     }
                     break;
@@ -271,7 +255,7 @@ namespace Passado.Database
                     break;
             }
 
-            return new SqlQuery($"{{{expression.ToString()}}}", variables);
+            return new SqlQuery($"{{{expression.ToString()}}}", parameters);
         }
     }
 }

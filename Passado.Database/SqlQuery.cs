@@ -6,17 +6,15 @@ using System.Text;
 
 namespace Passado.Database
 {
-    using VariableDictionary = ImmutableDictionary<(Type ClosureType, string MemberName), (string VariableName, Func<object> ValueGetter)>;
-
     public class SqlQuery
     {
-        public SqlQuery(string queryText, VariableDictionary variables)
+        public SqlQuery(string queryText, ImmutableArray<MemberExpression> parameters)
         {
             QueryText = queryText;
-            Variables = variables;
+            Parameters = parameters;
         }
 
         public string QueryText { get; }
-        public VariableDictionary Variables { get; }
+        public ImmutableArray<MemberExpression> Parameters { get; }
     }
 }
