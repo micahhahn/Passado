@@ -225,7 +225,7 @@ namespace Passado.Database
                         }
                     }
                     else if (memberExpression.NodeType == ExpressionType.MemberAccess &&
-                             memberExpression.Expression is ConstantExpression constantExpression)
+                             (memberExpression.Expression is ConstantExpression constantExpression || memberExpression.Expression is null))
                     {
                         // Closures
                         return new SqlQuery($"{{{parameters.Length}}}", parameters.Add(memberExpression));

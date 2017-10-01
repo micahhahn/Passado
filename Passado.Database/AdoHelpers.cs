@@ -18,13 +18,13 @@ namespace Passado.Database
     {
         public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(SqlQuery query)
         {
-            var parameters = new Dictionary<(Type ClosureType, string FieldName), (string Name, Func<object> Getter)>();
+            var parameters = new Dictionary<(Type ClosureType, Type DeclaringType, string FieldName), (string Name, Func<object> Getter)>();
             var takenNames = new HashSet<string>();
             var parameterNames = new List<string>();
 
             foreach (var memberExpression in query.Parameters)
             {
-                if (parameters.TryGetValue((memberExpression.Expression.Type, memberExpression.Member.Name), out var value))
+                if (parameters.TryGetValue((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), out var value))
                 {
                     parameterNames.Add($"@{value.Name}");
                     takenNames.Add(value.Name);
@@ -37,7 +37,7 @@ namespace Passado.Database
                         newVariableName = $"{memberExpression.Member.Name}{++index}";
 
                     var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
-                    parameters.Add((memberExpression.Expression.Type, memberExpression.Member.Name), (newVariableName, func));
+                    parameters.Add((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), (newVariableName, func));
                     takenNames.Add(newVariableName);
                     parameterNames.Add($"@{newVariableName}");
                 }

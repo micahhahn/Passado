@@ -45,6 +45,27 @@ namespace Passado.Tests.Query
             }
         }
 
+        static int X = 7;
+
+        public class EmptyClass
+        {
+            public static int X = 8;
+        }
+
+        [Fact]
+        public void Closure_To_Static_Field_Should_Work()
+        {
+            var qb = GetQueryBuilder<EmptyDatabase>();
+
+            var query = qb.Select(t => new { X1 = X, X2 = EmptyClass.X })
+                          .Build();
+
+            var rows = query.Execute();
+            Assert.Equal(1, rows.Count());
+            Assert.Equal(X, rows.Single().X1);
+            Assert.Equal(EmptyClass.X, rows.Single().X2);
+        }
+
         [Fact]
         public void Closure_Should_Work_If_Referenced_Twice()
         {
