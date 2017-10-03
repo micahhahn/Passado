@@ -133,8 +133,10 @@ namespace Passado.Database
                     var columnExpression = ParseExpression(c, query, q.Parameters);
                     return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Parameters);
                 });
-                
-                return new SqlQuery($"{innerQuery.QueryText}\nVALUES ({valuesQuery.QueryText.Substring(2)})", valuesQuery.Parameters);
+
+                var prelude = query.InnerQuery is ValueQueryBase ? ",\n       " : "\nVALUES ";
+
+                return new SqlQuery($"{innerQuery.QueryText}{prelude}({valuesQuery.QueryText.Substring(2)})", valuesQuery.Parameters);
             }
             else
             {
