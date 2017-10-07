@@ -16,13 +16,13 @@ namespace Passado.Database
     /// </summary>
     public static class AdoHelpers
     {
-        public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(SqlQuery query)
+        public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(ImmutableArray<SqlClause> clauses, ImmutableArray<MemberExpression> sqlParameters)
         {
             var parameters = new Dictionary<(Type ClosureType, Type DeclaringType, string FieldName), (string Name, Func<object> Getter)>();
             var takenNames = new HashSet<string>();
             var parameterNames = new List<string>();
 
-            foreach (var memberExpression in query.Parameters)
+            foreach (var memberExpression in sqlParameters)
             {
                 if (parameters.TryGetValue((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), out var value))
                 {
@@ -43,7 +43,7 @@ namespace Passado.Database
                 }
             }
             
-            return (string.Format(query.QueryText, parameterNames.ToArray()), parameters.Values.ToImmutableArray());
+            return (string.Format(string.Join("\n", clauses.Select(s => s.ClauseText)), parameterNames.ToArray()), parameters.Values.ToImmutableArray());
         }
 
         static LambdaExpression GetSelector(QueryBase query)

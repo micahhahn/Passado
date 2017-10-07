@@ -11,8 +11,6 @@ using Passado.Query.Internal;
 
 namespace Passado.Database
 {
-    using VariableDictionary = ImmutableDictionary<(Type ClosureType, string MemberName), (string VariableName, Func<object> ValueGetter)>;
-
     public abstract class DatabaseQueryBuilder<TDatabase> : QueryBuilderBase, IQueryBuilder<TDatabase>
     {
         public DatabaseQueryBuilder()
@@ -35,7 +33,7 @@ namespace Passado.Database
             return $"\"{identifier.Replace("\"", "\"\"")}\"";
         }
         
-        public SqlQuery ParseQuery(QueryBase query)
+        public (ImmutableArray<SqlClause> Clauses, ImmutableArray<MemberExpression> Parameters) ParseQuery(QueryBase query)
         {
             if (query is AsQueryBase asQuery)
             {
@@ -48,8 +46,9 @@ namespace Passado.Database
             else if (query is WhereQueryBase whereQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                var parsedWhereQuery = ParseExpression(whereQuery.Condition.Body, query, innerQuery.Parameters);
-                return new SqlQuery($"{innerQuery.QueryText}\nWHERE {parsedWhereQuery.QueryText}", parsedWhereQuery.Parameters);
+                var parsedWhereExpression = ParseExpression(whereQuery.Condition.Body, query, innerQuery.Parameters);
+                var newClause = new SqlClause(ClauseType.Where, $"WHERE {parsedWhereExpression.QueryText}");
+                return (innerQuery.Clauses.Add(newClause), parsedWhereExpression.Parameters);
             }
             else if (query is GroupByQueryBase groupByQuery)
             {
@@ -60,13 +59,13 @@ namespace Passado.Database
                     return new SqlQuery($"{q.QueryText}, {columnExpression.QueryText}", columnExpression.Parameters);
                 });
 
-                return new SqlQuery($"{innerQuery.QueryText}\nGROUP BY {keysQuery.QueryText.Substring(2)}", keysQuery.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.GroupBy, $"GROUP BY {keysQuery.QueryText}")), keysQuery.Parameters);
             }
             else if (query is HavingQueryBase havingQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
                 var parsedHavingQuery = ParseExpression(havingQuery.Condition.Body, query, innerQuery.Parameters);
-                return new SqlQuery($"{innerQuery.QueryText}\nHAVING {parsedHavingQuery.QueryText}", parsedHavingQuery.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Having, $"HAVING {parsedHavingQuery.QueryText}")), parsedHavingQuery.Parameters);
             }
             else if (query is SelectQueryBase || query is ScalarSelectQueryBase)
             {
@@ -95,7 +94,7 @@ namespace Passado.Database
                                                .Zip(methodCallExpression.Arguments, (p, e) => (p.Name, e));
                 }
                 
-                var innerQuery = query.InnerQuery == null ? new SqlQuery(null, ImmutableArray.Create<MemberExpression>()) : ParseQuery(query.InnerQuery);
+                var innerQuery = query.InnerQuery == null ? (Clauses: ImmutableArray.Create<SqlClause>(), Parameters: ImmutableArray.Create<MemberExpression>()) : ParseQuery(query.InnerQuery);
                 var separator = ",\n       ";
 
                 var selectQueries = args.Aggregate(new SqlQuery("", innerQuery.Parameters), (q, s) =>
@@ -104,26 +103,28 @@ namespace Passado.Database
                     return new SqlQuery($"{q.QueryText}{separator}{selectExpression.QueryText} AS {s.Name}", selectExpression.Parameters);
                 });
 
-                return new SqlQuery($"SELECT {selectQueries.QueryText.Substring(separator.Length)}{(innerQuery.QueryText != null ? $"\n{innerQuery.QueryText}" : "")}", selectQueries.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Select, $"SELECT {selectQueries.QueryText.Substring(separator.Length)}")), selectQueries.Parameters);
             }
             else if (query is OrderByQueryBase orderByQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nORDER BY {string.Join(", ", orderByQuery.Columns.Select(c => $"{c.Property.Name} {(c.Order == Model.SortOrder.Ascending ? "ASC" : "DESC")}"))}", innerQuery.Parameters);
+                var columns = orderByQuery.Columns.Select(c => $"{c.Property.Name} {(c.Order == Model.SortOrder.Ascending ? "ASC" : "DESC")}");
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.OrderBy, $"ORDER BY {string.Join(", ", columns)}")), innerQuery.Parameters);
             }
             else if (query is OffsetQueryBase offsetQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nOFFSET {offsetQuery.Offset}", innerQuery.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Offset, $"OFFSET {offsetQuery.Offset}")), innerQuery.Parameters);
             }
             else if (query is LimitQueryBase limitQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return new SqlQuery($"{innerQuery.QueryText}\nLIMIT {limitQuery.Limit}", innerQuery.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Limit, $"LIMIT {limitQuery.Limit}")), innerQuery.Parameters);
             }
             else if (query is InsertQueryBase insertQuery)
             {
-                return new SqlQuery($"INSERT INTO {insertQuery.Model.Name} ({string.Join(", ", insertQuery.IntoColumns.Select(c => c.Name))})", ImmutableArray.Create<MemberExpression>());
+                var columns = string.Join(", ", insertQuery.IntoColumns.Select(c => c.Name));
+                return (ImmutableArray.Create(new SqlClause(ClauseType.Insert, $"INSERT INTO {insertQuery.Model.Name} ({columns})")), ImmutableArray.Create<MemberExpression>());
             }
             else if (query is ValueQueryBase valueQuery)
             {
@@ -136,7 +137,7 @@ namespace Passado.Database
 
                 var prelude = query.InnerQuery is ValueQueryBase ? ",\n       " : "\nVALUES ";
 
-                return new SqlQuery($"{innerQuery.QueryText}{prelude}({valuesQuery.QueryText.Substring(2)})", valuesQuery.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Values, $"{prelude}({valuesQuery.QueryText.Substring(2)})")), valuesQuery.Parameters);
             }
             else
             {
@@ -144,7 +145,7 @@ namespace Passado.Database
             }
         }
 
-        SqlQuery ParseFromOrJoinQuery(QueryBase query, ImmutableArray<(string DefaultName, string AsName)>? names)
+        (ImmutableArray<SqlClause> Clauses, ImmutableArray<MemberExpression> Parameters) ParseFromOrJoinQuery(QueryBase query, ImmutableArray<(string DefaultName, string AsName)>? names)
         {
             string GetName(string defaultName)
             {
@@ -165,11 +166,11 @@ namespace Passado.Database
 
                 var innerQuery = ParseFromOrJoinQuery(query.InnerQuery, names);
                 var onExpression = ParseExpression(joinQuery.Condition.Body, query, innerQuery.Parameters);
-                return new SqlQuery($"{innerQuery.QueryText}\n{joinName} {joinQuery.Model.Name} AS {GetName(joinQuery.DefaultName)} ON {onExpression.QueryText}", onExpression.Parameters);
+                return (innerQuery.Clauses.Add(new SqlClause(ClauseType.Join, $"{joinName} {joinQuery.Model.Name} AS {GetName(joinQuery.DefaultName)} ON {onExpression.QueryText}")), onExpression.Parameters);
             }
             else if (query is FromQueryBase fromQuery)
             {
-                return new SqlQuery($"FROM {fromQuery.Model.Name} AS {GetName(fromQuery.Name)}", ImmutableArray.Create<MemberExpression>());
+                return (ImmutableArray.Create(new SqlClause(ClauseType.From, $"FROM {fromQuery.Model.Name} AS {GetName(fromQuery.Name)}")), ImmutableArray.Create<MemberExpression>());
             }
 
             throw new NotImplementedException();
