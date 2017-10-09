@@ -21,8 +21,7 @@ namespace Passado.Database
             var parameters = new Dictionary<(Type ClosureType, Type DeclaringType, string FieldName), (string Name, Func<object> Getter)>();
             var takenNames = new HashSet<string>();
             var stringBuilder = new StringBuilder();
-            //var parameterNames = new List<string>();
-
+            
             foreach (var clause in clauses)
             {
                 var clauseParameterNames = new List<string>();
@@ -48,7 +47,7 @@ namespace Passado.Database
                     }
                 }
 
-                stringBuilder.AppendLine(string.Format(string.Join("\n", clauses.Select(s => s.Text)), clauseParameterNames.ToArray()));
+                stringBuilder.AppendLine(string.Format(clause.Text, clauseParameterNames.ToArray()));
             }
 
             return (stringBuilder.ToString(), parameters.Values.ToImmutableArray());

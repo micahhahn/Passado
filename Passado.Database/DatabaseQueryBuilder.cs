@@ -134,7 +134,7 @@ namespace Passado.Database
                     return ($"{q.Text}, {columnExpression.Text}", columnExpression.Parameters);
                 });
 
-                var prelude = query.InnerQuery is ValueQueryBase ? ",\n       " : "\nVALUES ";
+                var prelude = query.InnerQuery is ValueQueryBase ? "     , " : "VALUES ";
 
                 return innerQuery.Add(new SqlClause(ClauseType.Values, $"{prelude}({valuesQuery.Text.Substring(2)})", valuesQuery.Parameters));
             }
