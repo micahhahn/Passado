@@ -16,34 +16,42 @@ namespace Passado.Database
     /// </summary>
     public static class AdoHelpers
     {
-        public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(ImmutableArray<SqlClause> clauses, ImmutableArray<MemberExpression> sqlParameters)
+        public static (string Query, ImmutableArray<(string Name, Func<object> Getter)>) CreateNamedParameters(ImmutableArray<SqlClause> clauses)
         {
             var parameters = new Dictionary<(Type ClosureType, Type DeclaringType, string FieldName), (string Name, Func<object> Getter)>();
             var takenNames = new HashSet<string>();
-            var parameterNames = new List<string>();
+            var stringBuilder = new StringBuilder();
+            //var parameterNames = new List<string>();
 
-            foreach (var memberExpression in sqlParameters)
+            foreach (var clause in clauses)
             {
-                if (parameters.TryGetValue((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), out var value))
-                {
-                    parameterNames.Add($"@{value.Name}");
-                    takenNames.Add(value.Name);
-                }
-                else
-                {
-                    var newVariableName = memberExpression.Member.Name;
-                    var index = 1;
-                    while (takenNames.Contains(newVariableName))
-                        newVariableName = $"{memberExpression.Member.Name}{++index}";
+                var clauseParameterNames = new List<string>();
 
-                    var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
-                    parameters.Add((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), (newVariableName, func));
-                    takenNames.Add(newVariableName);
-                    parameterNames.Add($"@{newVariableName}");
+                foreach (var memberExpression in clause.Parameters)
+                {
+                    if (parameters.TryGetValue((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), out var value))
+                    {
+                        clauseParameterNames.Add($"@{value.Name}");
+                        takenNames.Add(value.Name);
+                    }
+                    else
+                    {
+                        var newVariableName = memberExpression.Member.Name;
+                        var index = 1;
+                        while (takenNames.Contains(newVariableName))
+                            newVariableName = $"{memberExpression.Member.Name}{++index}";
+
+                        var func = (Func<object>)Expression.Lambda(Expression.Convert(memberExpression, typeof(object))).Compile();
+                        parameters.Add((memberExpression.Expression?.Type, memberExpression.Member.DeclaringType, memberExpression.Member.Name), (newVariableName, func));
+                        takenNames.Add(newVariableName);
+                        clauseParameterNames.Add($"@{newVariableName}");
+                    }
                 }
+
+                stringBuilder.AppendLine(string.Format(string.Join("\n", clauses.Select(s => s.Text)), clauseParameterNames.ToArray()));
             }
-            
-            return (string.Format(string.Join("\n", clauses.Select(s => s.ClauseText)), parameterNames.ToArray()), parameters.Values.ToImmutableArray());
+
+            return (stringBuilder.ToString(), parameters.Values.ToImmutableArray());
         }
 
         static LambdaExpression GetSelector(QueryBase query)
