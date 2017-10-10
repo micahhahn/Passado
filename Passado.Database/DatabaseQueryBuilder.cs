@@ -101,8 +101,9 @@ namespace Passado.Database
                     var selectText = string.Format(selectExpression.Text, selectExpression.Parameters.Select((m, i) => $"{{{i + q.Parameters.Length}}}").ToArray());
                     return (q.Lines.Add($"{selectText} AS {s.Name}"), q.Parameters.AddRange(selectExpression.Parameters));
                 });
-
-                return innerQuery.Add(new SqlClause(ClauseType.Select, $"SELECT {string.Join(",\n       ", selectQueries.Lines)}", selectQueries.Parameters));
+                
+                // Selct clause always goes at the beginning
+                return innerQuery.Insert(0, new SqlClause(ClauseType.Select, $"SELECT {string.Join(",\n       ", selectQueries.Lines)}", selectQueries.Parameters));
             }
             else if (query is OrderByQueryBase orderByQuery)
             {
@@ -118,7 +119,16 @@ namespace Passado.Database
             else if (query is LimitQueryBase limitQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return innerQuery.Add(new SqlClause(ClauseType.Limit, $"LIMIT {limitQuery.Limit}", ImmutableArray.Create<MemberExpression>()));
+                if (query.InnerQuery is OffsetQueryBase)
+                {
+                    // The logical order is to do offset and then limit, but most sql databases have it in reverse order
+                    var offsetClause = innerQuery.Last();
+                    return innerQuery.RemoveAt(innerQuery.Length - 1)
+                                     .Add(new SqlClause(ClauseType.Limit, $"LIMIT {limitQuery.Limit}", ImmutableArray.Create<MemberExpression>()))
+                                     .Add(offsetClause);
+                }
+
+                throw new NotImplementedException();
             }
             else if (query is InsertQueryBase insertQuery)
             {
