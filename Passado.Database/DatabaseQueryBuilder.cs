@@ -94,15 +94,15 @@ namespace Passado.Database
                 }
                 
                 var innerQuery = query.InnerQuery == null ? ImmutableArray.Create<SqlClause>() : ParseQuery(query.InnerQuery);
-                var separator = ",\n       ";
 
-                var selectQueries = args.Aggregate((Text: "", Parameters:ImmutableArray.Create<MemberExpression>()), (q, s) =>
+                var selectQueries = args.Aggregate((Lines: ImmutableArray.Create<string>(), Parameters: ImmutableArray.Create<MemberExpression>()), (q, s) =>
                 {
                     var selectExpression = ParseExpression(s.Expression, ClauseType.Select, query);
-                    return ($"{q.Text}{separator}{selectExpression.Text} AS {s.Name}", selectExpression.Parameters);
+                    var selectText = string.Format(selectExpression.Text, selectExpression.Parameters.Select((m, i) => $"{{{i + q.Parameters.Length}}}").ToArray());
+                    return (q.Lines.Add($"{selectText} AS {s.Name}"), q.Parameters.AddRange(selectExpression.Parameters));
                 });
 
-                return innerQuery.Add(new SqlClause(ClauseType.Select, $"SELECT {selectQueries.Text.Substring(separator.Length)}", selectQueries.Parameters));
+                return innerQuery.Add(new SqlClause(ClauseType.Select, $"SELECT {string.Join(",\n       ", selectQueries.Lines)}", selectQueries.Parameters));
             }
             else if (query is OrderByQueryBase orderByQuery)
             {
