@@ -47,8 +47,8 @@ namespace Passado.Tests.Query
 
             var query = qb.From(d => d.Users)
                           .Select(t => new { t.T1.UserId })
-                          .Offset(1)
-                          .Limit(1)
+                          .Offset(() => 1)
+                          .Limit(() => 1)
                           .Build();
 
             var rows = query.Execute();

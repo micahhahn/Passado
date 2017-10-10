@@ -114,17 +114,26 @@ namespace Passado.Database
             else if (query is OffsetQueryBase offsetQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
-                return innerQuery.Add(new SqlClause(ClauseType.Offset, $"OFFSET {offsetQuery.Offset}", ImmutableArray.Create<MemberExpression>()));
+                var newClause = offsetQuery.Offset is MemberExpression memberExpression ? new SqlClause(ClauseType.Offset, "OFFSET {0}", ImmutableArray.Create(memberExpression)) :
+                                offsetQuery.Offset is ConstantExpression constantExpression ? new SqlClause(ClauseType.Offset, $"OFFSET {constantExpression.Value}", ImmutableArray.Create<MemberExpression>()) :
+                                throw new NotImplementedException();
+
+                return innerQuery.Add(newClause);
             }
             else if (query is LimitQueryBase limitQuery)
             {
                 var innerQuery = ParseQuery(query.InnerQuery);
+
+                var newClause = limitQuery.Limit is MemberExpression memberExpression ? new SqlClause(ClauseType.Limit, "LIMIT {0}", ImmutableArray.Create(memberExpression)) :
+                                limitQuery.Limit is ConstantExpression constantExpression ? new SqlClause(ClauseType.Limit, $"LIMIT {constantExpression.Value}", ImmutableArray.Create<MemberExpression>()) :
+                                throw new NotImplementedException();
+
                 if (query.InnerQuery is OffsetQueryBase)
                 {
                     // The logical order is to do offset and then limit, but most sql databases have it in reverse order
                     var offsetClause = innerQuery.Last();
                     return innerQuery.RemoveAt(innerQuery.Length - 1)
-                                     .Add(new SqlClause(ClauseType.Limit, $"LIMIT {limitQuery.Limit}", ImmutableArray.Create<MemberExpression>()))
+                                     .Add(newClause)
                                      .Add(offsetClause);
                 }
 

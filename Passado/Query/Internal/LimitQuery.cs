@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,20 +7,20 @@ namespace Passado.Query.Internal
 {
     public abstract class LimitQueryBase : QueryBase
     {
-        public LimitQueryBase(QueryBase innerQuery, long limit)
+        public LimitQueryBase(QueryBase innerQuery, Expression<Func<long>> limit)
         {
             InnerQuery = innerQuery;
-            Limit = limit;
+            Limit = limit.Body;
         }
 
-        public long Limit { get; }
+        public Expression Limit { get; }
     }
 
     public class LimitQuery<TResult>
         : LimitQueryBase
         , Select.ILimitQuery<TResult>
     {
-        public LimitQuery(QueryBase innerQuery, long limit)
+        public LimitQuery(QueryBase innerQuery, Expression<Func<long>> limit)
             : base(innerQuery, limit)
         { }
     }

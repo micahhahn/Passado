@@ -147,12 +147,12 @@ namespace Passado
             return new OrderByQuery<TResult>(orderable as QueryBase, selector);
         }
 
-        public static Query.Select.IOffsetQuery<TResult> Offset<TResult>(this Query.Select.IOffsetable<TResult> offsetable, long offset)
+        public static Query.Select.IOffsetQuery<TResult> Offset<TResult>(this Query.Select.IOffsetable<TResult> offsetable, Expression<Func<long>> offset)
         {
             return new OffsetQuery<TResult>(offsetable as QueryBase, offset);
         }
 
-        public static Query.Select.ILimitQuery<TResult> Limit<TResult>(this Query.Select.ILimitable<TResult> limitable, long limit)
+        public static Query.Select.ILimitQuery<TResult> Limit<TResult>(this Query.Select.ILimitable<TResult> limitable, Expression<Func<long>> limit)
         {
             return new LimitQuery<TResult>(limitable as QueryBase, limit);
         }
